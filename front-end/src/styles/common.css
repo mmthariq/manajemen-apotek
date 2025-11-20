@@ -1,0 +1,54 @@
+/* Common Styles */
+
+/* Action buttons styling */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-button,
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-button {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.edit-button:hover {
+  background-color: #e0e0e0;
+}
+
+.delete-button {
+  background-color: #fee;
+  color: #f44336;
+}
+
+.delete-button:hover {
+  background-color: #fdd;
+}
+
+/* Styling for SVG icons with stroke */
+.edit-button svg,
+.delete-button svg {
+  stroke-width: 2px;
+  width: 18px;
+  height: 18px;
+}
+
+.edit-button svg {
+  stroke: #333;
+}
+
+.delete-button svg {
+  stroke: #f44336;
+} 

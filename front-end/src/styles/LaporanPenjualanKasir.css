@@ -1,0 +1,147 @@
+/* LaporanPenjualanKasir Styles */
+.laporan-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+}
+
+.laporan-container h2 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.date-input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  background-color: white;
+  width: 180px;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #333;
+}
+
+.display-button {
+  padding: 10px 16px;
+  background-color: #222;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.display-button:hover {
+  background-color: #111;
+}
+
+.display-button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
+.table-container {
+  margin-bottom: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th, 
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.data-table th {
+  background-color: #f8f9fa;
+  font-weight: 500;
+  color: #333;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.export-container {
+  display: flex;
+  gap: 10px;
+}
+
+.export-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: none;
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.export-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.export-button:hover {
+  background-color: #e0e0e0;
+}
+
+.export-pdf svg {
+  color: #f44336;
+}
+
+.export-excel svg {
+  color: #4caf50;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filter-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .date-input {
+    width: 100%;
+  }
+  
+  .display-button {
+    width: 100%;
+  }
+  
+  .export-container {
+    flex-direction: column;
+  }
+  
+  .export-button {
+    width: 100%;
+    justify-content: center;
+  }
+} 

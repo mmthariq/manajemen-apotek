@@ -1,0 +1,331 @@
+/* TransaksiKasir.css */
+.transaksi-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.transaksi-form, .cart-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #666;
+  pointer-events: none;
+}
+
+select, input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: white;
+}
+
+select {
+  padding-right: 30px;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #333;
+}
+
+input[readonly] {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.button-primary {
+  background-color: #222;
+  color: white;
+}
+
+.button-primary:hover {
+  background-color: #111;
+}
+
+.button-secondary {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.button-secondary:hover {
+  background-color: #e0e0e0;
+}
+
+/* Cart styles */
+.cart-items {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.cart-items table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cart-items th, 
+.cart-items td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.cart-items th {
+  font-weight: 500;
+  color: #666;
+}
+
+.cart-items tr:last-child td {
+  border-bottom: none;
+}
+
+.cart-total {
+  margin: 16px 0;
+  padding: 10px 0;
+  border-top: 1px solid #eee;
+}
+
+.cart-total p {
+  text-align: right;
+  font-size: 1.1rem;
+}
+
+.cart-checkout {
+  margin-top: 20px;
+}
+
+.checkout-button {
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.empty-cart {
+  padding: 40px 0;
+  text-align: center;
+  color: #666;
+}
+
+/* Struk (Receipt) Styles */
+.struk-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.struk-container {
+  background-color: white;
+  width: 350px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.struk-header {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: 1px dashed #ddd;
+}
+
+.struk-header svg {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.struk-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.struk-content {
+  padding: 20px;
+}
+
+.struk-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.struk-item p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.struk-total {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px dashed #ddd;
+  margin-top: 15px;
+  padding-top: 15px;
+  font-weight: 600;
+}
+
+.struk-info {
+  margin-top: 20px;
+  font-size: 0.8rem;
+  color: #666;
+  text-align: center;
+}
+
+.struk-info p {
+  margin: 5px 0;
+}
+
+.struk-actions {
+  display: flex;
+  border-top: 1px solid #eee;
+}
+
+.struk-actions button {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.struk-actions button:first-child {
+  border-right: 1px solid #eee;
+}
+
+.struk-actions .button-primary {
+  background: none;
+  color: #333;
+}
+
+.struk-actions .button-primary:hover {
+  background-color: #f5f5f5;
+}
+
+.struk-actions .button-secondary {
+  background: none;
+  color: #333;
+}
+
+.struk-actions .button-secondary:hover {
+  background-color: #f5f5f5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .transaksi-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .struk-container,
+  .struk-container * {
+    visibility: visible;
+  }
+  
+  .struk-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+  }
+  
+  .struk-actions {
+    display: none;
+  }
+} 

@@ -1,0 +1,127 @@
+/* Sidebar Styles */
+.sidebar {
+  width: 260px;
+  background-color: #fff;
+  border-right: 1px solid #eaeaea;
+  height: 100vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  transition: width 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.sidebar-header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  margin-bottom: 5px;
+}
+
+.sidebar-nav li a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #555;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.sidebar-nav li a:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.sidebar-nav li.active a {
+  background-color: #f0f0f0;
+  color: #333;
+  font-weight: 500;
+  border-left: 3px solid #333;
+}
+
+.sidebar-nav li svg {
+  min-width: 24px;
+}
+
+.sidebar-nav li a span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav li.logout {
+  margin-top: 30px;
+}
+
+.sidebar-nav li.logout a,
+.sidebar-nav li.logout .logout-link {
+  color: #f44336;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.sidebar-nav li.logout a:hover,
+.sidebar-nav li.logout .logout-link:hover {
+  background-color: #fee;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+  }
+  
+  .sidebar-header h2 {
+    display: none;
+  }
+  
+  .sidebar-nav li a span {
+    display: none;
+  }
+  
+  .sidebar-nav li a {
+    justify-content: center;
+    padding: 15px 0;
+  }
+  
+  /* Add hover effect to show text on hover */
+  .sidebar:hover {
+    width: 260px;
+  }
+  
+  .sidebar:hover .sidebar-header h2 {
+    display: block;
+  }
+  
+  .sidebar:hover .sidebar-nav li a {
+    justify-content: flex-start;
+    padding: 12px 20px;
+  }
+  
+  .sidebar:hover .sidebar-nav li a span {
+    display: block;
+  }
+} 
