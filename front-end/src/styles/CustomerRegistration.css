@@ -1,0 +1,390 @@
+.registration-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.registration-box {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 500px;
+  padding: 40px;
+}
+
+.registration-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.registration-header h1 {
+  font-size: 28px;
+  color: #333;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.registration-header p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input.input-error,
+.form-group textarea.input-error {
+  border-color: #e74c3c;
+  background-color: #fff5f5;
+}
+
+.error-message {
+  font-size: 12px;
+  color: #e74c3c;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.submit-button {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 10px;
+}
+
+.submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.login-link p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.login-link a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.login-link a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.notification {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px 30px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-in-out;
+  z-index: 1000;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.notification.success {
+  background-color: #27ae60;
+  color: white;
+}
+
+.notification.error {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.notification.info {
+  background-color: #3498db;
+  color: white;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .registration-box {
+    padding: 30px 20px;
+  }
+
+  .registration-header h1 {
+    font-size: 24px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    font-size: 16px;
+  }
+}
+
+/* SUCCESS SCREEN STYLES */
+.registration-box.success-box {
+  text-align: center;
+  padding: 50px 40px;
+}
+
+.success-icon {
+  color: #51cf66;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  animation: scaleIn 0.5s ease-out;
+}
+
+.success-icon svg {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 4px 8px rgba(81, 207, 102, 0.3));
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.success-title {
+  font-size: 32px;
+  color: #333;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.success-subtitle {
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 30px 0;
+}
+
+.success-info {
+  background: #f0f7ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.info-icon {
+  color: #51cf66;
+  font-weight: bold;
+  font-size: 18px;
+  min-width: 24px;
+}
+
+.activation-info {
+  background: #fff8e1;
+  border-left: 4px solid #ffc107;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.activation-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.activation-info p {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.activation-info strong {
+  color: #333;
+}
+
+.success-actions {
+  margin-bottom: 30px;
+}
+
+.btn-back-to-login {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+}
+
+.btn-back-to-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-back-to-login:active {
+  transform: translateY(0);
+}
+
+.next-step {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.next-step strong {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.divider {
+  height: 1px;
+  background: #eee;
+  margin: 30px 0;
+}
+
+.welcome-info {
+  text-align: left;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.welcome-info h3 {
+  font-size: 16px;
+  color: #333;
+  margin: 0 0 15px 0;
+  font-weight: 600;
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.benefits-list li {
+  font-size: 14px;
+  color: #555;
+  padding-left: 10px;
+}
+
+@media (max-width: 600px) {
+  .registration-box.success-box {
+    padding: 40px 30px;
+  }
+
+  .success-title {
+    font-size: 24px;
+  }
+
+  .success-subtitle {
+    font-size: 14px;
+  }
+
+  .welcome-info {
+    text-align: center;
+  }
+
+  .benefits-list li {
+    padding-left: 0;
+  }
+}
