@@ -1,11 +1,16 @@
+const pool = require('../config/database');
+
 const getAllSuppliers = async (req, res, next) => {
   try {
-    // Mock data
-    const mockSuppliers = [
-      { id: 1, nama: 'PT. Bio Farma', alamat: 'Jl. Pasteur No.28, Bandung', telepon: '022-2033755', email: 'info@biofarma.co.id' },
-      { id: 2, nama: 'PT. Kalbe Farma Tbk', alamat: 'Jl. Letjend Suprapto Kav.4, Jakarta', telepon: '021-42873888', email: 'customer_care@kalbe.co.id' },
-    ];
-    res.status(200).json({ message: 'Data semua supplier berhasil diambil.', data: mockSuppliers, query: req.query });
+    const result = await pool.query(
+      'SELECT "id", "name", "contactPerson", "phone", "address", "createdAt", "updatedAt" FROM "Supplier" ORDER BY "id" DESC'
+    );
+
+    res.status(200).json({
+      message: 'Data semua supplier berhasil diambil.',
+      data: result.rows,
+      total: result.rowCount,
+    });
   } catch (error) {
     next(error);
   }
@@ -13,7 +18,23 @@ const getAllSuppliers = async (req, res, next) => {
 
 const createSupplier = async (req, res, next) => {
   try {
-    res.status(201).json({ message: 'Supplier baru berhasil ditambahkan.', body: req.body });
+    const { name, contactPerson, phone, address } = req.body;
+
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ message: 'Nama supplier harus diisi.' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO "Supplier" ("name", "contactPerson", "phone", "address")
+       VALUES ($1, $2, $3, $4)
+       RETURNING "id", "name", "contactPerson", "phone", "address", "createdAt", "updatedAt"`,
+      [String(name).trim(), contactPerson || null, phone || null, address || null]
+    );
+
+    res.status(201).json({
+      message: 'Supplier baru berhasil ditambahkan.',
+      data: result.rows[0],
+    });
   } catch (error) {
     next(error);
   }

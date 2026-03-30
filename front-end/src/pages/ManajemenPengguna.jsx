@@ -1,21 +1,43 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/ManajemenPengguna.css';
 import Sidebar from '../components/Sidebar';
 import PenggunaForm from '../components/PenggunaForm';
 import ConfirmModal from '../components/ConfirmModal';
 
+const API_BASE_URL = 'http://localhost:3000/api/users';
+
+const toTitleCaseRole = (roleValue) => {
+  const role = String(roleValue || '').toLowerCase();
+
+  if (role === 'admin') return 'Admin';
+  if (role === 'kasir') return 'Kasir';
+  if (role === 'staff') return 'Staff';
+  if (role === 'customer') return 'Customer';
+  if (role === 'owner') return 'Owner';
+
+  return roleValue || 'Staff';
+};
+
+const toApiRole = (roleValue) => String(roleValue || '').toLowerCase();
+
+const mapApiUserToUi = (user) => {
+  const isActive = user.status ?? user.is_active ?? user.active;
+
+  return {
+    id: String(user.id),
+    apiId: user.id,
+    email: user.email || '-',
+    username: user.username || user.name || '-',
+    role: toTitleCaseRole(user.role),
+    status: isActive === false ? 'Nonaktif' : 'Aktif',
+    lastLogin: user.last_login || user.lastLogin || '-',
+  };
+};
+
 const ManajemenPengguna = ({ onLogout }) => {
-  // Sample data for users
-  const [users, setUsers] = useState([
-    {
-      id: 'USR001',
-      email: 'mthariq@gmail.com',
-      username: 'mthariq',
-      role: 'Admin',
-      status: 'Aktif',
-      lastLogin: '12/05/2025 07:00'
-    }
-  ]);
+  const [users, setUsers] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEditData, setCurrentEditData] = useState(null);
@@ -29,6 +51,38 @@ const ManajemenPengguna = ({ onLogout }) => {
     userDetails: ''
   });
   const itemsPerPage = 10;
+
+  const fetchUsers = async () => {
+    try {
+      setIsLoadingUsers(true);
+      setApiError('');
+
+      const response = await fetch(API_BASE_URL);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal mengambil data pengguna.');
+      }
+
+      const mappedUsers = Array.isArray(result.data)
+        ? result.data.map(mapApiUserToUi)
+        : [];
+
+      setUsers(mappedUsers);
+    } catch (error) {
+      setApiError(error.message || 'Terjadi kesalahan saat memuat data pengguna.');
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedRole, selectedStatus]);
 
   // Function to handle edit user
   const handleEdit = (id) => {
@@ -49,8 +103,31 @@ const ManajemenPengguna = ({ onLogout }) => {
 
   // Function to confirm delete
   const handleConfirmDelete = () => {
-    setUsers(users.filter(user => user.id !== confirmModal.userId));
-    setConfirmModal({ isOpen: false, userId: null, userDetails: '' });
+    const deleteUser = async () => {
+      try {
+        setApiError('');
+
+        const targetUser = users.find((user) => user.id === confirmModal.userId);
+        const idToDelete = targetUser?.apiId ?? confirmModal.userId;
+
+        const response = await fetch(`${API_BASE_URL}/${idToDelete}`, {
+          method: 'DELETE',
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal menghapus pengguna.');
+        }
+
+        await fetchUsers();
+      } catch (error) {
+        setApiError(error.message || 'Terjadi kesalahan saat menghapus pengguna.');
+      } finally {
+        setConfirmModal({ isOpen: false, userId: null, userDetails: '' });
+      }
+    };
+
+    deleteUser();
   };
 
   // Function to cancel delete
@@ -59,24 +136,52 @@ const ManajemenPengguna = ({ onLogout }) => {
   };
 
   // Function to handle add or update user
-  const handleSaveUser = (formData) => {
-    if (currentEditData) {
-      // Update existing user
-      setUsers(users.map(user => 
-        user.id === formData.id ? formData : user
-      ));
-    } else {
-      // Add new user
-      const newId = `USR${String(users.length + 1).padStart(3, '0')}`;
-      const newUser = {
-        ...formData,
-        id: newId,
-        lastLogin: '-'
+  const handleSaveUser = async (formData) => {
+    try {
+      setApiError('');
+
+      const payload = {
+        name: formData.username,
+        email: formData.email,
+        role: toApiRole(formData.role),
+        ...(formData.status ? { status: formData.status } : {}),
+        ...(formData.password ? { password: formData.password } : {}),
       };
-      setUsers([...users, newUser]);
+
+      if (currentEditData) {
+        const response = await fetch(`${API_BASE_URL}/${currentEditData.apiId ?? currentEditData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal memperbarui pengguna.');
+        }
+      } else {
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal menambahkan pengguna.');
+        }
+      }
+
+      await fetchUsers();
+      setIsModalOpen(false);
+      setCurrentEditData(null);
+    } catch (error) {
+      setApiError(error.message || 'Terjadi kesalahan saat menyimpan pengguna.');
     }
-    setIsModalOpen(false);
-    setCurrentEditData(null);
   };
 
   // Function to open modal for adding new user
@@ -133,6 +238,12 @@ const ManajemenPengguna = ({ onLogout }) => {
             Tambah Pengguna
           </button>
         </div>
+
+        {apiError && (
+          <div className="no-data">
+            <p>{apiError}</p>
+          </div>
+        )}
         
         <div className="filters-container">
           <div className="search-container">
@@ -158,6 +269,7 @@ const ManajemenPengguna = ({ onLogout }) => {
               <option value="Admin">Admin</option>
               <option value="Kasir">Kasir</option>
               <option value="Staff">Staff</option>
+              <option value="Customer">Customer</option>
             </select>
             
             <select 
@@ -185,7 +297,13 @@ const ManajemenPengguna = ({ onLogout }) => {
               </tr>
             </thead>
             <tbody>
-              {currentUsers.map((user) => (
+              {isLoadingUsers ? (
+                <tr>
+                  <td colSpan="7" className="no-data">
+                    Memuat data pengguna...
+                  </td>
+                </tr>
+              ) : currentUsers.map((user) => (
                 <tr key={user.id}>
                   <td>{user.id}</td>
                   <td>{user.email}</td>
@@ -227,7 +345,7 @@ const ManajemenPengguna = ({ onLogout }) => {
           </table>
         </div>
         
-        {filteredUsers.length > 0 ? (
+        {isLoadingUsers ? null : filteredUsers.length > 0 ? (
           <div className="pagination-info">
             <span>Menampilkan {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredUsers.length)} dari {filteredUsers.length} data</span>
             
