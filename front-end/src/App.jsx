@@ -12,29 +12,58 @@ import LaporanAnalitik from './pages/LaporanAnalitik'
 import DashboardKasir from './pages/DashboardKasir'
 import TransaksiKasir from './pages/TransaksiForm'
 import LaporanPenjualanKasir from './pages/LaporanPenjualanKasir'
+import CustomerRegistration from './pages/CustomerRegistration'
+import CustomerDashboard from './pages/CustomerDashboard'
+import ManajemenObatRacikan from './pages/ManajemenObatRacikan'
+import OrderSuccess from './pages/OrderSuccess'
+import OrderDetail from './pages/OrderDetail'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userRole, setUserRole] = useState(null)
+  const normalizeRole = (role) => String(role || '').toLowerCase()
 
-  // Check for token in localStorage on component mount
+  // Check for token and role in localStorage on component mount
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (token) {
+    const role = normalizeRole(localStorage.getItem('role'))
+    if (token && role) {
       setIsAuthenticated(true)
+      setUserRole(role)
     }
   }, [])
 
-  const handleLogin = (username, password) => {
-    // In a real app, you would validate credentials against an API
-    // For now, we'll just simulate successful login
-    localStorage.setItem('token', 'dummy-token')
-    setIsAuthenticated(true)
-  }
+  const handleLogin = (token, role, userData = null) => {
+    const normalizedRole = normalizeRole(role)
+    localStorage.setItem('token', token);
+    localStorage.setItem('role', normalizedRole);
+    if (normalizedRole === 'customer' && userData) {
+      localStorage.setItem('customerData', JSON.stringify(userData));
+    }
+    setIsAuthenticated(true);
+    setUserRole(normalizedRole);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('role')
     setIsAuthenticated(false)
+    setUserRole(null)
   }
+
+  const getRedirectPath = () => {
+    if (!userRole) return "/";
+    switch (userRole) {
+      case 'admin':
+        return '/dashboard';
+      case 'kasir':
+        return '/dashboard-kasir';
+      case 'customer':
+        return '/customer-dashboard';
+      default:
+        return '/';
+    }
+  };
 
   return (
     <Router>
@@ -42,8 +71,23 @@ function App() {
         <Routes>
           <Route path="/" element={
             isAuthenticated ? 
-              <Navigate to="/dashboard" /> : 
+              <Navigate to={getRedirectPath()} /> : 
               <LoginPage onLogin={handleLogin} />
+          } />
+          <Route path="/customer-dashboard" element={
+            isAuthenticated && userRole === 'customer' ? 
+              <CustomerDashboard onLogout={handleLogout} /> : 
+              <Navigate to="/" />
+          } />
+          <Route path="/order-success" element={
+            isAuthenticated && userRole === 'customer' ?
+              <OrderSuccess /> :
+              <Navigate to="/" />
+          } />
+          <Route path="/orders/:orderId" element={
+            isAuthenticated && userRole === 'customer' ?
+              <OrderDetail /> :
+              <Navigate to="/" />
           } />
           <Route path="/dashboard" element={
             isAuthenticated ? 
@@ -58,6 +102,11 @@ function App() {
           <Route path="/manajemen-stok" element={
             isAuthenticated ? 
               <ManajemenStok onLogout={handleLogout} /> : 
+              <Navigate to="/" />
+          } />
+          <Route path="/manajemen-obat-racikan" element={
+            isAuthenticated ? 
+              <ManajemenObatRacikan onLogout={handleLogout} /> : 
               <Navigate to="/" />
           } />
           <Route path="/transaksi" element={
@@ -89,6 +138,10 @@ function App() {
             isAuthenticated ? 
               <LaporanAnalitik onLogout={handleLogout} /> : 
               <Navigate to="/" />
+          } />
+          {/* Customer Routes */}
+          <Route path="/register-customer" element={
+            <CustomerRegistration onRegistrationSuccess={() => setIsAuthenticated(true)} />
           } />
           {/* Add more routes for other pages as needed */}
         </Routes>
