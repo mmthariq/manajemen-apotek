@@ -1,11 +1,19 @@
+const pool = require('../config/database');
+
 const getAllDrugs = async (req, res, next) => {
   try {
-    // Mock data
-    const mockDrugs = [
-      { id: 1, nama: 'Paracetamol 500mg', deskripsi: 'Meredakan demam dan nyeri', harga: 5000, stok: 100, kategori: 'Analgesik', supplierId: 1 },
-      { id: 2, nama: 'Amoxicillin 250mg', deskripsi: 'Antibiotik spektrum luas', harga: 15000, stok: 50, kategori: 'Antibiotik', supplierId: 2 },
-    ];
-    res.status(200).json({ message: 'Data semua obat berhasil diambil.', data: mockDrugs, query: req.query });
+    const result = await pool.query(
+      `SELECT d."id", d."name", d."description", d."stock", d."unit", d."price", d."expiredDate", d."supplierId", s."name" AS "supplierName", d."createdAt", d."updatedAt"
+       FROM "Drug" d
+       LEFT JOIN "Supplier" s ON s."id" = d."supplierId"
+       ORDER BY d."id" DESC`
+    );
+
+    res.status(200).json({
+      message: 'Data semua obat berhasil diambil.',
+      data: result.rows,
+      total: result.rowCount,
+    });
   } catch (error) {
     next(error);
   }
@@ -13,8 +21,41 @@ const getAllDrugs = async (req, res, next) => {
 
 const createDrug = async (req, res, next) => {
   try {
-    res.status(201).json({ message: 'Obat baru berhasil ditambahkan.', body: req.body });
+    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId } = req.body;
+
+    const resolvedName = String(name || nama || '').trim();
+    const resolvedStock = Number(stock ?? stok);
+    const resolvedPrice = Number(price ?? harga);
+
+    if (!resolvedName || Number.isNaN(resolvedStock) || Number.isNaN(resolvedPrice) || !unit) {
+      return res.status(400).json({
+        message: 'Nama obat, stok, unit, dan harga harus diisi dengan format yang valid.',
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO "Drug" ("name", "description", "stock", "unit", "price", "expiredDate", "supplierId")
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
+      [
+        resolvedName,
+        description ?? deskripsi ?? null,
+        resolvedStock,
+        String(unit).trim(),
+        resolvedPrice,
+        expiredDate || null,
+        supplierId || null,
+      ]
+    );
+
+    res.status(201).json({
+      message: 'Obat baru berhasil ditambahkan.',
+      data: result.rows[0],
+    });
   } catch (error) {
+    if (error.code === '23503') {
+      return res.status(400).json({ message: 'Supplier tidak ditemukan.' });
+    }
     next(error);
   }
 };
@@ -22,12 +63,23 @@ const createDrug = async (req, res, next) => {
 const getDrugById = async (req, res, next) => {
   try {
     const { idObat } = req.params;
-    // Mock data
-    const mockDrug = { id: parseInt(idObat), nama: 'Paracetamol 500mg', deskripsi: 'Meredakan demam dan nyeri', harga: 5000, stok: 100, kategori: 'Analgesik', supplierId: 1 };
-    if (mockDrug.id !== 1 && mockDrug.id !== 2) { // Assuming IDs 1 and 2 exist from getAllDrugs mock
+
+    const result = await pool.query(
+      `SELECT d."id", d."name", d."description", d."stock", d."unit", d."price", d."expiredDate", d."supplierId", s."name" AS "supplierName", d."createdAt", d."updatedAt"
+       FROM "Drug" d
+       LEFT JOIN "Supplier" s ON s."id" = d."supplierId"
+       WHERE d."id" = $1`,
+      [idObat]
+    );
+
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: `Obat dengan ID ${idObat} tidak ditemukan.` });
     }
-    res.status(200).json({ message: `Data obat dengan ID ${idObat} berhasil diambil.`, data: mockDrug });
+
+    res.status(200).json({
+      message: `Data obat dengan ID ${idObat} berhasil diambil.`,
+      data: result.rows[0],
+    });
   } catch (error) {
     next(error);
   }
@@ -36,32 +88,55 @@ const getDrugById = async (req, res, next) => {
 const updateDrug = async (req, res, next) => {
   try {
     const { idObat } = req.params;
-    const { nama, deskripsi, harga, stok, kategori, supplierId } = req.body;
+    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId } = req.body;
 
-    // Mock data - check if drug exists
-    const existingDrug = [
-      { id: 1, nama: 'Paracetamol 500mg', deskripsi: 'Meredakan demam dan nyeri', harga: 5000, stok: 100, kategori: 'Analgesik', supplierId: 1 },
-      { id: 2, nama: 'Amoxicillin 250mg', deskripsi: 'Antibiotik spektrum luas', harga: 15000, stok: 50, kategori: 'Antibiotik', supplierId: 2 },
-    ].find(drug => drug.id === parseInt(idObat));
-
-    if (!existingDrug) {
+    const existingResult = await pool.query('SELECT * FROM "Drug" WHERE "id" = $1', [idObat]);
+    if (existingResult.rowCount === 0) {
       return res.status(404).json({ message: `Obat dengan ID ${idObat} tidak ditemukan.` });
     }
 
-    // Mock updated drug
-    const updatedDrugMock = {
-      ...existingDrug,
-      nama: nama || existingDrug.nama,
-      deskripsi: deskripsi || existingDrug.deskripsi,
-      harga: harga || existingDrug.harga,
-      stok: stok || existingDrug.stok,
-      kategori: kategori || existingDrug.kategori,
-      supplierId: supplierId || existingDrug.supplierId,
-      updatedAt: new Date().toISOString()
-    };
+    const existing = existingResult.rows[0];
+    const nextName = name ?? nama ?? existing.name;
+    const nextDescription = description ?? deskripsi ?? existing.description;
+    const nextStock = stock ?? stok ?? existing.stock;
+    const nextPrice = price ?? harga ?? existing.price;
 
-    res.status(200).json({ message: `Data obat dengan ID ${idObat} berhasil diperbarui.`, data: updatedDrugMock });
+    if (!nextName || !unit && !existing.unit) {
+      return res.status(400).json({ message: 'Nama obat dan unit harus diisi.' });
+    }
+
+    const result = await pool.query(
+      `UPDATE "Drug"
+       SET "name" = $1,
+           "description" = $2,
+           "stock" = $3,
+           "unit" = $4,
+           "price" = $5,
+           "expiredDate" = $6,
+           "supplierId" = $7,
+           "updatedAt" = NOW()
+       WHERE "id" = $8
+       RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
+      [
+        String(nextName).trim(),
+        nextDescription,
+        Number(nextStock),
+        String(unit ?? existing.unit).trim(),
+        Number(nextPrice),
+        expiredDate === undefined ? existing.expiredDate : expiredDate,
+        supplierId === undefined ? existing.supplierId : supplierId,
+        idObat,
+      ]
+    );
+
+    res.status(200).json({
+      message: `Data obat dengan ID ${idObat} berhasil diperbarui.`,
+      data: result.rows[0],
+    });
   } catch (error) {
+    if (error.code === '23503') {
+      return res.status(400).json({ message: 'Supplier tidak ditemukan.' });
+    }
     next(error);
   }
 };
@@ -69,7 +144,17 @@ const updateDrug = async (req, res, next) => {
 const deleteDrug = async (req, res, next) => {
   try {
     const { idObat } = req.params;
-    res.status(200).json({ message: `Obat dengan ID ${idObat} berhasil dihapus.` }); // Sebaiknya 204 jika tidak ada body, atau 200 dengan pesan sukses
+
+    const result = await pool.query(
+      'DELETE FROM "Drug" WHERE "id" = $1 RETURNING "id"',
+      [idObat]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: `Obat dengan ID ${idObat} tidak ditemukan.` });
+    }
+
+    res.status(200).json({ message: `Obat dengan ID ${idObat} berhasil dihapus.` });
   } catch (error) {
     next(error);
   }
