@@ -1,0 +1,365 @@
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+  margin: 0;
+  color: #333;
+  font-size: 28px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.date {
+  color: #999;
+  font-size: 14px;
+}
+
+.content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tools-bar {
+  display: flex;
+  gap: 15px;
+  background: white;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 0 12px;
+  border: 1px solid #ddd;
+  transition: border-color 0.2s ease;
+}
+
+.search-box:focus-within {
+  border-color: #667eea;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-box svg {
+  color: #999;
+}
+
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.table-container {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state p {
+  font-size: 16px;
+  color: #999;
+  margin: 0 0 20px 0;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #764ba2;
+}
+
+.medicines-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.medicines-table thead {
+  background: #f9f9f9;
+  border-bottom: 2px solid #eee;
+}
+
+.medicines-table th {
+  padding: 15px 20px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.medicines-table td {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.medicines-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.id-cell {
+  font-weight: 600;
+  color: #667eea;
+  width: 60px;
+}
+
+.medicine-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.price-cell {
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.stock-cell {
+  width: 120px;
+}
+
+.stock-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stock-badge.low {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.komposisi-cell {
+  width: 120px;
+}
+
+.btn-view-komposisi {
+  padding: 5px 12px;
+  background: #e8eef7;
+  color: #667eea;
+  border: 1px solid #667eea;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-view-komposisi:hover {
+  background: #667eea;
+  color: white;
+}
+
+.action-cell {
+  display: flex;
+  gap: 8px;
+  width: 100px;
+}
+
+.btn-edit,
+.btn-delete {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-edit {
+  background: #667eea;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #764ba2;
+}
+
+.btn-delete {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #c0392b;
+}
+
+.info-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.info-card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.info-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease;
+  z-index: 1000;
+  max-width: 350px;
+}
+
+.notification.success {
+  background-color: #27ae60;
+  color: white;
+}
+
+.notification.error {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.notification.info {
+  background-color: #3498db;
+  color: white;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tools-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    order: 2;
+    min-width: 100%;
+  }
+
+  .btn-add {
+    order: 1;
+  }
+
+  .medicines-table {
+    font-size: 12px;
+  }
+
+  .medicines-table th,
+  .medicines-table td {
+    padding: 10px;
+  }
+
+  .action-cell {
+    width: 70px;
+    gap: 4px;
+  }
+
+  .info-section {
+    grid-template-columns: 1fr;
+  }
+}
