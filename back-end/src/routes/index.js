@@ -4,6 +4,9 @@ const userRoutes = require('./userRoutes'); // Akan dibuat
 const drugRoutes = require('./drugRoutes'); // Akan dibuat
 const supplierRoutes = require('./supplierRoutes'); // Akan dibuat
 const dashboardRoutes = require('./dashboardRoutes'); // Akan dibuat
+const customerRoutes = require('./customerRoutes'); // Fitur customer membership
+const customMedicineRoutes = require('./customMedicineRoutes'); // Fitur obat racikan
+const orderRoutes = require('./orderRoutes'); // Fitur pesanan online
 
 const router = express.Router();
 
@@ -22,5 +25,8 @@ router.use('/users', userRoutes);
 router.use('/obat', drugRoutes); // Sesuai dengan gambar: /api/obat
 router.use('/suppliers', supplierRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/customers', customerRoutes); // Fitur customer membership & online shopping
+router.use('/custom-medicine', customMedicineRoutes); // Fitur obat racikan
+router.use('/orders', orderRoutes); // Fitur pesanan online
 
 module.exports = router;
