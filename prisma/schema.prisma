@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  KASIR
+  CUSTOMER
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String?  @unique
+  password  String
+  role      Role
+
+  phone     String?
+  address   String?
+
+  isMember         Boolean  @default(false)
+  membershipStatus String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi
+  transactionsAsCashier Transaction[] @relation("CashierTransaction")
+  transactionsAsCustomer Transaction[] @relation("CustomerTransaction")
+}
+
+model Supplier {
+  id            Int      @id @default(autoincrement())
+  name          String
+  contactPerson String?
+  phone         String?
+  address       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  drugs     Drug[]
+  purchases Purchase[]
+}
+
+model Drug {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  stock       Int
+  unit        String
+  price       Float
+  expiredDate DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  supplierId Int?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+
+  transactionDetails TransactionDetail[]
+  purchaseDetails    PurchaseDetail[]
+  components         CustomMedicineComponent[]
+}
+
+model CustomMedicine {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  stock     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  components CustomMedicineComponent[]
+  transactionDetails TransactionDetail[]
+}
+
+model CustomMedicineComponent {
+  id               Int @id @default(autoincrement())
+
+  customMedicineId Int
+  drugId           Int
+  quantity         Int
+  unit             String
+
+  customMedicine CustomMedicine @relation(fields: [customMedicineId], references: [id])
+  drug           Drug           @relation(fields: [drugId], references: [id])
+}
+
+model Transaction {
+  id         Int      @id @default(autoincrement())
+  totalPrice Float
+  createdAt  DateTime @default(now())
+
+  cashierId  Int
+  customerId Int?
+
+  cashier  User  @relation("CashierTransaction", fields: [cashierId], references: [id])
+  customer User? @relation("CustomerTransaction", fields: [customerId], references: [id])
+
+  details TransactionDetail[]
+}
+
+model TransactionDetail {
+  id Int @id @default(autoincrement())
+
+  transactionId Int
+  drugId        Int?
+  customMedicineId Int?
+
+  quantity Int
+  price    Float
+
+  transaction    Transaction     @relation(fields: [transactionId], references: [id])
+  drug           Drug?           @relation(fields: [drugId], references: [id])
+  customMedicine CustomMedicine? @relation(fields: [customMedicineId], references: [id])
+}
+
+model Purchase {
+  id         Int      @id @default(autoincrement())
+  totalPrice Float
+  createdAt  DateTime @default(now())
+
+  supplierId Int
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  details PurchaseDetail[]
+}
+
+model PurchaseDetail {
+  id Int @id @default(autoincrement())
+
+  purchaseId Int
+  drugId     Int
+  quantity   Int
+  price      Float
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id])
+  drug     Drug     @relation(fields: [drugId], references: [id])
+}
