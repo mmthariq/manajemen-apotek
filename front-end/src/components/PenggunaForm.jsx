@@ -179,6 +179,7 @@ const PenggunaForm = ({ isOpen, onClose, onSave, editData }) => {
                 <option value="Admin">Admin</option>
                 <option value="Kasir">Kasir</option>
                 <option value="Staff">Staff</option>
+                <option value="Customer">Customer</option>
               </select>
             </div>
             
