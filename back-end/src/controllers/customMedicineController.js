@@ -1,5 +1,23 @@
 const pool = require('../config/database');
 
+const resolveDrugTable = async () => {
+  const tableCheck = await pool.query(
+    `SELECT
+       to_regclass('public."Drug"') AS "drugTable",
+       to_regclass('public.products') AS "legacyDrugTable"`
+  );
+
+  if (tableCheck.rows[0]?.drugTable) {
+    return '"Drug"';
+  }
+
+  if (tableCheck.rows[0]?.legacyDrugTable) {
+    return 'products';
+  }
+
+  return '"Drug"';
+};
+
 const mapCustomMedicineRow = (row) => ({
   id: row.id,
   nama: row.name,
@@ -14,6 +32,8 @@ const mapCustomMedicineRow = (row) => ({
 
 const getAllCustomMedicines = async (req, res, next) => {
   try {
+    const drugTable = await resolveDrugTable();
+
     const medicinesResult = await pool.query(
       `SELECT cm."id", cm."name", cm."price", cm."stock", cm."createdAt", cm."updatedAt",
               ''::text AS "description", ''::text AS "instruction"
@@ -24,7 +44,7 @@ const getAllCustomMedicines = async (req, res, next) => {
     const componentsResult = await pool.query(
       `SELECT c."id", c."customMedicineId", c."drugId", c."quantity", c."unit", d."name" AS "drugName"
        FROM "CustomMedicineComponent" c
-       JOIN "Drug" d ON d."id" = c."drugId"
+       JOIN ${drugTable} d ON d."id" = c."drugId"
        ORDER BY c."id" ASC`
     );
 
@@ -67,6 +87,7 @@ const createCustomMedicine = async (req, res, next) => {
   const client = await pool.connect();
 
   try {
+    const drugTable = await resolveDrugTable();
     const { nama, name, harga, price, komposisi = [], stok, stock } = req.body;
     const medicineName = String(nama || name || '').trim();
 
@@ -91,7 +112,7 @@ const createCustomMedicine = async (req, res, next) => {
       let drugId = item.drugId;
 
       if (!drugId && item.bahan) {
-        const drugLookup = await client.query('SELECT "id" FROM "Drug" WHERE LOWER("name") = LOWER($1) LIMIT 1', [String(item.bahan).trim()]);
+        const drugLookup = await client.query(`SELECT "id" FROM ${drugTable} WHERE LOWER("name") = LOWER($1) LIMIT 1`, [String(item.bahan).trim()]);
         drugId = drugLookup.rows[0]?.id;
       }
 
@@ -128,6 +149,7 @@ const createCustomMedicine = async (req, res, next) => {
 
 const getCustomMedicineById = async (req, res, next) => {
   try {
+    const drugTable = await resolveDrugTable();
     const { medicineId } = req.params;
 
     const medicineResult = await pool.query(
@@ -145,7 +167,7 @@ const getCustomMedicineById = async (req, res, next) => {
     const componentsResult = await pool.query(
       `SELECT c."id", c."drugId", c."quantity", c."unit", d."name" AS "drugName"
        FROM "CustomMedicineComponent" c
-       JOIN "Drug" d ON d."id" = c."drugId"
+       JOIN ${drugTable} d ON d."id" = c."drugId"
        WHERE c."customMedicineId" = $1
        ORDER BY c."id" ASC`,
       [medicineId]
@@ -175,6 +197,7 @@ const updateCustomMedicine = async (req, res, next) => {
   const client = await pool.connect();
 
   try {
+    const drugTable = await resolveDrugTable();
     const { medicineId } = req.params;
     const { nama, name, harga, price, stok, stock, komposisi } = req.body;
 
@@ -210,7 +233,7 @@ const updateCustomMedicine = async (req, res, next) => {
         let drugId = item.drugId;
 
         if (!drugId && item.bahan) {
-          const drugLookup = await client.query('SELECT "id" FROM "Drug" WHERE LOWER("name") = LOWER($1) LIMIT 1', [String(item.bahan).trim()]);
+          const drugLookup = await client.query(`SELECT "id" FROM ${drugTable} WHERE LOWER("name") = LOWER($1) LIMIT 1`, [String(item.bahan).trim()]);
           drugId = drugLookup.rows[0]?.id;
         }
 

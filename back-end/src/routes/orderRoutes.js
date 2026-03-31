@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const orderController = require('../controllers/orderController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -38,10 +39,15 @@ const upload = multer({
   },
 });
 
+router.use(authMiddleware.protect);
+
 router.get('/', orderController.getOrders);
 router.post('/', orderController.createOrder);
 router.get('/:id', orderController.getOrderById);
 router.patch('/:id/pay', upload.single('paymentProof'), orderController.payOrder);
+router.patch('/:id/verify-payment', authMiddleware.restrictTo('ADMIN', 'KASIR'), orderController.verifyPayment);
+router.patch('/:id/status', authMiddleware.restrictTo('ADMIN', 'KASIR'), orderController.updateOrderStatus);
 router.patch('/:id/cancel', orderController.cancelOrder);
+router.delete('/:id', orderController.deleteCancelledOrder);
 
 module.exports = router;

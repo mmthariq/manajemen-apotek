@@ -95,7 +95,9 @@ const login = async (req, res, next) => {
       user: {
         id: user.id,
         name: user.name || user.username,
-        role: user.role,
+        username: user.username || null,
+        email: user.email || null,
+        role: String(user.role || '').toLowerCase(),
       },
     });
   } catch (error) {
@@ -130,9 +132,37 @@ const logout = async (req, res, next) => {
   }
 };
 
+const me = async (req, res, next) => {
+  try {
+    const userResult = await pool.query(
+      'SELECT "id", "username", "email", "role" FROM "User" WHERE "id" = $1 LIMIT 1',
+      [req.user.id]
+    );
+
+    if (userResult.rowCount === 0) {
+      return res.status(404).json({ message: 'User tidak ditemukan.' });
+    }
+
+    const user = userResult.rows[0];
+    return res.status(200).json({
+      message: 'Sesi valid.',
+      user: {
+        id: user.id,
+        name: user.username,
+        username: user.username,
+        email: user.email,
+        role: String(user.role || '').toLowerCase(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   login,
   forgotPassword,
   resetPassword,
   logout,
+  me,
 };

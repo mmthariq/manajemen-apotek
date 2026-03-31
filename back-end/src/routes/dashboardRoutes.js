@@ -14,4 +14,9 @@ router.get(
   dashboardController.getDashboardSummary
 );
 
+router.get(
+  '/analytics',
+  dashboardController.getDashboardAnalytics
+);
+
 module.exports = router;

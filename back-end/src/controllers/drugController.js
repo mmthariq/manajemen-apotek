@@ -1,10 +1,30 @@
 const pool = require('../config/database');
 
+const resolveDrugTable = async () => {
+  const tableCheck = await pool.query(
+    `SELECT
+       to_regclass('public."Drug"') AS "drugTable",
+       to_regclass('public.products') AS "legacyDrugTable"`
+  );
+
+  if (tableCheck.rows[0]?.drugTable) {
+    return '"Drug"';
+  }
+
+  if (tableCheck.rows[0]?.legacyDrugTable) {
+    return 'products';
+  }
+
+  return '"Drug"';
+};
+
 const getAllDrugs = async (req, res, next) => {
   try {
+    const drugTable = await resolveDrugTable();
+
     const result = await pool.query(
       `SELECT d."id", d."name", d."description", d."stock", d."unit", d."price", d."expiredDate", d."supplierId", s."name" AS "supplierName", d."createdAt", d."updatedAt"
-       FROM "Drug" d
+       FROM ${drugTable} d
        LEFT JOIN "Supplier" s ON s."id" = d."supplierId"
        ORDER BY d."id" DESC`
     );
@@ -21,6 +41,7 @@ const getAllDrugs = async (req, res, next) => {
 
 const createDrug = async (req, res, next) => {
   try {
+    const drugTable = await resolveDrugTable();
     const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId } = req.body;
 
     const resolvedName = String(name || nama || '').trim();
@@ -34,7 +55,7 @@ const createDrug = async (req, res, next) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO "Drug" ("name", "description", "stock", "unit", "price", "expiredDate", "supplierId")
+      `INSERT INTO ${drugTable} ("name", "description", "stock", "unit", "price", "expiredDate", "supplierId")
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
       [
@@ -62,11 +83,12 @@ const createDrug = async (req, res, next) => {
 
 const getDrugById = async (req, res, next) => {
   try {
+    const drugTable = await resolveDrugTable();
     const { idObat } = req.params;
 
     const result = await pool.query(
       `SELECT d."id", d."name", d."description", d."stock", d."unit", d."price", d."expiredDate", d."supplierId", s."name" AS "supplierName", d."createdAt", d."updatedAt"
-       FROM "Drug" d
+       FROM ${drugTable} d
        LEFT JOIN "Supplier" s ON s."id" = d."supplierId"
        WHERE d."id" = $1`,
       [idObat]
@@ -87,10 +109,11 @@ const getDrugById = async (req, res, next) => {
 
 const updateDrug = async (req, res, next) => {
   try {
+    const drugTable = await resolveDrugTable();
     const { idObat } = req.params;
     const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId } = req.body;
 
-    const existingResult = await pool.query('SELECT * FROM "Drug" WHERE "id" = $1', [idObat]);
+    const existingResult = await pool.query(`SELECT * FROM ${drugTable} WHERE "id" = $1`, [idObat]);
     if (existingResult.rowCount === 0) {
       return res.status(404).json({ message: `Obat dengan ID ${idObat} tidak ditemukan.` });
     }
@@ -106,7 +129,7 @@ const updateDrug = async (req, res, next) => {
     }
 
     const result = await pool.query(
-      `UPDATE "Drug"
+      `UPDATE ${drugTable}
        SET "name" = $1,
            "description" = $2,
            "stock" = $3,
@@ -143,10 +166,11 @@ const updateDrug = async (req, res, next) => {
 
 const deleteDrug = async (req, res, next) => {
   try {
+    const drugTable = await resolveDrugTable();
     const { idObat } = req.params;
 
     const result = await pool.query(
-      'DELETE FROM "Drug" WHERE "id" = $1 RETURNING "id"',
+      `DELETE FROM ${drugTable} WHERE "id" = $1 RETURNING "id"`,
       [idObat]
     );
 

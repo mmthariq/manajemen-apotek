@@ -1,5 +1,6 @@
 const express = require('express');
 const authController = require('../controllers/authController'); // Akan dibuat
+const authMiddleware = require('../middlewares/authMiddleware');
 // const { validateLogin, validateForgotPassword, validateResetPassword } = require('../middlewares/validationMiddleware'); // Akan dibuat
 
 const router = express.Router();
@@ -34,6 +35,7 @@ router.post(
 
 // Endpoint untuk logout (jika menggunakan blacklist token)
 router.post('/logout', authController.logout);
+router.get('/me', authMiddleware.protect, authController.me);
 
 // Endpoint untuk refresh token (jika diperlukan, tidak ada di gambar awal tapi umum)
 // router.post('/refresh-token', authController.refreshToken);

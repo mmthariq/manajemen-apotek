@@ -27,9 +27,9 @@ router.post(
 // router.get('/:idSupplier', supplierController.getSupplierById);
 
 // PUT /api/suppliers/{idSupplier}
-// router.put('/:idSupplier', validateUpdateSupplier, supplierController.updateSupplier);
+router.put('/:idSupplier', supplierController.updateSupplier);
 
 // DELETE /api/suppliers/{idSupplier}
-// router.delete('/:idSupplier', supplierController.deleteSupplier);
+router.delete('/:idSupplier', supplierController.deleteSupplier);
 
 module.exports = router;

@@ -2,10 +2,31 @@ const pool = require('../config/database');
 
 const ORDER_STATUS = {
   PENDING: 'pending_payment',
+  PAYMENT_UPLOADED: 'payment_uploaded',
   PAID: 'paid',
   PROCESSED: 'processed',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+};
+
+const normalizeRole = (role) => String(role || '').toUpperCase();
+
+const isCustomerRequest = (req) => normalizeRole(req.user?.role) === 'CUSTOMER';
+const isStaffRequest = (req) => ['ADMIN', 'KASIR'].includes(normalizeRole(req.user?.role));
+
+const assertOrderAccessible = (req, orderRow) => {
+  if (!isCustomerRequest(req)) {
+    return null;
+  }
+
+  const ownerCustomerId = Number(orderRow.customerId ?? orderRow.customerid ?? 0);
+  if (!ownerCustomerId || ownerCustomerId !== Number(req.user?.id)) {
+    const accessError = new Error('Anda tidak memiliki akses ke pesanan ini.');
+    accessError.status = 403;
+    return accessError;
+  }
+
+  return null;
 };
 
 const mapOrderRow = (row) => ({
@@ -13,6 +34,7 @@ const mapOrderRow = (row) => ({
   order_status: row.order_status ?? null,
   total_amount: Number(row.total_amount ?? 0),
   order_time: row.order_time ?? null,
+  payment_proof_image_url: row.payment_proof_image_url ?? row.paymentProofImageUrl ?? null,
 });
 
 const mapOrderSummaryRow = (row) => ({
@@ -41,6 +63,9 @@ const createOrder = async (req, res, next) => {
 
   try {
     const { customer_id, cashier_id, items } = req.body;
+    const resolvedCustomerId = isCustomerRequest(req)
+      ? Number(req.user.id)
+      : (customer_id ?? null);
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: 'Item pesanan tidak boleh kosong.' });
@@ -95,7 +120,7 @@ const createOrder = async (req, res, next) => {
       `INSERT INTO online_orders ("customerId", "cashierId", order_time, total_amount, order_status)
        VALUES ($1, $2, NOW(), $3, $4)
        RETURNING id, order_status, total_amount, order_time`,
-      [customer_id ?? null, resolvedCashierId, totalAmount, ORDER_STATUS.PENDING]
+      [resolvedCustomerId, resolvedCashierId, totalAmount, ORDER_STATUS.PENDING]
     );
 
     const orderRow = orderResult.rows[0];
@@ -176,7 +201,10 @@ const getOrders = async (req, res, next) => {
     const params = [];
     let whereClause = '';
 
-    if (customerId) {
+    if (isCustomerRequest(req)) {
+      params.push(req.user.id);
+      whereClause = 'WHERE "customerId" = $1';
+    } else if (customerId) {
       params.push(customerId);
       whereClause = 'WHERE "customerId" = $1';
     }
@@ -186,12 +214,13 @@ const getOrders = async (req, res, next) => {
               orders."order_status",
               orders."total_amount",
               orders."order_time",
+              orders."payment_proof_image_url",
               COUNT(items."id")::int AS "total_items"
        FROM online_orders AS orders
        LEFT JOIN online_order_items AS items
          ON items."online_order_id" = orders."id"
        ${whereClause}
-       GROUP BY orders."id", orders."order_status", orders."total_amount", orders."order_time"
+       GROUP BY orders."id", orders."order_status", orders."total_amount", orders."order_time", orders."payment_proof_image_url"
        ORDER BY orders."id" DESC`,
       params
     );
@@ -211,12 +240,17 @@ const getOrderById = async (req, res, next) => {
     const { id } = req.params;
 
     const orderResult = await pool.query(
-      'SELECT * FROM online_orders WHERE id = $1',
+      'SELECT id, "customerId", order_status, total_amount, order_time, payment_proof_image_url FROM online_orders WHERE id = $1',
       [id]
     );
 
     if (orderResult.rowCount === 0) {
       return res.status(404).json({ message: `Pesanan dengan ID ${id} tidak ditemukan.` });
+    }
+
+    const accessError = assertOrderAccessible(req, orderResult.rows[0]);
+    if (accessError) {
+      throw accessError;
     }
 
     const itemsResult = await pool.query(
@@ -227,7 +261,7 @@ const getOrderById = async (req, res, next) => {
               items."price_per_unit",
               items."subtotal",
               products."name" AS "product_name",
-              products."product_type" AS "product_type"
+              NULL::text AS "product_type"
        FROM online_order_items AS items
        LEFT JOIN products ON products."id" = items."product_id"
        WHERE items."online_order_id" = $1
@@ -256,12 +290,17 @@ const payOrder = async (req, res, next) => {
     }
 
     const orderResult = await pool.query(
-      'SELECT id, order_status FROM online_orders WHERE id = $1',
+      'SELECT id, "customerId", order_status FROM online_orders WHERE id = $1',
       [id]
     );
 
     if (orderResult.rowCount === 0) {
       return res.status(404).json({ message: `Pesanan dengan ID ${id} tidak ditemukan.` });
+    }
+
+    const accessError = assertOrderAccessible(req, orderResult.rows[0]);
+    if (accessError) {
+      throw accessError;
     }
 
     const currentStatus = orderResult.rows[0].order_status ?? orderResult.rows[0].orderStatus;
@@ -273,11 +312,106 @@ const payOrder = async (req, res, next) => {
 
     const updateResult = await pool.query(
       'UPDATE online_orders SET payment_proof_image_url = $1, order_status = $2 WHERE id = $3 RETURNING *',
-      [proofUrl, ORDER_STATUS.PAID, id]
+      [proofUrl, ORDER_STATUS.PAYMENT_UPLOADED, id]
     );
 
     res.status(200).json({
       message: 'Bukti pembayaran berhasil diunggah.',
+      data: mapOrderRow(updateResult.rows[0]),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyPayment = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!isStaffRequest(req)) {
+      return res.status(403).json({ message: 'Hanya admin/kasir yang dapat memverifikasi pembayaran.' });
+    }
+
+    const orderResult = await pool.query(
+      'SELECT id, order_status, payment_proof_image_url FROM online_orders WHERE id = $1',
+      [id]
+    );
+
+    if (orderResult.rowCount === 0) {
+      return res.status(404).json({ message: `Pesanan dengan ID ${id} tidak ditemukan.` });
+    }
+
+    const order = orderResult.rows[0];
+    const currentStatus = order.order_status ?? order.orderStatus;
+    const proofUrl = order.payment_proof_image_url ?? order.paymentProofImageUrl;
+
+    if (!proofUrl) {
+      return res.status(400).json({ message: 'Pesanan belum memiliki bukti pembayaran untuk diverifikasi.' });
+    }
+
+    if (currentStatus !== ORDER_STATUS.PAYMENT_UPLOADED) {
+      return res.status(400).json({ message: 'Status pesanan tidak dapat diverifikasi.' });
+    }
+
+    const updateResult = await pool.query(
+      'UPDATE online_orders SET order_status = $1 WHERE id = $2 RETURNING *',
+      [ORDER_STATUS.PAID, id]
+    );
+
+    res.status(200).json({
+      message: 'Pembayaran berhasil diverifikasi.',
+      data: mapOrderRow(updateResult.rows[0]),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateOrderStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const requestedStatus = String(req.body?.status || '').trim().toLowerCase();
+
+    if (!isStaffRequest(req)) {
+      return res.status(403).json({ message: 'Hanya admin/kasir yang dapat mengubah status pesanan.' });
+    }
+
+    if (![ORDER_STATUS.PROCESSED, ORDER_STATUS.COMPLETED].includes(requestedStatus)) {
+      return res.status(400).json({
+        message: 'Status tujuan tidak valid. Gunakan processed atau completed.',
+      });
+    }
+
+    const orderResult = await pool.query(
+      'SELECT id, order_status FROM online_orders WHERE id = $1',
+      [id]
+    );
+
+    if (orderResult.rowCount === 0) {
+      return res.status(404).json({ message: `Pesanan dengan ID ${id} tidak ditemukan.` });
+    }
+
+    const currentStatus = orderResult.rows[0].order_status ?? orderResult.rows[0].orderStatus;
+
+    if (requestedStatus === ORDER_STATUS.PROCESSED && currentStatus !== ORDER_STATUS.PAID) {
+      return res.status(400).json({
+        message: 'Pesanan hanya bisa diproses setelah pembayaran terverifikasi.',
+      });
+    }
+
+    if (requestedStatus === ORDER_STATUS.COMPLETED && currentStatus !== ORDER_STATUS.PROCESSED) {
+      return res.status(400).json({
+        message: 'Pesanan hanya bisa diselesaikan setelah status diproses.',
+      });
+    }
+
+    const updateResult = await pool.query(
+      'UPDATE online_orders SET order_status = $1 WHERE id = $2 RETURNING *',
+      [requestedStatus, id]
+    );
+
+    res.status(200).json({
+      message: 'Status pesanan berhasil diperbarui.',
       data: mapOrderRow(updateResult.rows[0]),
     });
   } catch (error) {
@@ -290,12 +424,17 @@ const cancelOrder = async (req, res, next) => {
     const { id } = req.params;
 
     const orderResult = await pool.query(
-      'SELECT id, order_status FROM online_orders WHERE id = $1',
+      'SELECT id, "customerId", order_status FROM online_orders WHERE id = $1',
       [id]
     );
 
     if (orderResult.rowCount === 0) {
       return res.status(404).json({ message: `Pesanan dengan ID ${id} tidak ditemukan.` });
+    }
+
+    const accessError = assertOrderAccessible(req, orderResult.rows[0]);
+    if (accessError) {
+      throw accessError;
     }
 
     const currentStatus = orderResult.rows[0].order_status ?? orderResult.rows[0].orderStatus;
@@ -317,10 +456,63 @@ const cancelOrder = async (req, res, next) => {
   }
 };
 
+const deleteCancelledOrder = async (req, res, next) => {
+  const client = await pool.connect();
+
+  try {
+    const { id } = req.params;
+
+    const orderResult = await client.query(
+      'SELECT id, "customerId", order_status FROM online_orders WHERE id = $1',
+      [id]
+    );
+
+    if (orderResult.rowCount === 0) {
+      return res.status(404).json({ message: `Pesanan dengan ID ${id} tidak ditemukan.` });
+    }
+
+    const accessError = assertOrderAccessible(req, orderResult.rows[0]);
+    if (accessError) {
+      throw accessError;
+    }
+
+    const currentStatus = orderResult.rows[0].order_status ?? orderResult.rows[0].orderStatus;
+    if (currentStatus !== ORDER_STATUS.CANCELLED) {
+      return res.status(400).json({ message: 'Hanya pesanan dengan status dibatalkan yang dapat dihapus.' });
+    }
+
+    await client.query('BEGIN');
+
+    await client.query(
+      'DELETE FROM online_order_items WHERE online_order_id = $1',
+      [id]
+    );
+
+    await client.query(
+      'DELETE FROM online_orders WHERE id = $1',
+      [id]
+    );
+
+    await client.query('COMMIT');
+
+    res.status(200).json({
+      message: 'Pesanan dibatalkan berhasil dihapus.',
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    next(error);
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   createOrder,
   getOrders,
   getOrderById,
   payOrder,
+  verifyPayment,
+  updateOrderStatus,
   cancelOrder,
+  deleteCancelledOrder,
 };
