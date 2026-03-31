@@ -60,7 +60,6 @@ const ObatForm = ({ isOpen, onClose, onSave, editData }) => {
               name="kode"
               value={formData.kode}
               onChange={handleChange}
-              required
               disabled={isEditing}
             />
           </div>

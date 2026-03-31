@@ -1,29 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/SupplierPage.css';
 import Sidebar from '../components/Sidebar';
 import SupplierForm from '../components/SupplierForm';
 import ConfirmModal from '../components/ConfirmModal';
 
+const API_BASE_URL = 'http://localhost:3000/api/suppliers';
+
 const SupplierPage = ({ onLogout }) => {
-  // Sample data for suppliers
-  const [suppliers, setSuppliers] = useState([
-    {
-      id: 'SUP001',
-      name: 'PT Farmasi Utama',
-      address: 'Jl. Sudirman No. 123',
-      phone: '021-5551234',
-      email: 'contact@farmasiutama.com',
-      contactPerson: 'Messi'
-    },
-    {
-      id: 'SUP002',
-      name: 'CV Medika Jaya',
-      address: 'Jl. Gatot Subroto No. 45',
-      phone: '021-5557890',
-      email: 'info@medikajaya.com',
-      contactPerson: 'Antonella'
-    }
-  ]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEditData, setCurrentEditData] = useState(null);
@@ -32,6 +18,29 @@ const SupplierPage = ({ onLogout }) => {
     supplierId: null,
     supplierName: ''
   });
+
+  const fetchSuppliers = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      const response = await fetch(API_BASE_URL);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal memuat data supplier.');
+      }
+
+      setSuppliers(Array.isArray(result.data) ? result.data : []);
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat memuat supplier.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
 
   // Function to handle edit supplier
   const handleEdit = (id) => {
@@ -51,9 +60,24 @@ const SupplierPage = ({ onLogout }) => {
   };
 
   // Function to confirm delete
-  const handleConfirmDelete = () => {
-    setSuppliers(suppliers.filter(sup => sup.id !== confirmModal.supplierId));
-    setConfirmModal({ isOpen: false, supplierId: null, supplierName: '' });
+  const handleConfirmDelete = async () => {
+    try {
+      setErrorMessage('');
+      const response = await fetch(`${API_BASE_URL}/${confirmModal.supplierId}`, {
+        method: 'DELETE'
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal menghapus supplier.');
+      }
+
+      setSuppliers((prev) => prev.filter(sup => sup.id !== confirmModal.supplierId));
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat menghapus supplier.');
+    } finally {
+      setConfirmModal({ isOpen: false, supplierId: null, supplierName: '' });
+    }
   };
 
   // Function to cancel delete
@@ -62,22 +86,55 @@ const SupplierPage = ({ onLogout }) => {
   };
 
   // Function to handle add or update supplier
-  const handleSaveSupplier = (formData) => {
-    if (currentEditData) {
-      // Update existing supplier
-      setSuppliers(suppliers.map(sup => 
-        sup.id === formData.id ? formData : sup
-      ));
-    } else {
-      // Add new supplier
-      const newSupplier = {
-        ...formData,
-        id: `SUP${String(suppliers.length + 1).padStart(3, '0')}`
+  const handleSaveSupplier = async (formData) => {
+    try {
+      setErrorMessage('');
+      const payload = {
+        name: formData.name,
+        address: formData.address,
+        phone: formData.phone,
+        contactPerson: formData.contactPerson,
       };
-      setSuppliers([...suppliers, newSupplier]);
+
+      if (currentEditData) {
+        const response = await fetch(`${API_BASE_URL}/${currentEditData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal memperbarui supplier.');
+        }
+
+        setSuppliers((prev) => prev.map((sup) => (
+          sup.id === currentEditData.id ? result.data : sup
+        )));
+      } else {
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal menambahkan supplier.');
+        }
+
+        setSuppliers((prev) => [result.data, ...prev]);
+      }
+
+      setIsModalOpen(false);
+      setCurrentEditData(null);
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat menyimpan supplier.');
     }
-    setIsModalOpen(false);
-    setCurrentEditData(null);
   };
 
   // Function to open modal for adding new supplier
@@ -116,6 +173,8 @@ const SupplierPage = ({ onLogout }) => {
 
         {/* Table */}
         <div className="table-container">
+          {errorMessage && <p>{errorMessage}</p>}
+          {isLoading && <p>Memuat data supplier...</p>}
           <table className="suppliers-table">
             <thead>
               <tr>
@@ -135,7 +194,7 @@ const SupplierPage = ({ onLogout }) => {
                   <td>{supplier.name}</td>
                   <td>{supplier.address}</td>
                   <td>{supplier.phone}</td>
-                  <td>{supplier.email}</td>
+                  <td>-</td>
                   <td>{supplier.contactPerson}</td>
                   <td>
                     <div className="actions">

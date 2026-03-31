@@ -17,6 +17,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -30,19 +31,23 @@ import '../styles/CustomerDashboard.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
 const CUSTOMER_API_BASE_URL = 'http://localhost:3000/api/customers';
+const BACKEND_BASE_URL = 'http://localhost:3000';
+const DRUG_API_BASE_URL = 'http://localhost:3000/api/obat';
+const CUSTOM_MED_API_BASE_URL = 'http://localhost:3000/api/custom-medicine';
 
 const STATUS_LABELS = {
   pending_payment: 'Menunggu Pembayaran',
+  payment_uploaded: 'Menunggu Verifikasi Pembayaran',
   paid: 'Sudah Dibayar',
   processed: 'Diproses',
   completed: 'Selesai',
   cancelled: 'Dibatalkan',
 };
 
-const CustomerDashboard = ({ onLogout }) => {
+const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [customerData, setCustomerData] = useState(null);
+  const [customerData, setCustomerData] = useState(currentUser || null);
   const [activeTab, setActiveTab] = useState('catalog');
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [orderHistory, setOrderHistory] = useState([]);
@@ -50,8 +55,13 @@ const CustomerDashboard = ({ onLogout }) => {
   const [orderError, setOrderError] = useState('');
   const [payingOrderId, setPayingOrderId] = useState(null);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [deletingOrderId, setDeletingOrderId] = useState(null);
   const [selectedPayOrderId, setSelectedPayOrderId] = useState(null);
   const [cart, setCart] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [maxPriceFilter, setMaxPriceFilter] = useState('all');
+  const [sortFilter, setSortFilter] = useState('default');
   const fileInputRef = useRef(null);
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -61,34 +71,22 @@ const CustomerDashboard = ({ onLogout }) => {
   });
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [profileMessage, setProfileMessage] = useState({ type: '', text: '' });
+  const [catalogMessage, setCatalogMessage] = useState('');
 
-  const [medicines] = useState([
-    { id: 1, nama: 'Paracetamol 500mg', harga: 10000, kategori: 'Standar', stok: 50 },
-    { id: 2, nama: 'Amoxicillin 250mg', harga: 25000, kategori: 'Antibiotik', stok: 30 },
-    { id: 3, nama: 'Omeprazole 20mg', harga: 15000, kategori: 'Standar', stok: 40 },
-  ]);
+  const [medicines, setMedicines] = useState([]);
+  const [customMedicines, setCustomMedicines] = useState([]);
 
-  const [customMedicines] = useState([
-    { id: 101, nama: 'Racikan Penurun Panas', harga: 45000, deskripsi: 'Campuran untuk menekan demam', stok: 20 },
-    { id: 102, nama: 'Racikan Batuk Kering', harga: 35000, deskripsi: 'Campuran untuk batuk kering', stok: 15 },
-  ]);
-
-  const loadLocalOrderHistory = () => {
-    const storedOrders = localStorage.getItem('orderHistory');
-    if (!storedOrders) return [];
-
-    try {
-      const parsed = JSON.parse(storedOrders);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      return [];
+  const getAuthHeaders = (includeJsonContentType = false) => {
+    const headers = {};
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
     }
-  };
 
-  const persistCustomerData = (nextCustomerData) => {
-    setCustomerData(nextCustomerData);
-    localStorage.setItem('customerData', JSON.stringify(nextCustomerData));
-    window.dispatchEvent(new Event('customerDataUpdated'));
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+
+    return headers;
   };
 
   const hydrateProfileForm = (data) => {
@@ -104,7 +102,9 @@ const CustomerDashboard = ({ onLogout }) => {
     if (!customerId) return;
 
     try {
-      const response = await fetch(`${CUSTOMER_API_BASE_URL}/${customerId}/profile`);
+      const response = await fetch(`${CUSTOMER_API_BASE_URL}/${customerId}/profile`, {
+        headers: getAuthHeaders(),
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -119,7 +119,10 @@ const CustomerDashboard = ({ onLogout }) => {
         role: 'customer',
       };
 
-      persistCustomerData(nextCustomer);
+      setCustomerData(nextCustomer);
+      if (typeof onUserUpdate === 'function') {
+        onUserUpdate(nextCustomer);
+      }
       hydrateProfileForm(nextCustomer);
     } catch (error) {
       setProfileMessage({
@@ -164,9 +167,7 @@ const CustomerDashboard = ({ onLogout }) => {
       if (currentCustomerId) {
         const response = await fetch(`${CUSTOMER_API_BASE_URL}/${currentCustomerId}/profile`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload),
         });
 
@@ -184,7 +185,10 @@ const CustomerDashboard = ({ onLogout }) => {
         };
       }
 
-      persistCustomerData(nextCustomer);
+      setCustomerData(nextCustomer);
+      if (typeof onUserUpdate === 'function') {
+        onUserUpdate(nextCustomer);
+      }
       hydrateProfileForm(nextCustomer);
       setProfileMessage({ type: 'success', text: 'Profil berhasil diperbarui.' });
     } catch (error) {
@@ -195,22 +199,9 @@ const CustomerDashboard = ({ onLogout }) => {
   };
 
   useEffect(() => {
-    const storedCustomer = localStorage.getItem('customerData');
-
-    if (storedCustomer) {
-      try {
-        const parsed = JSON.parse(storedCustomer);
-        setCustomerData(parsed);
-        hydrateProfileForm(parsed);
-      } catch (error) {
-        setCustomerData(null);
-      }
-    } else {
-      hydrateProfileForm(null);
-    }
-
-    setOrderHistory(loadLocalOrderHistory());
-  }, []);
+    setCustomerData(currentUser || null);
+    hydrateProfileForm(currentUser || null);
+  }, [currentUser]);
 
   useEffect(() => {
     hydrateProfileForm(customerData);
@@ -232,6 +223,59 @@ const CustomerDashboard = ({ onLogout }) => {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    const fetchCatalogData = async () => {
+      try {
+        setCatalogMessage('');
+        const [drugsResponse, customResponse] = await Promise.all([
+          fetch(DRUG_API_BASE_URL),
+          fetch(CUSTOM_MED_API_BASE_URL),
+        ]);
+
+        const drugsResult = await drugsResponse.json();
+        const customResult = await customResponse.json();
+
+        if (!drugsResponse.ok) {
+          throw new Error(drugsResult.message || 'Gagal memuat katalog obat.');
+        }
+
+        if (!customResponse.ok) {
+          throw new Error(customResult.message || 'Gagal memuat katalog obat racikan.');
+        }
+
+        setMedicines(
+          Array.isArray(drugsResult.data)
+            ? drugsResult.data.map((item) => ({
+              id: item.id,
+              nama: item.name,
+              harga: Number(item.price || 0),
+              kategori: item.unit || 'Lainnya',
+              stok: Number(item.stock || 0),
+              popularitas: Number(item.stock || 0),
+            }))
+            : []
+        );
+
+        setCustomMedicines(
+          Array.isArray(customResult.data)
+            ? customResult.data.map((item) => ({
+              id: item.id,
+              nama: item.nama,
+              harga: Number(item.harga || 0),
+              deskripsi: item.deskripsi || '',
+              stok: Number(item.stok || 0),
+              popularitas: Number(item.stok || 0),
+            }))
+            : []
+        );
+      } catch (error) {
+        setCatalogMessage(error.message || 'Terjadi kesalahan saat memuat katalog.');
+      }
+    };
+
+    fetchCatalogData();
+  }, []);
+
   const cartTotal = useMemo(
     () => cart.reduce((total, item) => total + (item.harga * item.quantity), 0),
     [cart]
@@ -242,10 +286,55 @@ const CustomerDashboard = ({ onLogout }) => {
     [cart]
   );
 
+  const categoryOptions = useMemo(() => {
+    const categories = medicines.map((item) => item.kategori).filter(Boolean);
+    return ['all', ...Array.from(new Set(categories))];
+  }, [medicines]);
+
+  const applyProductFilters = (items, includeCategory = false) => {
+    let filtered = [...items];
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+
+    if (normalizedSearch) {
+      filtered = filtered.filter((item) => String(item.nama || '').toLowerCase().includes(normalizedSearch));
+    }
+
+    if (includeCategory && selectedCategory !== 'all') {
+      filtered = filtered.filter((item) => item.kategori === selectedCategory);
+    }
+
+    if (maxPriceFilter !== 'all') {
+      const maxPrice = Number(maxPriceFilter);
+      filtered = filtered.filter((item) => Number(item.harga) <= maxPrice);
+    }
+
+    if (sortFilter === 'price_low') {
+      filtered.sort((a, b) => Number(a.harga) - Number(b.harga));
+    } else if (sortFilter === 'price_high') {
+      filtered.sort((a, b) => Number(b.harga) - Number(a.harga));
+    } else if (sortFilter === 'popular') {
+      filtered.sort((a, b) => Number(b.popularitas || 0) - Number(a.popularitas || 0));
+    }
+
+    return filtered;
+  };
+
+  const filteredMedicines = useMemo(
+    () => applyProductFilters(medicines, true),
+    [medicines, searchQuery, selectedCategory, maxPriceFilter, sortFilter]
+  );
+
+  const filteredCustomMedicines = useMemo(
+    () => applyProductFilters(customMedicines, false),
+    [customMedicines, searchQuery, maxPriceFilter, sortFilter]
+  );
+
   const normalizeStatus = (status) => {
     const value = String(status || '').toLowerCase();
 
     if (value.includes('menunggu') && value.includes('pembayaran')) return 'pending_payment';
+    if (value.includes('verifikasi')) return 'payment_uploaded';
+    if (value.includes('uploaded')) return 'payment_uploaded';
     if (value.includes('dibayar')) return 'paid';
     if (value.includes('diproses')) return 'processed';
     if (value.includes('selesai')) return 'completed';
@@ -267,6 +356,18 @@ const CustomerDashboard = ({ onLogout }) => {
     const raw = String(order?.id ?? '');
     const cleaned = raw.replace(/^ORD-/, '');
     return /^\d+$/.test(cleaned) ? cleaned : null;
+  };
+
+  const resolveProofImageUrl = (proofPath) => {
+    if (!proofPath) {
+      return null;
+    }
+
+    if (String(proofPath).startsWith('http')) {
+      return proofPath;
+    }
+
+    return `${BACKEND_BASE_URL}${proofPath}`;
   };
 
   const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
@@ -322,9 +423,7 @@ const CustomerDashboard = ({ onLogout }) => {
 
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify(payload),
       });
 
@@ -380,7 +479,9 @@ const CustomerDashboard = ({ onLogout }) => {
         ? `${API_BASE_URL}?customerId=${customerId}`
         : API_BASE_URL;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -391,14 +492,9 @@ const CustomerDashboard = ({ onLogout }) => {
         ? result.data
         : [];
 
-      if (mapped.length > 0) {
-        setOrderHistory(mapped);
-      }
+      setOrderHistory(mapped);
     } catch (error) {
-      const fallbackOrders = loadLocalOrderHistory();
-      if (fallbackOrders.length === 0) {
-        setOrderError(error.message || 'Terjadi kesalahan saat memuat riwayat pesanan.');
-      }
+      setOrderError(error.message || 'Terjadi kesalahan saat memuat riwayat pesanan.');
     } finally {
       setIsOrderLoading(false);
     }
@@ -430,6 +526,7 @@ const CustomerDashboard = ({ onLogout }) => {
 
       const response = await fetch(`${API_BASE_URL}/${selectedPayOrderId}/pay`, {
         method: 'PATCH',
+        headers: getAuthHeaders(),
         body: formData,
       });
 
@@ -461,6 +558,7 @@ const CustomerDashboard = ({ onLogout }) => {
 
       const response = await fetch(`${API_BASE_URL}/${resolvedId}/cancel`, {
         method: 'PATCH',
+        headers: getAuthHeaders(),
       });
 
       const result = await response.json();
@@ -473,6 +571,38 @@ const CustomerDashboard = ({ onLogout }) => {
       setOrderError(error.message || 'Terjadi kesalahan saat membatalkan pesanan.');
     } finally {
       setCancellingOrderId(null);
+    }
+  };
+
+  const handleDeleteCancelledOrder = async (order) => {
+    const resolvedId = resolveNumericOrderId(order);
+    if (!resolvedId) {
+      setOrderError('ID pesanan tidak valid untuk dihapus.');
+      return;
+    }
+
+    const confirmed = window.confirm('Hapus pesanan yang sudah dibatalkan ini dari riwayat?');
+    if (!confirmed) return;
+
+    try {
+      setDeletingOrderId(resolvedId);
+      setOrderError('');
+
+      const response = await fetch(`${API_BASE_URL}/${resolvedId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal menghapus pesanan dibatalkan.');
+      }
+
+      await fetchOrderHistory();
+    } catch (error) {
+      setOrderError(error.message || 'Terjadi kesalahan saat menghapus pesanan.');
+    } finally {
+      setDeletingOrderId(null);
     }
   };
 
@@ -495,7 +625,7 @@ const CustomerDashboard = ({ onLogout }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} userRole="customer" />
+      <Sidebar onLogout={onLogout} userRole="customer" currentUser={customerData} />
 
       <div className="main-content">
         <Card sx={{ p: 2, mb: 3, borderRadius: 3 }}>
@@ -505,6 +635,9 @@ const CustomerDashboard = ({ onLogout }) => {
         </Card>
 
         <Card sx={{ p: 2, mb: 3, borderRadius: 3 }}>
+          {catalogMessage && (
+            <Typography color="error" mb={1}>{catalogMessage}</Typography>
+          )}
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'center' }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <Button
@@ -655,6 +788,18 @@ const CustomerDashboard = ({ onLogout }) => {
                         secondary={`${order.order_time ? new Date(order.order_time).toLocaleString('id-ID') : '-'} | ${resolveOrderLabel(order)}`}
                       />
                       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                        {order.payment_proof_image_url && (
+                          <Button
+                            size="small"
+                            variant="text"
+                            component="a"
+                            href={resolveProofImageUrl(order.payment_proof_image_url)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Lihat Bukti
+                          </Button>
+                        )}
                         <Button
                           size="small"
                           variant="outlined"
@@ -692,8 +837,24 @@ const CustomerDashboard = ({ onLogout }) => {
                         )}
                         {resolveOrderStatus(order) === 'paid' && (
                           <Typography color="text.secondary" fontSize={13} sx={{ alignSelf: 'center' }}>
-                            Menunggu diproses
+                            Pembayaran terverifikasi, menunggu diproses
                           </Typography>
+                        )}
+                        {resolveOrderStatus(order) === 'payment_uploaded' && (
+                          <Typography color="text.secondary" fontSize={13} sx={{ alignSelf: 'center' }}>
+                            Menunggu verifikasi pembayaran oleh admin
+                          </Typography>
+                        )}
+                        {resolveOrderStatus(order) === 'cancelled' && (
+                          <Button
+                            size="small"
+                            variant="text"
+                            color="error"
+                            onClick={() => handleDeleteCancelledOrder(order)}
+                            disabled={deletingOrderId === resolveNumericOrderId(order)}
+                          >
+                            Hapus
+                          </Button>
                         )}
                       </Stack>
                     </ListItem>
@@ -717,8 +878,68 @@ const CustomerDashboard = ({ onLogout }) => {
             <Typography variant="h5" fontWeight={700} mb={2}>
               {showCatalog ? 'Obat Standar' : 'Obat Racikan'}
             </Typography>
+            <Grid container spacing={1.5} mb={2.5}>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Cari produk"
+                  placeholder="Contoh: Paracetamol"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                />
+              </Grid>
+              {showCatalog && (
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    fullWidth
+                    select
+                    size="small"
+                    label="Kategori"
+                    value={selectedCategory}
+                    onChange={(event) => setSelectedCategory(event.target.value)}
+                  >
+                    {categoryOptions.map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option === 'all' ? 'Semua Kategori' : option}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              )}
+              <Grid item xs={12} md={showCatalog ? 2.5 : 4}>
+                <TextField
+                  fullWidth
+                  select
+                  size="small"
+                  label="Rentang Harga"
+                  value={maxPriceFilter}
+                  onChange={(event) => setMaxPriceFilter(event.target.value)}
+                >
+                  <MenuItem value="all">Semua Harga</MenuItem>
+                  <MenuItem value="15000">Sampai Rp 15.000</MenuItem>
+                  <MenuItem value="30000">Sampai Rp 30.000</MenuItem>
+                  <MenuItem value="50000">Sampai Rp 50.000</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} md={showCatalog ? 2.5 : 4}>
+                <TextField
+                  fullWidth
+                  select
+                  size="small"
+                  label="Urutkan"
+                  value={sortFilter}
+                  onChange={(event) => setSortFilter(event.target.value)}
+                >
+                  <MenuItem value="default">Paling Relevan</MenuItem>
+                  <MenuItem value="popular">Popularitas</MenuItem>
+                  <MenuItem value="price_low">Harga Termurah</MenuItem>
+                  <MenuItem value="price_high">Harga Termahal</MenuItem>
+                </TextField>
+              </Grid>
+            </Grid>
             <Grid container spacing={2}>
-              {(showCatalog ? medicines : customMedicines).map((medicine) => (
+              {(showCatalog ? filteredMedicines : filteredCustomMedicines).map((medicine) => (
                 <Grid item xs={12} md={6} lg={4} key={medicine.id}>
                   <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
                     <CardContent>

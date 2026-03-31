@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import '../styles/LaporanAnalitik.css';
 import Sidebar from '../components/Sidebar';
 import ExportModal from '../components/ExportModal';
+
+const API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
+
+const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
+  style: 'currency',
+  currency: 'IDR',
+}).format(Number(value || 0));
 
 const LaporanAnalitik = ({ onLogout }) => {
   // Default date range for the report
   const [startDate, setStartDate] = useState('2025-01-01');
   const [endDate, setEndDate] = useState('2025-01-31');
   const [selectedCategory, setSelectedCategory] = useState('Semua Kategori');
+  const [summaryData, setSummaryData] = useState(null);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Modal states
   const [exportModal, setExportModal] = useState({
@@ -15,35 +26,46 @@ const LaporanAnalitik = ({ onLogout }) => {
     type: null
   });
   
-  // Sample data for summary cards
-  const summaryData = {
-    totalPenjualan: 'Rp 45.6M',
-    obatTerlaris: '2,345',
-    stokMenipis: '15',
-    supplierAktif: '24',
-    pendapatan: 'Rp 12.3M'
+  const categories = useMemo(
+    () => ['Semua Kategori', ...availableCategories],
+    [availableCategories]
+  );
+
+  const fetchAnalytics = async () => {
+    try {
+      setErrorMessage('');
+      const query = new URLSearchParams({
+        startDate,
+        endDate,
+      });
+
+      if (selectedCategory !== 'Semua Kategori') {
+        query.set('category', selectedCategory);
+      }
+
+      const response = await fetch(`${API_BASE_URL}?${query.toString()}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal memuat analitik.');
+      }
+
+      const data = result.data || {};
+      setSummaryData(data.summary || null);
+      setLowStockProducts(Array.isArray(data.lowStockProducts) ? data.lowStockProducts : []);
+      setAvailableCategories(Array.isArray(data.categories) ? data.categories.map((item) => item.name) : []);
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat memuat analitik.');
+    }
   };
-  
-  // Sample data for low stock products
-  const lowStockProducts = [
-    { name: 'Paracetamol', category: 'Obat Bebas', stock: 5, status: 'Kritis' },
-    { name: 'Amoxicillin', category: 'Obat Keras', stock: 8, status: 'Menipis' },
-    { name: 'Vitamin C', category: 'Suplemen', stock: 10, status: 'Menipis' }
-  ];
-  
-  // Categories for filter dropdown
-  const categories = [
-    'Semua Kategori',
-    'Obat Bebas',
-    'Obat Keras',
-    'Suplemen',
-    'Alat Kesehatan'
-  ];
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
   
   // Function to handle filter application
   const handleApplyFilter = () => {
-    console.log('Applying filters:', { startDate, endDate, selectedCategory });
-    // In a real application, this would fetch filtered data from an API
+    fetchAnalytics();
   };
   
   // Function to open export modal
@@ -183,25 +205,26 @@ const LaporanAnalitik = ({ onLogout }) => {
         </div>
         
         <div className="summary-cards">
+          {errorMessage && <p>{errorMessage}</p>}
           <div className="summary-card">
             <h3>Total Penjualan</h3>
-            <p className="card-value">{summaryData.totalPenjualan}</p>
+            <p className="card-value">{formatCurrency(summaryData?.penjualanHariIni || 0)}</p>
           </div>
           <div className="summary-card">
             <h3>Obat Terlaris</h3>
-            <p className="card-value">{summaryData.obatTerlaris}</p>
+            <p className="card-value">{summaryData?.obatTerlaris || 0}</p>
           </div>
           <div className="summary-card">
             <h3>Stok Menipis</h3>
-            <p className="card-value">{summaryData.stokMenipis}</p>
+            <p className="card-value">{summaryData?.stokMenipis || 0}</p>
           </div>
           <div className="summary-card">
             <h3>Supplier Aktif</h3>
-            <p className="card-value">{summaryData.supplierAktif}</p>
+            <p className="card-value">{summaryData?.totalSupplier || 0}</p>
           </div>
           <div className="summary-card">
             <h3>Pendapatan</h3>
-            <p className="card-value">{summaryData.pendapatan}</p>
+            <p className="card-value">{formatCurrency(summaryData?.pendapatanPeriode || 0)}</p>
           </div>
         </div>
         

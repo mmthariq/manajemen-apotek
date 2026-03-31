@@ -95,7 +95,6 @@ const SupplierForm = ({ isOpen, onClose, onSave, editData }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
               />
             </div>
           </div>

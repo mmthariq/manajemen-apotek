@@ -263,6 +263,57 @@
   color: #f44336;
 }
 
+.orders-message {
+  margin-bottom: 12px;
+  color: #1565c0;
+  font-size: 0.9rem;
+}
+
+.cashier-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-btn.approve {
+  background-color: #2e7d32;
+}
+
+.action-btn.process {
+  background-color: #ef6c00;
+}
+
+.action-btn.complete {
+  background-color: #1565c0;
+}
+
+.action-muted {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.payment-proof-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1100px) {
   .charts-row {

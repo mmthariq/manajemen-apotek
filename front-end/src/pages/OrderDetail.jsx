@@ -17,13 +17,14 @@ const API_BASE_URL = 'http://localhost:3000/api/orders';
 
 const STATUS_LABELS = {
   pending_payment: 'Menunggu Pembayaran',
+  payment_uploaded: 'Menunggu Verifikasi Pembayaran',
   paid: 'Sudah Dibayar',
   processed: 'Diproses',
   completed: 'Selesai',
   cancelled: 'Dibatalkan',
 };
 
-const OrderDetail = () => {
+const OrderDetail = ({ authToken }) => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
@@ -41,7 +42,11 @@ const OrderDetail = () => {
       setIsLoading(true);
       setError('');
 
-      const response = await fetch(`${API_BASE_URL}/${orderId}`);
+      const response = await fetch(`${API_BASE_URL}/${orderId}`, {
+        headers: authToken
+          ? { Authorization: `Bearer ${authToken}` }
+          : {},
+      });
       const result = await response.json();
 
       if (!response.ok) {

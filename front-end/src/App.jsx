@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 import './styles/common.css'
@@ -19,36 +19,36 @@ import OrderSuccess from './pages/OrderSuccess'
 import OrderDetail from './pages/OrderDetail'
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authToken, setAuthToken] = useState(null)
   const [userRole, setUserRole] = useState(null)
-  const normalizeRole = (role) => String(role || '').toLowerCase()
-
-  // Check for token and role in localStorage on component mount
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    const role = normalizeRole(localStorage.getItem('role'))
-    if (token && role) {
-      setIsAuthenticated(true)
-      setUserRole(role)
-    }
-  }, [])
+  const [currentUser, setCurrentUser] = useState(null)
+  const normalizeRole = (role) => String(role || '').trim().toLowerCase()
+  const isAuthenticated = Boolean(authToken && userRole)
 
   const handleLogin = (token, role, userData = null) => {
     const normalizedRole = normalizeRole(role)
-    localStorage.setItem('token', token);
-    localStorage.setItem('role', normalizedRole);
-    if (normalizedRole === 'customer' && userData) {
-      localStorage.setItem('customerData', JSON.stringify(userData));
-    }
-    setIsAuthenticated(true);
-    setUserRole(normalizedRole);
-  };
+    setAuthToken(token)
+    setUserRole(normalizedRole)
+    setCurrentUser(userData || null)
+  }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('role')
-    setIsAuthenticated(false)
+  const handleLogout = async () => {
+    if (authToken) {
+      try {
+        await fetch('http://localhost:3000/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        })
+      } catch (error) {
+        // Logout lokal tetap dijalankan walau request logout gagal.
+      }
+    }
+
+    setAuthToken(null)
     setUserRole(null)
+    setCurrentUser(null)
   }
 
   const getRedirectPath = () => {
@@ -65,6 +65,8 @@ function App() {
     }
   };
 
+  const hasRole = (allowedRoles) => isAuthenticated && allowedRoles.includes(userRole)
+
   return (
     <Router>
       <div className="app">
@@ -76,7 +78,12 @@ function App() {
           } />
           <Route path="/customer-dashboard" element={
             isAuthenticated && userRole === 'customer' ? 
-              <CustomerDashboard onLogout={handleLogout} /> : 
+              <CustomerDashboard
+                onLogout={handleLogout}
+                authToken={authToken}
+                currentUser={currentUser}
+                onUserUpdate={setCurrentUser}
+              /> : 
               <Navigate to="/" />
           } />
           <Route path="/order-success" element={
@@ -86,62 +93,62 @@ function App() {
           } />
           <Route path="/orders/:orderId" element={
             isAuthenticated && userRole === 'customer' ?
-              <OrderDetail /> :
+              <OrderDetail authToken={authToken} /> :
               <Navigate to="/" />
           } />
           <Route path="/dashboard" element={
-            isAuthenticated ? 
-              <Dashboard onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+            hasRole(['admin']) ?
+              <Dashboard onLogout={handleLogout} userRole={userRole} currentUser={currentUser} /> :
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/dashboard-kasir" element={
-            isAuthenticated ? 
-              <DashboardKasir onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+            hasRole(['kasir']) ?
+              <DashboardKasir onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> :
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/manajemen-stok" element={
-            isAuthenticated ? 
+            hasRole(['admin']) ? 
               <ManajemenStok onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/manajemen-obat-racikan" element={
-            isAuthenticated ? 
+            hasRole(['admin']) ? 
               <ManajemenObatRacikan onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/transaksi" element={
-            isAuthenticated ? 
-              <TransaksiPenjualan onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+            hasRole(['admin']) ? 
+              <TransaksiPenjualan onLogout={handleLogout} authToken={authToken} /> : 
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/transaksi-kasir" element={
-            isAuthenticated ? 
-              <TransaksiKasir onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+            hasRole(['kasir']) ? 
+              <TransaksiKasir onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> : 
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/laporan-kasir" element={
-            isAuthenticated ? 
-              <LaporanPenjualanKasir onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+            hasRole(['kasir']) ? 
+              <LaporanPenjualanKasir onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> : 
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/supplier" element={
-            isAuthenticated ? 
+            hasRole(['admin']) ? 
               <SupplierPage onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/manajemen-pengguna" element={
-            isAuthenticated ? 
+            hasRole(['admin']) ? 
               <ManajemenPengguna onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           <Route path="/laporan" element={
-            isAuthenticated ? 
+            hasRole(['admin']) ? 
               <LaporanAnalitik onLogout={handleLogout} /> : 
-              <Navigate to="/" />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
           } />
           {/* Customer Routes */}
           <Route path="/register-customer" element={
-            <CustomerRegistration onRegistrationSuccess={() => setIsAuthenticated(true)} />
+            <CustomerRegistration />
           } />
           {/* Add more routes for other pages as needed */}
         </Routes>

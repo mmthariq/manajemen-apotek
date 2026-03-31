@@ -5,19 +5,7 @@ import { Box, Button, Card, Chip, Divider, List, ListItem, ListItemText, Stack, 
 const OrderSuccess = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
-
-  const fallbackOrder = (() => {
-    const stored = localStorage.getItem('lastOrder');
-    if (!stored) return null;
-
-    try {
-      return JSON.parse(stored);
-    } catch (error) {
-      return null;
-    }
-  })();
-
-  const order = state?.orderData || fallbackOrder;
+  const order = state?.orderData || null;
 
   const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -26,6 +14,7 @@ const OrderSuccess = () => {
 
   const statusLabels = {
     pending_payment: 'Menunggu Pembayaran',
+    payment_uploaded: 'Menunggu Verifikasi Pembayaran',
     paid: 'Sudah Dibayar',
     processed: 'Diproses',
     completed: 'Selesai',
@@ -36,6 +25,8 @@ const OrderSuccess = () => {
     const value = String(status || '').toLowerCase();
 
     if (value.includes('menunggu') && value.includes('pembayaran')) return 'pending_payment';
+    if (value.includes('verifikasi')) return 'payment_uploaded';
+    if (value.includes('uploaded')) return 'payment_uploaded';
     if (value.includes('dibayar')) return 'paid';
     if (value.includes('diproses')) return 'processed';
     if (value.includes('selesai')) return 'completed';

@@ -1,31 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/ManajemenStok.css';
 import Sidebar from '../components/Sidebar';
 import ObatForm from '../components/ObatForm';
 import ConfirmModal from '../components/ConfirmModal';
 
+const API_BASE_URL = 'http://localhost:3000/api/obat';
+
+const formatRupiah = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+const parseRupiah = (text) => Number(String(text || '').replace(/[^\d]/g, '')) || 0;
+
 const ManajemenStok = ({ onLogout }) => {
-  // Sample data for medications
-  const [medications, setMedications] = useState([
-    {
-      kode: 'OBT001',
-      nama: 'Paracetamol',
-      jenis: 'Tablet',
-      stok: 500,
-      harga: 'Rp 10.000',
-      kadaluarsa: '2025-12-31',
-      supplier: 'PT Kimia Farma'
-    },
-    {
-      kode: 'OBT002',
-      nama: 'Amoxicillin',
-      jenis: 'Kapsul',
-      stok: 200,
-      harga: 'Rp 25.000',
-      kadaluarsa: '2025-10-15',
-      supplier: 'PT Kalbe Farma'
-    }
-  ]);
+  const [medications, setMedications] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEditData, setCurrentEditData] = useState(null);
@@ -34,6 +21,42 @@ const ManajemenStok = ({ onLogout }) => {
     medicationCode: null,
     medicationName: ''
   });
+
+  const mapDrugToMedication = (item) => ({
+    id: item.id,
+    kode: `OBT${String(item.id).padStart(3, '0')}`,
+    nama: item.name,
+    jenis: item.unit,
+    stok: item.stock,
+    harga: formatRupiah(item.price),
+    kadaluarsa: item.expiredDate ? new Date(item.expiredDate).toISOString().slice(0, 10) : '',
+    supplier: item.supplierName || '-',
+    supplierId: item.supplierId || null,
+  });
+
+  const fetchDrugs = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      const response = await fetch(API_BASE_URL);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal memuat data obat.');
+      }
+
+      const mapped = Array.isArray(result.data) ? result.data.map(mapDrugToMedication) : [];
+      setMedications(mapped);
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat memuat obat.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDrugs();
+  }, []);
 
   // Function to handle edit medication
   const handleEdit = (kode) => {
@@ -53,9 +76,28 @@ const ManajemenStok = ({ onLogout }) => {
   };
 
   // Function to confirm delete
-  const handleConfirmDelete = () => {
-    setMedications(medications.filter(med => med.kode !== confirmModal.medicationCode));
-    setConfirmModal({ isOpen: false, medicationCode: null, medicationName: '' });
+  const handleConfirmDelete = async () => {
+    const target = medications.find((med) => med.kode === confirmModal.medicationCode);
+    if (!target?.id) {
+      setConfirmModal({ isOpen: false, medicationCode: null, medicationName: '' });
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      const response = await fetch(`${API_BASE_URL}/${target.id}`, { method: 'DELETE' });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal menghapus obat.');
+      }
+
+      setMedications((prev) => prev.filter((med) => med.id !== target.id));
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat menghapus obat.');
+    } finally {
+      setConfirmModal({ isOpen: false, medicationCode: null, medicationName: '' });
+    }
   };
 
   // Function to cancel delete
@@ -64,18 +106,51 @@ const ManajemenStok = ({ onLogout }) => {
   };
 
   // Function to handle add or update medication
-  const handleSaveObat = (formData) => {
-    if (currentEditData) {
-      // Update existing medication
-      setMedications(medications.map(med => 
-        med.kode === formData.kode ? formData : med
-      ));
-    } else {
-      // Add new medication
-      setMedications([...medications, formData]);
+  const handleSaveObat = async (formData) => {
+    try {
+      setErrorMessage('');
+      const payload = {
+        name: formData.nama,
+        stock: Number(formData.stok || 0),
+        unit: formData.jenis,
+        price: parseRupiah(formData.harga),
+        expiredDate: formData.kadaluarsa || null,
+        description: formData.nama,
+      };
+
+      if (currentEditData?.id) {
+        const response = await fetch(`${API_BASE_URL}/${currentEditData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal memperbarui obat.');
+        }
+
+        setMedications((prev) => prev.map((med) => (
+          med.id === currentEditData.id ? mapDrugToMedication(result.data) : med
+        )));
+      } else {
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal menambahkan obat.');
+        }
+
+        setMedications((prev) => [mapDrugToMedication(result.data), ...prev]);
+      }
+
+      setIsModalOpen(false);
+      setCurrentEditData(null);
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat menyimpan obat.');
     }
-    setIsModalOpen(false);
-    setCurrentEditData(null);
   };
 
   // Function to open modal for adding new medication
@@ -115,6 +190,8 @@ const ManajemenStok = ({ onLogout }) => {
         </div>
         
         <div className="table-container">
+          {errorMessage && <p>{errorMessage}</p>}
+          {isLoading && <p>Memuat data obat...</p>}
           <table className="data-table medications-table">
             <thead>
               <tr>

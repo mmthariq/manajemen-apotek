@@ -2,30 +2,23 @@ import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import '../styles/LaporanPenjualanKasir.css';
 
-const LaporanPenjualanKasir = ({ onLogout }) => {
+const API_BASE_URL = 'http://localhost:3000/api/orders';
+
+const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   const [selectedDate, setSelectedDate] = useState(getCurrentDate());
   const [isLoading, setIsLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState('success'); // 'success', 'error', 'info'
-  
-  // Sample transaction data
-  const [transactions, setTransactions] = useState([
-    {
-      id: 'TRX-001',
-      waktu: '09:15',
-      obat: 'Paracetamol',
-      jumlah: 2,
-      totalHarga: 'Rp 15.000'
-    },
-    {
-      id: 'TRX-002',
-      waktu: '09:45',
-      obat: 'Amoxicillin',
-      jumlah: 1,
-      totalHarga: 'Rp 25.000'
+  const [transactions, setTransactions] = useState([]);
+
+  const buildHeaders = () => {
+    const headers = {};
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
     }
-  ]);
+    return headers;
+  };
 
   // Get current date in YYYY-MM-DD format for the date input
   function getCurrentDate() {
@@ -42,15 +35,29 @@ const LaporanPenjualanKasir = ({ onLogout }) => {
   };
 
   // Handle displaying transactions for the selected date
-  const handleDisplayTransactions = () => {
-    setIsLoading(true);
-    
-    // Simulate API call with a timeout
-    setTimeout(() => {
-      // In a real app, you would fetch transactions for the selected date from an API
-      // For now, we'll just use the sample data
+  const handleDisplayTransactions = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(API_BASE_URL, {
+        headers: buildHeaders(),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal memuat laporan transaksi.');
+      }
+
+      const filtered = (Array.isArray(result.data) ? result.data : []).filter((item) => {
+        if (!item.order_time) return false;
+        return new Date(item.order_time).toISOString().slice(0, 10) === selectedDate;
+      });
+
+      setTransactions(filtered);
+    } catch (error) {
+      showNotificationMessage(error.message || 'Terjadi kesalahan saat memuat transaksi.', 'error');
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   // Show notification function
@@ -89,7 +96,7 @@ const LaporanPenjualanKasir = ({ onLogout }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} />
+      <Sidebar onLogout={onLogout} userRole={userRole} currentUser={currentUser} />
       
       <div className="main-content">
         <div className="header">
@@ -142,11 +149,11 @@ const LaporanPenjualanKasir = ({ onLogout }) => {
               <tbody>
                 {transactions.map((transaction) => (
                   <tr key={transaction.id}>
-                    <td>{transaction.id}</td>
-                    <td>{transaction.waktu}</td>
-                    <td>{transaction.obat}</td>
-                    <td>{transaction.jumlah}</td>
-                    <td>{transaction.totalHarga}</td>
+                    <td>TRX-{String(transaction.id).padStart(4, '0')}</td>
+                    <td>{transaction.order_time ? new Date(transaction.order_time).toLocaleTimeString('id-ID') : '-'}</td>
+                    <td>Order Online</td>
+                    <td>{Number(transaction.total_items || 0)}</td>
+                    <td>Rp {Number(transaction.total_amount || 0).toLocaleString('id-ID')}</td>
                   </tr>
                 ))}
               </tbody>

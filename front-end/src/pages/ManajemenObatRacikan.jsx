@@ -1,33 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import CustomMedicineForm from '../components/CustomMedicineForm';
 import '../styles/ManajemenObatRacikan.css';
 
+const API_BASE_URL = 'http://localhost:3000/api/custom-medicine';
+
 const ManajemenObatRacikan = ({ onLogout }) => {
-  const [customMedicines, setCustomMedicines] = useState([
-    {
-      id: 1,
-      nama: 'Racikan Penurun Panas',
-      kategori: 'Racikan',
-      harga: 45000,
-      stok: 20,
-      komposisi: [
-        { bahan: 'Paracetamol 500mg', jumlah: 2, satuan: 'tablet' },
-        { bahan: 'Ibuprofen 200mg', jumlah: 1, satuan: 'tablet' }
-      ]
-    },
-    {
-      id: 2,
-      nama: 'Racikan Batuk Kering',
-      kategori: 'Racikan',
-      harga: 35000,
-      stok: 15,
-      komposisi: [
-        { bahan: 'Codein 5mg', jumlah: 1, satuan: 'tablet' },
-        { bahan: 'GG Formula', jumlah: 2, satuan: 'tablet' }
-      ]
-    }
-  ]);
+  const [customMedicines, setCustomMedicines] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -35,6 +16,29 @@ const ManajemenObatRacikan = ({ onLogout }) => {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState('success');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const fetchCustomMedicines = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      const response = await fetch(API_BASE_URL);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal memuat obat racikan.');
+      }
+
+      setCustomMedicines(Array.isArray(result.data) ? result.data : []);
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat memuat obat racikan.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomMedicines();
+  }, []);
 
   const showNotificationMessage = (message, type = 'success') => {
     setNotificationMessage(message);
@@ -60,29 +64,66 @@ const ManajemenObatRacikan = ({ onLogout }) => {
     setEditingId(null);
   };
 
-  const handleSave = (formData) => {
-    if (editingId) {
-      setCustomMedicines(customMedicines.map(med =>
-        med.id === editingId
-          ? { ...med, ...formData }
-          : med
-      ));
-      showNotificationMessage('Obat racikan berhasil diperbarui', 'success');
-    } else {
-      const newMedicine = {
-        id: Math.max(...customMedicines.map(m => m.id), 0) + 1,
-        ...formData
+  const handleSave = async (formData) => {
+    try {
+      const payload = {
+        nama: formData.nama,
+        harga: Number(formData.harga || 0),
+        stok: Number(formData.stok || 0),
+        komposisi: formData.komposisi,
       };
-      setCustomMedicines([...customMedicines, newMedicine]);
-      showNotificationMessage('Obat racikan baru berhasil ditambahkan', 'success');
+
+      if (editingId) {
+        const response = await fetch(`${API_BASE_URL}/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal memperbarui obat racikan.');
+        }
+
+        setCustomMedicines((prev) => prev.map((med) => (
+          med.id === editingId ? { ...med, ...result.data } : med
+        )));
+        showNotificationMessage('Obat racikan berhasil diperbarui', 'success');
+      } else {
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal menambahkan obat racikan.');
+        }
+
+        setCustomMedicines((prev) => [result.data, ...prev]);
+        showNotificationMessage('Obat racikan baru berhasil ditambahkan', 'success');
+      }
+      handleCloseModal();
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat menyimpan obat racikan.');
+      showNotificationMessage(error.message || 'Gagal menyimpan data', 'error');
     }
-    handleCloseModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus obat racikan ini?')) {
-      setCustomMedicines(customMedicines.filter(med => med.id !== id));
-      showNotificationMessage('Obat racikan berhasil dihapus', 'success');
+      try {
+        const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal menghapus obat racikan.');
+        }
+
+        setCustomMedicines((prev) => prev.filter(med => med.id !== id));
+        showNotificationMessage('Obat racikan berhasil dihapus', 'success');
+      } catch (error) {
+        setErrorMessage(error.message || 'Terjadi kesalahan saat menghapus obat racikan.');
+        showNotificationMessage(error.message || 'Gagal menghapus data', 'error');
+      }
     }
   };
 
@@ -133,6 +174,8 @@ const ManajemenObatRacikan = ({ onLogout }) => {
 
           {/* Medicines Table */}
           <div className="table-container">
+            {errorMessage && <p>{errorMessage}</p>}
+            {isLoading && <p>Memuat data obat racikan...</p>}
             {filteredMedicines.length === 0 ? (
               <div className="empty-state">
                 <p>Belum ada obat racikan</p>

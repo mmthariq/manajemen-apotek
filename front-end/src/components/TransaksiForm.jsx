@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/TransaksiForm.css';
 
+const DRUG_API_BASE_URL = 'http://localhost:3000/api/obat';
+
 const TransaksiForm = ({ isOpen, onClose, onSave, editData }) => {
   const initialFormData = {
     namaObat: '',
@@ -11,12 +13,7 @@ const TransaksiForm = ({ isOpen, onClose, onSave, editData }) => {
   };
 
   const [formData, setFormData] = useState(initialFormData);
-  const [availableMeds, setAvailableMeds] = useState([
-    { nama: 'Paracetamol', harga: 'Rp 10.000' },
-    { nama: 'Amoxicillin', harga: 'Rp 25.000' },
-    { nama: 'Omeprazole', harga: 'Rp 15.000' },
-    { nama: 'Simvastatin', harga: 'Rp 20.000' },
-  ]);
+  const [availableMeds, setAvailableMeds] = useState([]);
   
   const isEditing = !!editData;
 
@@ -27,6 +24,32 @@ const TransaksiForm = ({ isOpen, onClose, onSave, editData }) => {
       setFormData(initialFormData);
     }
   }, [editData]);
+
+  useEffect(() => {
+    const fetchMeds = async () => {
+      try {
+        const response = await fetch(DRUG_API_BASE_URL);
+        const result = await response.json();
+
+        if (!response.ok) {
+          return;
+        }
+
+        const mapped = Array.isArray(result.data)
+          ? result.data.map((item) => ({
+            nama: item.name,
+            harga: `Rp ${Number(item.price || 0).toLocaleString('id-ID')}`,
+          }))
+          : [];
+
+        setAvailableMeds(mapped);
+      } catch (error) {
+        setAvailableMeds([]);
+      }
+    };
+
+    fetchMeds();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

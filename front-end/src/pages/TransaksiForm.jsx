@@ -1,25 +1,51 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import '../styles/TransaksiKasir.css';
 
-const TransaksiKasir = ({ onLogout }) => {
+const DRUG_API_BASE_URL = 'http://localhost:3000/api/obat';
+const ORDER_API_BASE_URL = 'http://localhost:3000/api/orders';
+
+const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   // State for form input values
   const [selectedObat, setSelectedObat] = useState('');
-  const [stokTersedia, setStokTersedia] = useState(100);
+  const [stokTersedia, setStokTersedia] = useState(0);
   const [jumlah, setJumlah] = useState('');
-  const [hargaSatuan, setHargaSatuan] = useState('Rp 5.000');
+  const [hargaSatuan, setHargaSatuan] = useState('Rp 0');
   const [totalHarga, setTotalHarga] = useState('Rp 0');
   const [cartItems, setCartItems] = useState([]);
   const [namaPembeli, setNamaPembeli] = useState('');
   const [showStruk, setShowStruk] = useState(false);
+  const [obatList, setObatList] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
   
-  // Sample medicines data
-  const obatList = [
-    { id: 1, nama: 'Paracetamol 500mg', harga: 5000, stok: 100 },
-    { id: 2, nama: 'Amoxicillin 500mg', harga: 8000, stok: 85 },
-    { id: 3, nama: 'Omeprazole 20mg', harga: 10000, stok: 60 },
-    { id: 4, nama: 'Simvastatin 10mg', harga: 15000, stok: 45 },
-  ];
+  useEffect(() => {
+    const fetchDrugs = async () => {
+      try {
+        setErrorMessage('');
+        const response = await fetch(DRUG_API_BASE_URL);
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal memuat katalog obat.');
+        }
+
+        const mapped = Array.isArray(result.data)
+          ? result.data.map((item) => ({
+            id: item.id,
+            nama: item.name,
+            harga: Number(item.price || 0),
+            stok: Number(item.stock || 0),
+          }))
+          : [];
+
+        setObatList(mapped);
+      } catch (error) {
+        setErrorMessage(error.message || 'Terjadi kesalahan saat memuat katalog obat.');
+      }
+    };
+
+    fetchDrugs();
+  }, []);
 
   // Function to handle medicine selection
   const handleObatChange = (e) => {
@@ -93,7 +119,7 @@ const TransaksiKasir = ({ onLogout }) => {
   };
 
   // Function to handle checkout
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cartItems.length === 0) {
       alert('Keranjang belanja kosong');
       return;
@@ -104,7 +130,39 @@ const TransaksiKasir = ({ onLogout }) => {
       return;
     }
     
-    setShowStruk(true);
+    try {
+      setErrorMessage('');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+
+      const payload = {
+        items: cartItems.map((item) => ({
+          product_id: obatList.find((obat) => obat.nama === item.nama)?.id || null,
+          product_name: item.nama,
+          product_type: 'regular',
+          quantity: item.jumlah,
+          price_per_unit: item.hargaSatuan,
+        })),
+      };
+
+      const response = await fetch(ORDER_API_BASE_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal menyimpan transaksi ke database.');
+      }
+
+      setShowStruk(true);
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat checkout.');
+    }
   };
 
   // Function to handle receipt printing
@@ -140,7 +198,7 @@ const TransaksiKasir = ({ onLogout }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} />
+      <Sidebar onLogout={onLogout} userRole={userRole} currentUser={currentUser} />
       
       <div className="main-content">
         <div className="header">
@@ -159,6 +217,7 @@ const TransaksiKasir = ({ onLogout }) => {
         </div>
 
         <div className="transaksi-container">
+          {errorMessage && <p>{errorMessage}</p>}
           <div className="transaksi-form">
             <h2>Input Penjualan</h2>
             <div className="form-row">

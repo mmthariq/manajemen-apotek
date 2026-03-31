@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
@@ -8,56 +8,18 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import '../styles/Sidebar.css';
 
-const Sidebar = ({ onLogout, userRole = 'admin' }) => {
+const Sidebar = ({ onLogout, userRole = 'admin', currentUser = null }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const navigate = useNavigate();
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
-  const getStoredCustomerData = () => {
-    const stored = localStorage.getItem('customerData');
-
-    if (!stored) {
-      return {
-        name: 'Customer',
-        email: 'customer@apotek.local',
-      };
-    }
-
-    try {
-      const parsed = JSON.parse(stored);
-      return {
-        id: parsed.id,
-        name: parsed.name || parsed.username || 'Customer',
-        email: parsed.email || 'customer@apotek.local',
-      };
-    } catch (error) {
-      return {
-        name: 'Customer',
-        email: 'customer@apotek.local',
-      };
-    }
+  const customerData = {
+    id: currentUser?.id,
+    name: currentUser?.name || currentUser?.username || 'Customer',
+    email: currentUser?.email || 'customer@apotek.local',
   };
-  const [customerData, setCustomerData] = useState(getStoredCustomerData);
-
-  useEffect(() => {
-    const syncCustomerData = () => {
-      setCustomerData(getStoredCustomerData());
-    };
-
-    window.addEventListener('storage', syncCustomerData);
-    window.addEventListener('customerDataUpdated', syncCustomerData);
-
-    return () => {
-      window.removeEventListener('storage', syncCustomerData);
-      window.removeEventListener('customerDataUpdated', syncCustomerData);
-    };
-  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('customerData');
-    
     if (onLogout) {
       onLogout();
     } else {
@@ -79,9 +41,12 @@ const Sidebar = ({ onLogout, userRole = 'admin' }) => {
   };
 
   const currentCustomerTab = new URLSearchParams(location.search).get('tab') || 'catalog';
+  const currentKasirTab = new URLSearchParams(location.search).get('tab') || 'overview';
   const isProfileActive = currentPath === '/customer-dashboard' && currentCustomerTab === 'profile';
   const isHistoryActive = currentPath === '/customer-dashboard' && currentCustomerTab === 'history';
   const isShopActive = currentPath === '/customer-dashboard' && !['profile', 'history'].includes(currentCustomerTab);
+  const isKasirDashboardActive = currentPath === '/dashboard-kasir' && currentKasirTab !== 'verification';
+  const isKasirVerificationActive = currentPath === '/dashboard-kasir' && currentKasirTab === 'verification';
 
   return (
     <div className="sidebar">
@@ -188,12 +153,20 @@ const Sidebar = ({ onLogout, userRole = 'admin' }) => {
           {/* Kasir Menu */}
           {userRole === 'kasir' && (
             <>
-              <li className={currentPath === '/dashboard-kasir' ? 'active' : ''}>
+              <li className={isKasirDashboardActive ? 'active' : ''}>
                 <Link to="/dashboard-kasir">
                   <svg viewBox="0 0 24 24" width="24" height="24">
                     <path fill="currentColor" d="M19.5,3.5L18,2L16.5,3.5L15,2L13.5,3.5L12,2L10.5,3.5L9,2L7.5,3.5L6,2L4.5,3.5L3,2V22L4.5,20.5L6,22L7.5,20.5L9,22L10.5,20.5L12,22L13.5,20.5L15,22L16.5,20.5L18,22L19.5,20.5L21,22V2L19.5,3.5M9,17H7V15H9V17M9,13H7V11H9V13M9,9H7V7H9V9M13,17H11V15H13V17M13,13H11V11H13V13M13,9H11V7H13V9Z" />
                   </svg>
                   <span>Dashboard</span>
+                </Link>
+              </li>
+              <li className={isKasirVerificationActive ? 'active' : ''}>
+                <Link to="/dashboard-kasir?tab=verification">
+                  <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M16.59,7.58L10,14.17L7.41,11.59L6,13L10,17L18,9L16.59,7.58Z" />
+                  </svg>
+                  <span>Verifikasi Pembayaran</span>
                 </Link>
               </li>
               <li className={currentPath === '/transaksi-kasir' ? 'active' : ''}>

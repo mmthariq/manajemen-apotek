@@ -1,28 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/Dashboard.css';
 import Sidebar from '../components/Sidebar';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
-const Dashboard = ({ onLogout }) => {
-  // Sample data for weekly sales chart
-  const weeklySalesData = [
-    { name: 'Senin', penjualan: 420000 },
-    { name: 'Selasa', penjualan: 380000 },
-    { name: 'Rabu', penjualan: 550000 },
-    { name: 'Kamis', penjualan: 490000 },
-    { name: 'Jumat', penjualan: 600000 },
-    { name: 'Sabtu', penjualan: 750000 },
-    { name: 'Minggu', penjualan: 320000 },
-  ];
+const API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
 
-  // Sample data for medicine categories
-  const medicineCategoryData = [
-    { name: 'Antibiotik', value: 35 },
-    { name: 'Analgesik', value: 25 },
-    { name: 'Vitamin', value: 20 },
-    { name: 'Antipiretik', value: 15 },
-    { name: 'Lainnya', value: 5 },
-  ];
+const Dashboard = ({ onLogout, userRole, currentUser }) => {
+  const [weeklySalesData, setWeeklySalesData] = useState([]);
+  const [medicineCategoryData, setMedicineCategoryData] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [summaryData, setSummaryData] = useState({
+    totalObat: 0,
+    transaksiHariIni: 0,
+    totalSupplier: 0,
+    totalPengguna: 0,
+  });
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Colors for pie chart
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -31,6 +25,36 @@ const Dashboard = ({ onLogout }) => {
   const formatToRupiah = (value) => {
     return `Rp ${value.toLocaleString('id-ID')}`;
   };
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setErrorMessage('');
+        const response = await fetch(API_BASE_URL);
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal memuat dashboard.');
+        }
+
+        const data = result.data || {};
+        setWeeklySalesData(Array.isArray(data.weeklySales) ? data.weeklySales : []);
+        setMedicineCategoryData(Array.isArray(data.categories) ? data.categories : []);
+        setLowStockProducts(Array.isArray(data.lowStockProducts) ? data.lowStockProducts.slice(0, 5) : []);
+        setRecentTransactions(Array.isArray(data.recentTransactions) ? data.recentTransactions.slice(0, 5) : []);
+        setSummaryData(data.summary || {
+          totalObat: 0,
+          transaksiHariIni: 0,
+          totalSupplier: 0,
+          totalPengguna: 0,
+        });
+      } catch (error) {
+        setErrorMessage(error.message || 'Terjadi kesalahan saat memuat dashboard.');
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
 
   // Custom tooltip for pie chart
   const CustomTooltip = ({ active, payload }) => {
@@ -46,7 +70,7 @@ const Dashboard = ({ onLogout }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} />
+      <Sidebar onLogout={onLogout} userRole={userRole} currentUser={currentUser} />
       
       <div className="main-content">
         <div className="header">
@@ -65,10 +89,11 @@ const Dashboard = ({ onLogout }) => {
         </div>
         
         <div className="stats-container">
+          {errorMessage && <p>{errorMessage}</p>}
           <div className="stat-card">
             <div className="stat-info">
               <span className="stat-label">Total Obat</span>
-              <h2 className="stat-value">1021</h2>
+              <h2 className="stat-value">{summaryData.totalObat}</h2>
             </div>
             <div className="stat-icon medicine-icon">
               <svg viewBox="0 0 24 24" width="24" height="24">
@@ -80,7 +105,7 @@ const Dashboard = ({ onLogout }) => {
           <div className="stat-card">
             <div className="stat-info">
               <span className="stat-label">Transaksi Hari Ini</span>
-              <h2 className="stat-value">45</h2>
+              <h2 className="stat-value">{summaryData.transaksiHariIni}</h2>
             </div>
             <div className="stat-icon transaction-icon">
               <svg viewBox="0 0 24 24" width="24" height="24">
@@ -92,7 +117,7 @@ const Dashboard = ({ onLogout }) => {
           <div className="stat-card">
             <div className="stat-info">
               <span className="stat-label">Total Supplier</span>
-              <h2 className="stat-value">28</h2>
+              <h2 className="stat-value">{summaryData.totalSupplier}</h2>
             </div>
             <div className="stat-icon supplier-icon">
               <svg viewBox="0 0 24 24" width="24" height="24">
@@ -104,7 +129,7 @@ const Dashboard = ({ onLogout }) => {
           <div className="stat-card">
             <div className="stat-info">
               <span className="stat-label">Total Pengguna</span>
-              <h2 className="stat-value">2</h2>
+              <h2 className="stat-value">{summaryData.totalPengguna}</h2>
             </div>
             <div className="stat-icon user-icon">
               <svg viewBox="0 0 24 24" width="24" height="24">
@@ -177,18 +202,12 @@ const Dashboard = ({ onLogout }) => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Paracetamol</td>
-                  <td>5</td>
-                </tr>
-                <tr>
-                  <td>Amoxicillin</td>
-                  <td>8</td>
-                </tr>
-                <tr>
-                  <td>Omeprazole</td>
-                  <td>3</td>
-                </tr>
+                {lowStockProducts.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.name}</td>
+                    <td>{item.stock}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -204,21 +223,13 @@ const Dashboard = ({ onLogout }) => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>TR-001</td>
-                  <td>Lionel Messi</td>
-                  <td>Rp 150.000</td>
-                </tr>
-                <tr>
-                  <td>TR-002</td>
-                  <td>Raphinha</td>
-                  <td>Rp 75.000</td>
-                </tr>
-                <tr>
-                  <td>TR-003</td>
-                  <td>Lamine Yamal</td>
-                  <td>Rp 225.000</td>
-                </tr>
+                {recentTransactions.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.id}</td>
+                    <td>{item.customerName}</td>
+                    <td>{formatToRupiah(item.totalPrice)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
