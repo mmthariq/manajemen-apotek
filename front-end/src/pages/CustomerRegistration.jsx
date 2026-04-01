@@ -434,7 +434,7 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
                         color="primary.main" 
                         fontWeight={600}
                         sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate('/Login')}
                       >
                         Masuk di sini
                       </Typography>

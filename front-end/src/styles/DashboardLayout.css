@@ -1,0 +1,27 @@
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+  width: 100%;
+  background: linear-gradient(135deg, #f3f1ec 0%, #f5f7fa 55%, #eef2f6 100%);
+}
+
+.dashboard-layout-sidebar {
+  flex: 0 0 auto;
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  background: transparent;
+}
+
+.dashboard-layout-sidebar .sidebar {
+  min-height: 100vh;
+  height: auto;
+}
+
+.dashboard-layout-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}

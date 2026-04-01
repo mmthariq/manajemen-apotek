@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/Dashboard.css';
-import Sidebar from '../components/Sidebar';
+import DashboardLayout from '../components/DashboardLayout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 const API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
@@ -69,9 +69,7 @@ const Dashboard = ({ onLogout, userRole, currentUser }) => {
   };
 
   return (
-    <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} userRole={userRole} currentUser={currentUser} />
-      
+    <DashboardLayout onLogout={onLogout} userRole={userRole} currentUser={currentUser}>
       <div className="main-content">
         <div className="header">
           <h1>Dashboard</h1>
@@ -235,7 +233,7 @@ const Dashboard = ({ onLogout, userRole, currentUser }) => {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

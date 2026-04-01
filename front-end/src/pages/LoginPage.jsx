@@ -36,7 +36,7 @@ const theme = createTheme({
     }
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Poppins", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     button: {
       textTransform: 'none',
       fontWeight: 600,
@@ -49,6 +49,14 @@ const theme = createTheme({
 
 const LoginPage = ({ onLogin }) => {
   const navigate = useNavigate();
+  const freepikImageCandidates = [
+    '/images/apotek.jpg',
+    '/images/apotek.jpeg',
+    '/images/apotek.png',
+    '/images/freepik-apotek.jpg',
+    '/images/freepik-apotek.jpeg',
+    '/images/freepik-apotek.png',
+  ];
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('admin');
@@ -56,6 +64,9 @@ const LoginPage = ({ onLogin }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [showImageFallback, setShowImageFallback] = useState(false);
+  const activeFreepikImage = freepikImageCandidates[imageIndex];
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -132,27 +143,64 @@ const LoginPage = ({ onLogin }) => {
           <Box sx={{ position: 'absolute', top: '-10%', left: '-10%', width: 400, height: 400, bgcolor: 'rgba(255,255,255,0.4)', borderRadius: '50%', filter: 'blur(40px)' }} />
           <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: 300, height: 300, bgcolor: 'rgba(14, 165, 233, 0.1)', borderRadius: '50%', filter: 'blur(40px)' }} />
 
-          <Box sx={{ zIndex: 1, textAlign: 'center', maxWidth: 400 }}>
-            <Box 
-              sx={{ 
-                width: 80, height: 80, 
-                bgcolor: 'white', 
-                borderRadius: '24px', 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                mx: 'auto', mb: 4,
-                boxShadow: '0 10px 25px rgba(16, 185, 129, 0.15)'
+          <Box sx={{ zIndex: 1, textAlign: 'center', maxWidth: 520 }}>
+            <Typography
+              variant="h3"
+              fontWeight="800"
+              color="text.primary"
+              sx={{
+                mb: 4,
+                letterSpacing: '-0.8px',
+                lineHeight: 1.15,
+                fontSize: { md: '2.2rem', lg: '2.6rem' },
+                whiteSpace: 'nowrap',
               }}
             >
-              <LocalHospitalRoundedIcon sx={{ fontSize: 40, color: '#10b981' }} />
+              Apotek Pemuda Farma 
+            </Typography>
+            <Box sx={{ mt: 5 }}>
+              {!showImageFallback ? (
+                <Box
+                  component="img"
+                  src={activeFreepikImage}
+                  alt="Ilustrasi apotek oleh Freepik"
+                  onError={() => {
+                    if (imageIndex < freepikImageCandidates.length - 1) {
+                      setImageIndex((prevIndex) => prevIndex + 1);
+                    } else {
+                      setShowImageFallback(true);
+                    }
+                  }}
+                  sx={{
+                    width: '100%',
+                    maxWidth: 320,
+                    height: 'auto',
+                    mx: 'auto',
+                    display: 'block',
+                    borderRadius: '20px',
+                    boxShadow: '0 14px 30px rgba(16, 185, 129, 0.2)',
+                    bgcolor: 'rgba(255,255,255,0.6)',
+                    p: 1.5,
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: 140,
+                    height: 140,
+                    mx: 'auto',
+                    borderRadius: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(255,255,255,0.7)',
+                    boxShadow: '0 14px 30px rgba(16, 185, 129, 0.15)',
+                  }}
+                >
+                  <LocalHospitalRoundedIcon sx={{ fontSize: 64, color: '#10b981' }} />
+                </Box>
+              )}
             </Box>
-            <Typography variant="h3" fontWeight="800" color="text.primary" gutterBottom sx={{ letterSpacing: '-1px' }}>
-              Pemuda Farma
-            </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400, lineHeight: 1.6 }}>
-              Sistem manajemen apotek terpadu untuk pelayanan kesehatan yang lebih baik dan terpercaya.
-            </Typography>
           </Box>
         </Box>
 
@@ -189,9 +237,17 @@ const LoginPage = ({ onLogin }) => {
               <Typography variant="h4" fontWeight="bold" color="text.primary" gutterBottom>
                 Welcome Back
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                Please sign in to your account.
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 1.5 }}>
+                Masuk untuk mengelola dashboard apotek, transaksi, dan layanan customer.
               </Typography>
+              <Button
+                variant="text"
+                size="small"
+                sx={{ px: 0, mb: 3, fontWeight: 600 }}
+                onClick={() => navigate('/')}
+              >
+                Kembali ke halaman utama
+              </Button>
 
               {errors.api && (
                 <Box sx={{ bgcolor: '#fee2e2', color: '#ef4444', p: 2, borderRadius: 2, mb: 3 }}>

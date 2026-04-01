@@ -26,7 +26,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import Sidebar from '../components/Sidebar';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/CustomerDashboard.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
@@ -53,6 +53,10 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
   const [orderHistory, setOrderHistory] = useState([]);
   const [isOrderLoading, setIsOrderLoading] = useState(false);
   const [orderError, setOrderError] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedOrderItems, setSelectedOrderItems] = useState([]);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState('');
   const [payingOrderId, setPayingOrderId] = useState(null);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [deletingOrderId, setDeletingOrderId] = useState(null);
@@ -222,6 +226,24 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
       setActiveTab('catalog');
     }
   }, [searchParams]);
+
+  const detailOrderId = searchParams.get('detail');
+
+  const openOrderDetail = (resolvedId) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('tab', 'history');
+    nextParams.set('detail', resolvedId);
+    setSearchParams(nextParams);
+  };
+
+  const closeOrderDetail = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('detail');
+    setSearchParams(nextParams);
+    setSelectedOrder(null);
+    setSelectedOrderItems([]);
+    setDetailError('');
+  };
 
   useEffect(() => {
     const fetchCatalogData = async () => {
@@ -500,6 +522,32 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
     }
   };
 
+  const fetchOrderDetail = async (resolvedId) => {
+    try {
+      setIsDetailLoading(true);
+      setDetailError('');
+
+      const response = await fetch(`${API_BASE_URL}/${resolvedId}`, {
+        headers: getAuthHeaders(),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal mengambil detail pesanan.');
+      }
+
+      const payload = result.data || {};
+      setSelectedOrder(payload.id ? payload : null);
+      setSelectedOrderItems(Array.isArray(payload.items) ? payload.items : []);
+    } catch (error) {
+      setDetailError(error.message || 'Terjadi kesalahan saat memuat detail pesanan.');
+      setSelectedOrder(null);
+      setSelectedOrderItems([]);
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
   const handlePayNow = (order) => {
     const resolvedId = resolveNumericOrderId(order);
     if (!resolvedId) {
@@ -618,15 +666,21 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
   }, [showHistory, customerData?.id]);
 
   useEffect(() => {
+    if (!detailOrderId) {
+      return;
+    }
+
+    fetchOrderDetail(detailOrderId);
+  }, [detailOrderId, authToken]);
+
+  useEffect(() => {
     if (showProfile && customerData?.id) {
       fetchCustomerProfile(customerData.id);
     }
   }, [showProfile, customerData?.id]);
 
   return (
-    <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} userRole="customer" currentUser={customerData} />
-
+    <DashboardLayout onLogout={onLogout} userRole="customer" currentUser={customerData}>
       <div className="main-content">
         <Card sx={{ p: 2, mb: 3, borderRadius: 3 }}>
           <Typography variant="h4" fontWeight={700} align="center">
@@ -809,7 +863,7 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
                               setOrderError('ID pesanan tidak valid untuk detail.');
                               return;
                             }
-                            navigate(`/orders/${resolvedId}`);
+                            openOrderDetail(resolvedId);
                           }}
                         >
                           Detail
@@ -979,6 +1033,70 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
             </Grid>
           </Card>
         )}
+
+        {detailOrderId && (
+          <div className="customer-order-overlay" onClick={closeOrderDetail}>
+            <Card
+              className="customer-order-dialog"
+              sx={{ p: { xs: 3, sm: 4 } }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1} mb={1}>
+                <Typography variant="h5" fontWeight={800}>Detail Pesanan</Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  {selectedOrder && (
+                    <Chip label={resolveOrderLabel(selectedOrder)} color="info" variant="outlined" />
+                  )}
+                  <Button size="small" variant="outlined" onClick={closeOrderDetail}>
+                    Tutup
+                  </Button>
+                </Stack>
+              </Stack>
+
+              {isDetailLoading && (
+                <Typography color="text.secondary">Memuat detail pesanan...</Typography>
+              )}
+
+              {!isDetailLoading && detailError && (
+                <Typography color="error">{detailError}</Typography>
+              )}
+
+              {!isDetailLoading && !detailError && selectedOrder && (
+                <>
+                  <Typography color="text.secondary" mb={2}>
+                    ID Pesanan: {selectedOrder.id} | {selectedOrder.order_time ? new Date(selectedOrder.order_time).toLocaleString('id-ID') : '-'}
+                  </Typography>
+
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Typography variant="h6" fontWeight={700} mb={1}>Daftar Item</Typography>
+                  {selectedOrderItems.length === 0 ? (
+                    <Typography color="text.secondary">Item pesanan tidak ditemukan.</Typography>
+                  ) : (
+                    <List>
+                      {selectedOrderItems.map((item, index) => (
+                        <ListItem key={item.id || index} sx={{ px: 0 }}>
+                          <ListItemText
+                            primary={item.product_name || `Item #${index + 1}`}
+                            secondary={`Qty ${item.quantity} x ${formatCurrency(item.price_per_unit)}`}
+                          />
+                          <Typography fontWeight={700}>{formatCurrency(item.subtotal)}</Typography>
+                        </ListItem>
+                      ))}
+                    </List>
+                  )}
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Stack direction="row" justifyContent="space-between" mb={0.5}>
+                    <Typography>Total Harga</Typography>
+                    <Typography fontWeight={800}>{formatCurrency(selectedOrder.total_amount)}</Typography>
+                  </Stack>
+                </>
+              )}
+            </Card>
+          </div>
+        )}
       </div>
 
       <Drawer anchor="right" open={isCartOpen} onClose={() => setIsCartOpen(false)}>
@@ -1050,7 +1168,7 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
           </Stack>
         </Box>
       </Drawer>
-    </div>
+    </DashboardLayout>
   );
 };
 

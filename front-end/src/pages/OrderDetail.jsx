@@ -12,6 +12,8 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import DashboardLayout from '../components/DashboardLayout';
+import '../styles/OrderDetail.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
 
@@ -24,7 +26,7 @@ const STATUS_LABELS = {
   cancelled: 'Dibatalkan',
 };
 
-const OrderDetail = ({ authToken }) => {
+const OrderDetail = ({ authToken, onLogout, currentUser }) => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
@@ -74,47 +76,39 @@ const OrderDetail = ({ authToken }) => {
     return STATUS_LABELS[status] || status;
   }, [order]);
 
-  if (isLoading) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2, backgroundColor: '#f5f7fa' }}>
-        <Typography>Memuat detail pesanan...</Typography>
-      </Box>
-    );
-  }
+  const renderContent = () => {
+    if (isLoading) {
+      return <Typography>Memuat detail pesanan...</Typography>;
+    }
 
-  if (error) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2, backgroundColor: '#f5f7fa' }}>
-        <Card sx={{ p: 4, borderRadius: 3, width: '100%', maxWidth: 560, textAlign: 'center' }}>
+    if (error) {
+      return (
+        <Card className="order-detail-card" sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h5" fontWeight={700} mb={1}>Detail pesanan tidak tersedia</Typography>
           <Typography color="text.secondary" mb={3}>{error}</Typography>
           <Button variant="contained" onClick={() => navigate('/customer-dashboard?tab=history')}>Kembali ke Riwayat</Button>
         </Card>
-      </Box>
-    );
-  }
+      );
+    }
 
-  if (!order) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2, backgroundColor: '#f5f7fa' }}>
-        <Card sx={{ p: 4, borderRadius: 3, width: '100%', maxWidth: 560, textAlign: 'center' }}>
+    if (!order) {
+      return (
+        <Card className="order-detail-card" sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h5" fontWeight={700} mb={1}>Pesanan tidak ditemukan</Typography>
           <Typography color="text.secondary" mb={3}>Silakan cek kembali riwayat pesanan Anda.</Typography>
           <Button variant="contained" onClick={() => navigate('/customer-dashboard?tab=history')}>Kembali ke Riwayat</Button>
         </Card>
-      </Box>
-    );
-  }
+      );
+    }
 
-  return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2, backgroundColor: '#f5f7fa' }}>
-      <Card sx={{ p: 4, borderRadius: 3, width: '100%', maxWidth: 820 }}>
+    return (
+      <Card className="order-detail-card" sx={{ p: 4 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1} mb={1}>
           <Typography variant="h4" fontWeight={800}>Detail Pesanan</Typography>
           <Chip label={statusLabel} color="info" variant="outlined" />
         </Stack>
 
-        <Typography color="text.secondary" mb={2}>
+        <Typography className="order-detail-meta" mb={2}>
           ID Pesanan: {order.id} | {order.order_time ? new Date(order.order_time).toLocaleString('id-ID') : '-'}
         </Typography>
 
@@ -148,7 +142,17 @@ const OrderDetail = ({ authToken }) => {
           <Button variant="contained" onClick={() => navigate('/customer-dashboard?tab=history')}>Kembali ke Riwayat</Button>
         </Stack>
       </Card>
-    </Box>
+    );
+  };
+
+  return (
+    <DashboardLayout onLogout={onLogout} userRole="customer" currentUser={currentUser}>
+      <div className="main-content order-detail-content">
+        <div className="order-detail-overlay">
+          {renderContent()}
+        </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

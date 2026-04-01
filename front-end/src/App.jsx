@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import './App.css'
 import './styles/common.css'
+import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import Dashboard from './pages/Dashboard'
 import ManajemenStok from './pages/ManajemenStok'
@@ -16,7 +17,6 @@ import CustomerRegistration from './pages/CustomerRegistration'
 import CustomerDashboard from './pages/CustomerDashboard'
 import ManajemenObatRacikan from './pages/ManajemenObatRacikan'
 import OrderSuccess from './pages/OrderSuccess'
-import OrderDetail from './pages/OrderDetail'
 
 function App() {
   const [authToken, setAuthToken] = useState(null)
@@ -52,7 +52,7 @@ function App() {
   }
 
   const getRedirectPath = () => {
-    if (!userRole) return "/";
+    if (!userRole) return '/login';
     switch (userRole) {
       case 'admin':
         return '/dashboard';
@@ -61,19 +61,30 @@ function App() {
       case 'customer':
         return '/customer-dashboard';
       default:
-        return '/';
+        return '/login';
     }
   };
 
   const hasRole = (allowedRoles) => isAuthenticated && allowedRoles.includes(userRole)
+
+  const OrderDetailRedirect = () => {
+    const { orderId } = useParams()
+    const target = orderId
+      ? `/customer-dashboard?tab=history&detail=${orderId}`
+      : '/customer-dashboard?tab=history'
+    return <Navigate to={target} replace />
+  }
 
   return (
     <Router>
       <div className="app">
         <Routes>
           <Route path="/" element={
-            isAuthenticated ? 
-              <Navigate to={getRedirectPath()} /> : 
+            <LandingPage isAuthenticated={isAuthenticated} redirectPath={getRedirectPath()} />
+          } />
+          <Route path="/login" element={
+            isAuthenticated ?
+              <Navigate to={getRedirectPath()} /> :
               <LoginPage onLogin={handleLogin} />
           } />
           <Route path="/customer-dashboard" element={
@@ -84,67 +95,67 @@ function App() {
                 currentUser={currentUser}
                 onUserUpdate={setCurrentUser}
               /> : 
-              <Navigate to="/" />
+              <Navigate to="/login" />
           } />
           <Route path="/order-success" element={
             isAuthenticated && userRole === 'customer' ?
               <OrderSuccess /> :
-              <Navigate to="/" />
+              <Navigate to="/login" />
           } />
           <Route path="/orders/:orderId" element={
             isAuthenticated && userRole === 'customer' ?
-              <OrderDetail authToken={authToken} /> :
-              <Navigate to="/" />
+              <OrderDetailRedirect /> :
+              <Navigate to="/login" />
           } />
           <Route path="/dashboard" element={
             hasRole(['admin']) ?
               <Dashboard onLogout={handleLogout} userRole={userRole} currentUser={currentUser} /> :
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/dashboard-kasir" element={
             hasRole(['kasir']) ?
               <DashboardKasir onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> :
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/manajemen-stok" element={
             hasRole(['admin']) ? 
               <ManajemenStok onLogout={handleLogout} /> : 
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/manajemen-obat-racikan" element={
             hasRole(['admin']) ? 
               <ManajemenObatRacikan onLogout={handleLogout} /> : 
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/transaksi" element={
             hasRole(['admin']) ? 
               <TransaksiPenjualan onLogout={handleLogout} authToken={authToken} /> : 
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/transaksi-kasir" element={
             hasRole(['kasir']) ? 
               <TransaksiKasir onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> : 
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/laporan-kasir" element={
             hasRole(['kasir']) ? 
               <LaporanPenjualanKasir onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> : 
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/supplier" element={
             hasRole(['admin']) ? 
               <SupplierPage onLogout={handleLogout} /> : 
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/manajemen-pengguna" element={
             hasRole(['admin']) ? 
               <ManajemenPengguna onLogout={handleLogout} /> : 
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/laporan" element={
             hasRole(['admin']) ? 
               <LaporanAnalitik onLogout={handleLogout} /> : 
-              <Navigate to={isAuthenticated ? getRedirectPath() : '/'} />
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           {/* Customer Routes */}
           <Route path="/register-customer" element={

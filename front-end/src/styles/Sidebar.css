@@ -1,25 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
 /* Sidebar Styles */
 .sidebar {
-  width: 260px;
-  background-color: #fff;
-  border-right: 1px solid #eaeaea;
-  height: 100vh;
+  width: 280px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(45, 212, 191, 0.18), transparent 45%),
+    radial-gradient(circle at 85% 20%, rgba(34, 197, 94, 0.18), transparent 42%),
+    linear-gradient(180deg, #0f2b2f 0%, #0b1d1f 100%);
+  border-right: none;
+  min-height: 100vh;
+  height: auto;
   overflow-y: auto;
   position: sticky;
   top: 0;
+  align-self: stretch;
   transition: width 0.3s ease;
+  box-shadow: 18px 0 40px rgba(6, 95, 70, 0.12);
+  font-family: 'DM Sans', 'Space Grotesk', sans-serif;
 }
 
 .sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid #eaeaea;
+  padding: 22px 20px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .sidebar-header h2 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #333;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e2f2ee;
   margin: 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -32,11 +43,13 @@
 }
 
 .customer-profile-card {
-  margin: 14px;
-  padding: 12px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(92, 107, 192, 0.08), rgba(102, 187, 106, 0.08));
-  border: 1px solid #e3e8ff;
+  margin: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(15, 118, 110, 0.18);
+  border: 1px solid rgba(45, 212, 191, 0.25);
+  color: #e6f6f2;
+  backdrop-filter: blur(10px);
 }
 
 .customer-profile-head {
@@ -55,7 +68,7 @@
   margin: 0;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #e6f6f2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -64,40 +77,56 @@
 .customer-email {
   margin: 0;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: rgba(226, 242, 238, 0.75);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+
 .sidebar-nav li {
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
 .sidebar-nav li a {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
-  color: #555;
+  padding: 11px 16px;
+  color: rgba(226, 242, 238, 0.72);
   text-decoration: none;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  border-radius: 12px;
+  margin: 0 10px;
+  position: relative;
 }
 
 .sidebar-nav li a:hover {
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #f0fdfa;
 }
 
 .sidebar-nav li.active a {
-  background-color: #f0f0f0;
-  color: #333;
-  font-weight: 500;
-  border-left: 3px solid #333;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.28), rgba(15, 118, 110, 0.08));
+  color: #f0fdfa;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.18);
+}
+
+.sidebar-nav li.active a::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
 }
 
 .sidebar-nav li svg {
   min-width: 24px;
+  color: inherit;
 }
 
 .sidebar-nav li a span {
@@ -107,30 +136,35 @@
 }
 
 .sidebar-nav li.logout {
-  margin-top: 30px;
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .sidebar-nav li.logout a,
 .sidebar-nav li.logout .logout-link {
-  color: #f44336;
+  color: #fca5a5;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
+  padding: 11px 16px;
+  margin: 0 10px;
   text-decoration: none;
   transition: all 0.2s;
   cursor: pointer;
+  border-radius: 12px;
 }
 
 .sidebar-nav li.logout a:hover,
 .sidebar-nav li.logout .logout-link:hover {
-  background-color: #fee;
+  background-color: rgba(248, 113, 113, 0.18);
+  color: #fecaca;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .sidebar {
-    width: 70px;
+    width: 74px;
   }
 
   .customer-profile-card {
@@ -152,7 +186,7 @@
   
   /* Add hover effect to show text on hover */
   .sidebar:hover {
-    width: 260px;
+    width: 280px;
   }
   
   .sidebar:hover .sidebar-header h2 {

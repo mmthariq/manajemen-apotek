@@ -1,132 +1,53 @@
 /* SupplierPage Styles - Fixed Sidebar */
-.dashboard-container {
+.supplier-page.dashboard-container {
   display: flex;
   min-height: 100vh;
   background-color: #f8f9fa;
 }
 
-/* Add these styles for sidebar to appear full */
-.sidebar {
-  width: 280px;
-  min-width: 280px;
-  background: #ffffff;
-  border-right: 1px solid #e9ecef;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-}
 
-.sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.sidebar-header h1 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #495057;
-  margin: 0;
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 16px 0;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  color: #6c757d;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-  font-weight: 500;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-}
-
-.nav-item:hover {
-  background-color: #f8f9fa;
-  color: #495057;
-}
-
-.nav-item.active {
-  background-color: #e9ecef;
-  color: #495057;
-  border-right: 3px solid #007bff;
-}
-
-.nav-item svg {
-  width: 20px;
-  height: 20px;
-  color: currentColor;
-}
-
-.sidebar-footer {
-  padding: 16px 0;
-  border-top: 1px solid #e9ecef;
-}
-
-.nav-item.logout {
-  color: #dc3545;
-}
-
-.nav-item.logout:hover {
-  background-color: #f8f9fa;
-  color: #c82333;
-}
-
-.main-content {
+.supplier-page .main-content {
   flex: 1;
   padding: 20px 30px;
   background-color: #f8f9fa;
   min-height: 100vh;
 }
 
-.header {
+.supplier-page .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
 }
 
-.header h1 {
+.supplier-page .header h1 {
   font-size: 1.8rem;
   font-weight: 600;
   color: #333;
 }
 
-.user-info {
+.supplier-page .user-info {
   display: flex;
   align-items: center;
   gap: 20px;
 }
 
-.date {
+.supplier-page .date {
   font-size: 0.9rem;
   color: #666;
 }
 
-.admin-profile {
+.supplier-page .admin-profile {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.admin-profile span {
+.supplier-page .admin-profile span {
   font-weight: 500;
 }
 
-.profile-image {
+.supplier-page .profile-image {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -263,28 +184,17 @@
 }
 
 @media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    left: -280px;
-    z-index: 1000;
-    transition: left 0.3s ease;
-  }
-  
-  .sidebar.open {
-    left: 0;
-  }
-  
-  .main-content {
+  .supplier-page .main-content {
     margin-left: 0;
   }
   
-  .header {
+  .supplier-page .header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
   
-  .user-info {
+  .supplier-page .user-info {
     width: 100%;
     justify-content: flex-end;
   }

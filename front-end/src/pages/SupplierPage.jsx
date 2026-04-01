@@ -144,7 +144,7 @@ const SupplierPage = ({ onLogout }) => {
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container supplier-page">
       <Sidebar onLogout={onLogout} />
       
       <div className="main-content">

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import '../styles/Dashboard.css';
-import Sidebar from '../components/Sidebar';
+import DashboardLayout from '../components/DashboardLayout';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ORDER_API_BASE_URL = 'http://localhost:3000/api/orders';
@@ -191,9 +191,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   };
 
   return (
-    <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} userRole={userRole} currentUser={currentUser} />
-      
+    <DashboardLayout onLogout={onLogout} userRole={userRole} currentUser={currentUser}>
       <div className="main-content">
         <div className="header">
           <h1>Dashboard Kasir</h1>
@@ -383,7 +381,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
         </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
