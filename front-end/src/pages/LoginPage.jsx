@@ -118,6 +118,7 @@ const LoginPage = ({ onLogin }) => {
   const roles = [
     { id: 'admin', label: 'Admin' },
     { id: 'kasir', label: 'Cashier' },
+    { id: 'owner', label: 'Owner' },
     { id: 'customer', label: 'Customer' },
   ];
 

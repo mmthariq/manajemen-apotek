@@ -10,7 +10,7 @@ const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
   currency: 'IDR',
 }).format(Number(value || 0));
 
-const LaporanAnalitik = ({ onLogout }) => {
+const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) => {
   // Default date range for the report
   const [startDate, setStartDate] = useState('2025-01-01');
   const [endDate, setEndDate] = useState('2025-01-31');
@@ -30,6 +30,11 @@ const LaporanAnalitik = ({ onLogout }) => {
     () => ['Semua Kategori', ...availableCategories],
     [availableCategories]
   );
+
+  const profileLabel =
+    currentUser?.name ||
+    currentUser?.username ||
+    (String(userRole).toLowerCase() === 'owner' ? 'Owner' : 'Admin');
 
   const fetchAnalytics = async () => {
     try {
@@ -120,7 +125,7 @@ const LaporanAnalitik = ({ onLogout }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} />
+      <Sidebar onLogout={onLogout} userRole={userRole} currentUser={currentUser} />
       
       <div className="main-content">
         <div className="header">
@@ -128,7 +133,7 @@ const LaporanAnalitik = ({ onLogout }) => {
           <div className="user-info">
             <span className="date">12 May 2025, 07:41:55</span>
             <div className="admin-profile">
-              <span>Admin</span>
+              <span>{profileLabel}</span>
               <div className="profile-image">
                 <svg viewBox="0 0 24 24" width="24" height="24">
                   <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />

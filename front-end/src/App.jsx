@@ -58,6 +58,8 @@ function App() {
         return '/dashboard';
       case 'kasir':
         return '/dashboard-kasir';
+      case 'owner':
+        return '/laporan';
       case 'customer':
         return '/customer-dashboard';
       default:
@@ -153,8 +155,8 @@ function App() {
               <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/laporan" element={
-            hasRole(['admin']) ? 
-              <LaporanAnalitik onLogout={handleLogout} /> : 
+            hasRole(['admin', 'owner']) ? 
+              <LaporanAnalitik onLogout={handleLogout} userRole={userRole} currentUser={currentUser} /> : 
               <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           {/* Customer Routes */}
