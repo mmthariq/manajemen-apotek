@@ -68,7 +68,16 @@ const ManajemenPengguna = ({ onLogout }) => {
         ? result.data.map(mapApiUserToUi)
         : [];
 
-      setUsers(mappedUsers);
+      const sortedUsers = [...mappedUsers].sort((a, b) => {
+        const aId = Number(a.apiId ?? a.id);
+        const bId = Number(b.apiId ?? b.id);
+        if (Number.isNaN(aId) || Number.isNaN(bId)) {
+          return String(a.id).localeCompare(String(b.id));
+        }
+        return aId - bId;
+      });
+
+      setUsers(sortedUsers);
     } catch (error) {
       setApiError(error.message || 'Terjadi kesalahan saat memuat data pengguna.');
     } finally {
@@ -269,6 +278,7 @@ const ManajemenPengguna = ({ onLogout }) => {
               <option value="Admin">Admin</option>
               <option value="Kasir">Kasir</option>
               <option value="Staff">Staff</option>
+              <option value="Owner">Owner</option>
               <option value="Customer">Customer</option>
             </select>
             

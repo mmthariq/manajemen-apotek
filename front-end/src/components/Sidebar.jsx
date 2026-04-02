@@ -88,8 +88,8 @@ const Sidebar = ({ onLogout, userRole = 'admin', currentUser = null }) => {
 
       <nav className="sidebar-nav">
         <ul>
-          {/* Admin & Owner Menu */}
-          {(userRole === 'admin' || userRole === 'owner') && (
+          {/* Admin Menu */}
+          {userRole === 'admin' && (
             <>
               <li className={currentPath === '/dashboard' ? 'active' : ''}>
                 <Link to="/dashboard">
@@ -145,6 +145,20 @@ const Sidebar = ({ onLogout, userRole = 'admin', currentUser = null }) => {
                     <path fill="currentColor" d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z" />
                   </svg>
                   <span>Laporan Analitik</span>
+                </Link>
+              </li>
+            </>
+          )}
+
+          {/* Owner Menu (Read-only Analitik) */}
+          {userRole === 'owner' && (
+            <>
+              <li className={currentPath === '/laporan' ? 'active' : ''}>
+                <Link to="/laporan">
+                  <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z" />
+                  </svg>
+                  <span>Dashboard Analitik</span>
                 </Link>
               </li>
             </>
