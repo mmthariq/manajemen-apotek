@@ -6,6 +6,7 @@ const ROLE_MAP = {
   admin: 'ADMIN',
   kasir: 'KASIR',
   customer: 'CUSTOMER',
+  owner: 'OWNER',
 };
 
 const isMissingTableError = (error) => error && error.code === '42P01';
@@ -30,13 +31,13 @@ const login = async (req, res, next) => {
   try {
     const { email, password, role } = req.body;
     const normalizedRole = String(role || '').toLowerCase();
-    const prismaRole = ROLE_MAP[normalizedRole];
+    const mappedRole = ROLE_MAP[normalizedRole];
 
     if (!email || !password || !normalizedRole) {
       return res.status(400).json({ message: 'Email, password, dan role harus diisi.' });
     }
 
-    if (!prismaRole) {
+    if (!mappedRole) {
       return res.status(400).json({ message: 'Role tidak valid.' });
     }
 
@@ -53,8 +54,8 @@ const login = async (req, res, next) => {
 
       if (!user) {
         const result = await pool.query(
-          'SELECT * FROM "User" WHERE role = $2 AND (email = $1 OR username = $1)',
-          [email, prismaRole]
+          'SELECT * FROM "User" WHERE LOWER(CAST("role" AS text)) = $2 AND (email = $1 OR username = $1)',
+          [email, normalizedRole]
         );
         user = result.rows[0];
       }
@@ -69,7 +70,10 @@ const login = async (req, res, next) => {
       }
 
       if (!user) {
-        const result = await pool.query('SELECT * FROM "User" WHERE username = $1 AND role = $2', [email, prismaRole]);
+        const result = await pool.query(
+          'SELECT * FROM "User" WHERE username = $1 AND LOWER(CAST("role" AS text)) = $2',
+          [email, normalizedRole]
+        );
         user = result.rows[0];
       }
     }

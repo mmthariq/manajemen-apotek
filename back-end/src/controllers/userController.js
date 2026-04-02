@@ -6,7 +6,7 @@ const ROLE_MAP = {
   kasir: 'KASIR',
   customer: 'CUSTOMER',
   staff: 'KASIR',
-  owner: 'ADMIN',
+  owner: 'OWNER',
 };
 
 const normalizeRole = (role) => ROLE_MAP[String(role || '').toLowerCase()] || null;
