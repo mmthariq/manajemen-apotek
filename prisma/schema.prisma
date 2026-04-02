@@ -10,6 +10,7 @@ enum Role {
   ADMIN
   KASIR
   CUSTOMER
+  OWNER
 }
 
 model User {

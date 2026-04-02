@@ -58,6 +58,21 @@ async function main() {
     }
   });
 
+  await prisma.user.upsert({
+    where: { username: "owner" },
+    update: {
+      email: "owner@apotek.local",
+      password: "123456",
+      role: "OWNER"
+    },
+    create: {
+      username: "owner",
+      email: "owner@apotek.local",
+      password: "123456",
+      role: "OWNER"
+    }
+  });
+
   console.log("✅ Seed berhasil masuk!");
 }
 
