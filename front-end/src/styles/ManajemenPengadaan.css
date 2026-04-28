@@ -1,0 +1,131 @@
+.pengadaan-page {
+  padding: 20px;
+}
+
+.pengadaan-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.pengadaan-header p {
+  margin-top: 8px;
+  color: #5f6368;
+}
+
+.pengadaan-alert {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #eef3ff;
+  color: #1d2a4d;
+}
+
+.pengadaan-alert-error {
+  background: #fdecec;
+  color: #a11a1a;
+}
+
+.pengadaan-alert-success {
+  background: #e9f8ee;
+  color: #176a2d;
+}
+
+.pengadaan-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pengadaan-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e4e6ea;
+  padding: 16px;
+}
+
+.pengadaan-card h2 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.pengadaan-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pengadaan-form-row label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.pengadaan-form-row input,
+.pengadaan-form-row select {
+  border: 1px solid #cfd4db;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.pengadaan-inline-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pengadaan-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.pengadaan-actions button {
+  border: none;
+  background: #1f4aa0;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.pengadaan-actions button:disabled {
+  background: #98a3bb;
+  cursor: not-allowed;
+}
+
+.pengadaan-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pengadaan-table th,
+.pengadaan-table td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #eceff4;
+}
+
+.pengadaan-delete {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #ffe5e5;
+  color: #b02020;
+  cursor: pointer;
+}
+
+.pengadaan-total {
+  margin-top: 12px;
+  text-align: right;
+}
+
+.pengadaan-history-card {
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .pengadaan-grid {
+    grid-template-columns: 1fr;
+  }
+}
