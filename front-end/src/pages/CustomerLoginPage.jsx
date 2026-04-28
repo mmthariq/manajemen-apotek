@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ForgotPasswordPage from './ForgotPasswordPage';
 import {
-  Box, Button, Container, TextField, Typography, Paper,
+  Box, Button, Container, TextField, Typography,
   InputAdornment, IconButton, CircularProgress, Stack, Divider
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -11,20 +10,20 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import LocalPharmacyRoundedIcon from '@mui/icons-material/LocalPharmacyRounded';
-import MedicalServicesOutlinedIcon from '@mui/icons-material/MedicalServicesOutlined';
-import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
-import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import HealthAndSafetyOutlinedIcon from '@mui/icons-material/HealthAndSafetyOutlined';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#0d9488',   // teal-600
-      light: '#5eead4', // teal-300
-      dark: '#0f766e',  // teal-700
+      main: '#0d9488',
+      light: '#5eead4',
+      dark: '#0f766e',
     },
     secondary: {
-      main: '#14b8a6',   // teal-500
-      light: '#ccfbf1', // teal-100
+      main: '#14b8a6',
+      light: '#ccfbf1',
     },
     background: {
       default: '#f8fafc',
@@ -46,26 +45,49 @@ const theme = createTheme({
   },
 });
 
-const featureItems = [
-  { icon: <InventoryOutlinedIcon sx={{ fontSize: 22 }} />, label: 'Manajemen Stok & Obat' },
-  { icon: <MedicalServicesOutlinedIcon sx={{ fontSize: 22 }} />, label: 'Transaksi & Penjualan' },
-  { icon: <AssessmentOutlinedIcon sx={{ fontSize: 22 }} />, label: 'Laporan & Analitik' },
+const benefits = [
+  {
+    icon: <HealthAndSafetyOutlinedIcon sx={{ fontSize: 22 }} />,
+    title: 'Produk Terpercaya',
+    desc: 'Obat & suplemen original bersertifikat BPOM',
+  },
+  {
+    icon: <ShoppingBagOutlinedIcon sx={{ fontSize: 22 }} />,
+    title: 'Belanja Mudah',
+    desc: 'Pesan kapan saja, di mana saja dengan mudah',
+  },
+  {
+    icon: <LocalShippingOutlinedIcon sx={{ fontSize: 22 }} />,
+    title: 'Pengiriman Cepat',
+    desc: 'Dikirim langsung ke pintu rumah Anda',
+  },
 ];
 
-const LoginPage = ({ onLogin }) => {
+// Google SVG Icon
+const GoogleIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    <path fill="none" d="M0 0h48v48H0z"/>
+  </svg>
+);
+
+const CustomerLoginPage = ({ onLogin }) => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     const newErrors = {};
-    if (!username.trim()) newErrors.username = 'Email atau username wajib diisi';
+    if (!identifier.trim()) newErrors.identifier = 'Email atau nomor handphone wajib diisi';
     if (!password) newErrors.password = 'Password wajib diisi';
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -75,33 +97,15 @@ const LoginPage = ({ onLogin }) => {
     setIsLoading(true);
     setErrors({});
 
-    // Backend mewajibkan field `role`. Karena UI tidak menampilkan role selector,
-    // kita coba ketiga role internal secara otomatis hingga salah satu berhasil.
-    const internalRoles = ['admin', 'kasir', 'owner'];
-
     try {
-      let lastError = 'Login gagal, silakan coba lagi.';
-      for (const role of internalRoles) {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: username, password, role }),
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-          // Login berhasil dengan role ini
-          onLogin(data.token, data.user.role, data.user);
-          return;
-        }
-
-        // Simpan pesan error terakhir (selain "role tidak valid")
-        if (data.message && !data.message.toLowerCase().includes('role')) {
-          lastError = data.message;
-        }
-      }
-      // Semua role gagal
-      throw new Error(lastError);
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: identifier, password, role: 'customer' }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Login gagal, silakan coba lagi.');
+      onLogin(data.token, data.user.role, data.user);
     } catch (error) {
       setErrors({ api: error.message });
     } finally {
@@ -109,13 +113,18 @@ const LoginPage = ({ onLogin }) => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    // Placeholder: integrasikan dengan Google OAuth
+    setTimeout(() => {
+      setIsGoogleLoading(false);
+      setErrors({ api: 'Login dengan Google belum dikonfigurasi. Hubungi administrator.' });
+    }, 1500);
+  };
+
   const handleInputChange = (field) => {
     if (errors[field]) setErrors({ ...errors, [field]: '' });
   };
-
-  if (showForgotPassword) {
-    return <ForgotPasswordPage onBackToLogin={() => setShowForgotPassword(false)} />;
-  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -136,90 +145,119 @@ const LoginPage = ({ onLogin }) => {
             p: 8,
             position: 'relative',
             overflow: 'hidden',
-            backgroundImage: 'url(/images/apotek.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
+            background: 'linear-gradient(155deg, #134e4a 0%, #0f766e 30%, #0d9488 65%, #2dd4bf 100%)',
           }}
         >
-          {/* Dark teal overlay agar teks terbaca jelas di atas foto */}
-          <Box sx={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(145deg, rgba(9,78,72,0.82) 0%, rgba(13,148,136,0.72) 60%, rgba(20,184,166,0.55) 100%)',
-            zIndex: 0,
-          }} />
-
           {/* decorative blobs */}
           <Box sx={{
-            position: 'absolute', top: '-15%', right: '-15%',
-            width: 500, height: 500,
-            bgcolor: 'rgba(255,255,255,0.04)', borderRadius: '50%',
-            zIndex: 0,
+            position: 'absolute', top: '-20%', right: '-20%',
+            width: 550, height: 550,
+            bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '50%',
           }} />
           <Box sx={{
-            position: 'absolute', bottom: '-10%', left: '-10%',
-            width: 380, height: 380,
-            bgcolor: 'rgba(255,255,255,0.04)', borderRadius: '50%',
-            zIndex: 0,
+            position: 'absolute', bottom: '-15%', left: '-15%',
+            width: 400, height: 400,
+            bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '50%',
+          }} />
+          {/* Floating pill */}
+          <Box sx={{
+            position: 'absolute', top: '15%', right: '8%',
+            width: 80, height: 80, borderRadius: '24px',
+            bgcolor: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            transform: 'rotate(12deg)',
+          }} />
+          <Box sx={{
+            position: 'absolute', bottom: '18%', right: '12%',
+            width: 50, height: 50, borderRadius: '14px',
+            bgcolor: 'rgba(255,255,255,0.08)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            transform: 'rotate(-8deg)',
           }} />
 
-          <Box sx={{ zIndex: 1, textAlign: 'center', maxWidth: 480 }}>
+          <Box sx={{ zIndex: 1, textAlign: 'center', maxWidth: 460 }}>
             {/* Logo */}
             <Box sx={{
-              width: 88, height: 88, borderRadius: '24px', mx: 'auto', mb: 5,
+              width: 88, height: 88, borderRadius: '28px', mx: 'auto', mb: 5,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               bgcolor: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(10px)',
+              backdropFilter: 'blur(12px)',
               border: '1px solid rgba(255,255,255,0.25)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
             }}>
-              <LocalPharmacyRoundedIcon sx={{ fontSize: 48, color: '#fff' }} />
+              <LocalPharmacyRoundedIcon sx={{ fontSize: 50, color: '#ffffff' }} />
             </Box>
 
             <Typography
               variant="h3"
               fontWeight="800"
               sx={{
-                color: '#fff',
+                color: '#ffffff',
                 letterSpacing: '-0.5px',
                 lineHeight: 1.2,
-                mb: 2,
-                fontSize: { md: '2rem', lg: '2.4rem' },
+                mb: 2.5,
+                fontSize: { md: '1.9rem', lg: '2.3rem' },
               }}
             >
-              Apotek Pemuda<br />Farma
+              Apotek Pemuda Farma
             </Typography>
 
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.75)', mb: 6, lineHeight: 1.7, fontSize: '0.95rem' }}>
-              Sistem manajemen apotek terintegrasi untuk operasional yang lebih efisien dan akurat.
-            </Typography>
+            {/* Tagline Badge */}
+            <Box sx={{
+              display: 'inline-block',
+              px: 3, py: 0.8,
+              bgcolor: 'rgba(255,255,255,0.15)',
+              backdropFilter: 'blur(8px)',
+              borderRadius: '50px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              mb: 5,
+            }}>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, fontSize: '0.85rem' }}>
+                🛒 Toko Kesehatan Online Terpercaya
+              </Typography>
+            </Box>
 
-            {/* Feature Chips */}
-            <Stack spacing={2}>
-              {featureItems.map((item, idx) => (
+            {/* Benefit Cards */}
+            <Stack spacing={2.5}>
+              {benefits.map((item, idx) => (
                 <Box
                   key={idx}
                   sx={{
-                    display: 'flex', alignItems: 'center', gap: 2,
-                    bgcolor: 'rgba(255,255,255,0.12)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    borderRadius: '14px',
-                    px: 3, py: 1.8,
+                    display: 'flex', alignItems: 'center', gap: 2.5,
+                    bgcolor: 'rgba(255,255,255,0.10)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.16)',
+                    borderRadius: '16px',
+                    px: 3, py: 2,
+                    textAlign: 'left',
                     transition: 'all 0.2s',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.18)' },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.17)', transform: 'translateX(4px)' },
                   }}
                 >
-                  <Box sx={{ color: 'rgba(255,255,255,0.9)' }}>{item.icon}</Box>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-                    {item.label}
-                  </Typography>
+                  <Box sx={{
+                    width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    bgcolor: 'rgba(255,255,255,0.18)',
+                    color: '#ffffff',
+                  }}>
+                    {item.icon}
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" sx={{ color: '#ffffff', fontWeight: 700, mb: 0.3 }}>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
+                      {item.desc}
+                    </Typography>
+                  </Box>
                 </Box>
               ))}
             </Stack>
 
-            <Typography variant="caption" sx={{ display: 'block', mt: 6, color: 'rgba(255,255,255,0.45)' }}>
-              © 2025 Apotek Pemuda Farma. All rights reserved.
+            <Typography variant="caption" sx={{ display: 'block', mt: 6, color: 'rgba(255,255,255,0.4)' }}>
+              © 2025 Apotek Pemuda Farma. Semua hak dilindungi.
             </Typography>
           </Box>
         </Box>
@@ -250,23 +288,65 @@ const LoginPage = ({ onLogin }) => {
               <Typography variant="h6" fontWeight="700" color="text.primary">
                 Apotek Pemuda Farma
               </Typography>
+              <Typography variant="caption" color="text.secondary">Toko Kesehatan Online</Typography>
             </Box>
 
             {/* Heading */}
             <Box sx={{ mb: 5 }}>
               <Typography variant="h4" fontWeight="800" color="text.primary" sx={{ letterSpacing: '-0.5px', mb: 1 }}>
-                Welcome Back 👋
+                Masuk ke Akun Anda 🌿
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                Masuk untuk mengelola dashboard internal Apotek Pemuda Farma.
+                Silakan masuk untuk mulai berbelanja kebutuhan kesehatan Anda.
               </Typography>
+            </Box>
+
+            {/* Google Login Button */}
+            <Button
+              id="customer-google-signin-btn"
+              variant="outlined"
+              fullWidth
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading}
+              startIcon={isGoogleLoading ? <CircularProgress size={18} color="inherit" /> : <GoogleIcon />}
+              sx={{
+                py: 1.6,
+                mb: 3,
+                borderRadius: '14px',
+                borderColor: '#e2e8f0',
+                borderWidth: '1.5px',
+                color: '#374151',
+                bgcolor: '#fff',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: '#cbd5e1',
+                  bgcolor: '#f8fafc',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                  transform: 'translateY(-1px)',
+                },
+                '&:active': { transform: 'none' },
+              }}
+            >
+              Masuk dengan Google
+            </Button>
+
+            {/* Divider */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <Divider sx={{ flex: 1, borderColor: '#f1f5f9' }} />
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', fontWeight: 500, px: 1 }}>
+                atau masuk dengan email
+              </Typography>
+              <Divider sx={{ flex: 1, borderColor: '#f1f5f9' }} />
             </Box>
 
             {/* API Error */}
             {errors.api && (
               <Box sx={{
                 bgcolor: '#fef2f2', color: '#dc2626', borderLeft: '4px solid #ef4444',
-                p: 2.5, borderRadius: '12px', mb: 4, display: 'flex', alignItems: 'center', gap: 1.5,
+                p: 2.5, borderRadius: '12px', mb: 3, display: 'flex', alignItems: 'center', gap: 1.5,
               }}>
                 <Typography variant="body2" fontWeight={500}>{errors.api}</Typography>
               </Box>
@@ -274,20 +354,20 @@ const LoginPage = ({ onLogin }) => {
 
             <form onSubmit={handleLogin} noValidate>
               <Stack spacing={3}>
-                {/* Username / Email */}
+                {/* Email / Phone */}
                 <Box>
                   <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ mb: 1 }}>
-                    Email atau Username
+                    Email atau Nomor Handphone
                   </Typography>
                   <TextField
-                    id="staff-username"
+                    id="customer-identifier"
                     fullWidth
-                    placeholder="Masukkan email atau username"
+                    placeholder="email@contoh.com atau 08xxxxxxxxxx"
                     variant="outlined"
-                    value={username}
-                    onChange={(e) => { setUsername(e.target.value); handleInputChange('username'); }}
-                    error={!!errors.username}
-                    helperText={errors.username}
+                    value={identifier}
+                    onChange={(e) => { setIdentifier(e.target.value); handleInputChange('identifier'); }}
+                    error={!!errors.identifier}
+                    helperText={errors.identifier}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '14px',
@@ -315,7 +395,7 @@ const LoginPage = ({ onLogin }) => {
                     Password
                   </Typography>
                   <TextField
-                    id="staff-password"
+                    id="customer-password"
                     fullWidth
                     placeholder="Masukkan password Anda"
                     type={showPassword ? 'text' : 'password'}
@@ -344,7 +424,7 @@ const LoginPage = ({ onLogin }) => {
                       endAdornment: (
                         <InputAdornment position="end">
                           <IconButton
-                            id="staff-toggle-password"
+                            id="customer-toggle-password"
                             onClick={() => setShowPassword(!showPassword)}
                             edge="end"
                             sx={{ color: '#94a3b8', '&:hover': { color: '#0d9488' } }}
@@ -362,21 +442,21 @@ const LoginPage = ({ onLogin }) => {
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1.2 }}>
                     <Typography
                       variant="body2"
-                      onClick={() => setShowForgotPassword(true)}
+                      onClick={() => navigate('/lupa-password')}
                       sx={{
                         color: '#0d9488', fontWeight: 600, cursor: 'pointer',
                         '&:hover': { color: '#0f766e', textDecoration: 'underline' },
                         transition: 'color 0.2s',
                       }}
                     >
-                      Forgot Password?
+                      Lupa Password?
                     </Typography>
                   </Box>
                 </Box>
 
-                {/* Sign In Button */}
+                {/* Masuk Button */}
                 <Button
-                  id="staff-signin-btn"
+                  id="customer-signin-btn"
                   type="submit"
                   variant="contained"
                   fullWidth
@@ -399,37 +479,49 @@ const LoginPage = ({ onLogin }) => {
                 >
                   {isLoading
                     ? <CircularProgress size={22} sx={{ color: 'rgba(255,255,255,0.85)' }} />
-                    : 'Sign In'}
+                    : 'Masuk / Sign In'}
                 </Button>
               </Stack>
             </form>
 
-            {/* Divider & back to home */}
-            <Divider sx={{ my: 4, borderColor: '#f1f5f9' }} />
-            <Box sx={{ textAlign: 'center' }}>
+            {/* Register Link */}
+            <Box
+              sx={{
+                mt: 4, p: 3,
+                bgcolor: '#f0fdfa',
+                border: '1.5px solid #99f6e4',
+                borderRadius: '16px',
+                textAlign: 'center',
+              }}
+            >
               <Typography variant="body2" color="text.secondary">
-                Bukan portal pegawai?{' '}
+                Belum punya akun?{' '}
                 <Typography
                   component="span"
                   variant="body2"
-                  onClick={() => navigate('/customer-login')}
+                  onClick={() => navigate('/register-customer')}
                   sx={{
-                    color: '#0d9488', fontWeight: 600, cursor: 'pointer',
-                    '&:hover': { textDecoration: 'underline' },
+                    color: '#0d9488', fontWeight: 700, cursor: 'pointer',
+                    '&:hover': { textDecoration: 'underline', color: '#0f766e' },
+                    transition: 'color 0.2s',
                   }}
                 >
-                  Login sebagai Customer
+                  Daftar di sini
                 </Typography>
               </Typography>
+            </Box>
+
+            {/* Link to staff login */}
+            <Box sx={{ textAlign: 'center', mt: 3 }}>
               <Typography
                 variant="body2"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/login')}
                 sx={{
-                  color: '#94a3b8', mt: 1.5, cursor: 'pointer', fontWeight: 500, fontSize: '0.8rem',
+                  color: '#94a3b8', cursor: 'pointer', fontWeight: 500, fontSize: '0.8rem',
                   '&:hover': { color: '#0d9488' },
                 }}
               >
-                ← Kembali ke halaman utama
+                🔐 Portal Karyawan? Masuk di sini
               </Typography>
             </Box>
           </Container>
@@ -439,4 +531,4 @@ const LoginPage = ({ onLogin }) => {
   );
 };
 
-export default LoginPage;
+export default CustomerLoginPage;

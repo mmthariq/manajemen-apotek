@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
+import NotificationBell from '../components/NotificationBell';
 import Sidebar from '../components/Sidebar';
 import '../styles/LaporanPenjualanKasir.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
+const REPORT_EXPORT_URL = 'http://localhost:3000/api/reports/sales-kasir/export';
 
 const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) => {
+  const clock = useRealtimeClock();
   const [selectedDate, setSelectedDate] = useState(getCurrentDate());
   const [isLoading, setIsLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
@@ -48,8 +52,12 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
       }
 
       const filtered = (Array.isArray(result.data) ? result.data : []).filter((item) => {
-        if (!item.order_time) return false;
-        return new Date(item.order_time).toISOString().slice(0, 10) === selectedDate;
+        if (!item.createdAt) return false;
+        const d = new Date(item.createdAt);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}` === selectedDate;
       });
 
       setTransactions(filtered);
@@ -59,6 +67,13 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
       setIsLoading(false);
     }
   };
+
+  React.useEffect(() => {
+    if (authToken) {
+      handleDisplayTransactions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken, selectedDate]);
 
   // Show notification function
   const showNotificationMessage = (message, type = 'success') => {
@@ -71,27 +86,79 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
   };
 
   // Handle exporting to PDF
-  const handleExportPDF = () => {
-    setIsLoading(true);
-    
-    // Simulate PDF export process
-    setTimeout(() => {
-      setIsLoading(false);
+  const handleExportPDF = async () => {
+    try {
+      setIsLoading(true);
+      const query = new URLSearchParams({ date: selectedDate, type: 'pdf' });
+      const response = await fetch(`${REPORT_EXPORT_URL}?${query.toString()}`, {
+        headers: buildHeaders(),
+      });
+
+      if (!response.ok) {
+        let message = 'Gagal mengekspor laporan PDF.';
+        try {
+          const result = await response.json();
+          message = result.message || message;
+        } catch (error) {
+          // Abaikan parse error saat response bukan JSON.
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laporan-penjualan-kasir-${Date.now()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
       showNotificationMessage('Laporan berhasil diekspor ke PDF!', 'success');
-      // In a real app, this would call a PDF generation library or API
-    }, 1500);
+    } catch (error) {
+      showNotificationMessage(error.message || 'Terjadi kesalahan saat ekspor PDF.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle exporting to Excel
-  const handleExportExcel = () => {
-    setIsLoading(true);
-    
-    // Simulate Excel export process
-    setTimeout(() => {
-      setIsLoading(false);
+  const handleExportExcel = async () => {
+    try {
+      setIsLoading(true);
+      const query = new URLSearchParams({ date: selectedDate, type: 'excel' });
+      const response = await fetch(`${REPORT_EXPORT_URL}?${query.toString()}`, {
+        headers: buildHeaders(),
+      });
+
+      if (!response.ok) {
+        let message = 'Gagal mengekspor laporan Excel.';
+        try {
+          const result = await response.json();
+          message = result.message || message;
+        } catch (error) {
+          // Abaikan parse error saat response bukan JSON.
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laporan-penjualan-kasir-${Date.now()}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
       showNotificationMessage('Laporan berhasil diekspor ke Excel!', 'success');
-      // In a real app, this would use a library like exceljs or call an API
-    }, 1500);
+    } catch (error) {
+      showNotificationMessage(error.message || 'Terjadi kesalahan saat ekspor Excel.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -102,7 +169,8 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
         <div className="header">
           <h1>Laporan Penjualan</h1>
           <div className="user-info">
-            <span className="date">12 May 2025, 07:41:55</span>
+            <span className="date">{clock}</span>
+            <NotificationBell authToken={authToken} />
             <div className="admin-profile">
               <span>Kasir</span>
               <div className="profile-image">
@@ -147,15 +215,21 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((transaction) => (
-                  <tr key={transaction.id}>
-                    <td>TRX-{String(transaction.id).padStart(4, '0')}</td>
-                    <td>{transaction.order_time ? new Date(transaction.order_time).toLocaleTimeString('id-ID') : '-'}</td>
-                    <td>Order Online</td>
-                    <td>{Number(transaction.total_items || 0)}</td>
-                    <td>Rp {Number(transaction.total_amount || 0).toLocaleString('id-ID')}</td>
+                {transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center' }}>Belum ada transaksi untuk tanggal ini.</td>
                   </tr>
-                ))}
+                ) : (
+                  transactions.map((transaction) => (
+                    <tr key={transaction.id}>
+                      <td>TRX-{String(transaction.id).padStart(4, '0')}</td>
+                      <td>{transaction.createdAt ? new Date(transaction.createdAt).toLocaleTimeString('id-ID') : '-'}</td>
+                      <td>Order Online</td>
+                      <td>{Number(transaction.totalItems || 0)}</td>
+                      <td>Rp {Number(transaction.totalPrice || 0).toLocaleString('id-ID')}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

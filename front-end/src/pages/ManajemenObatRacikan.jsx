@@ -1,27 +1,46 @@
 import React, { useEffect, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
 import Sidebar from '../components/Sidebar';
 import CustomMedicineForm from '../components/CustomMedicineForm';
 import '../styles/ManajemenObatRacikan.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/custom-medicine';
 
-const ManajemenObatRacikan = ({ onLogout }) => {
+const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
+  const clock = useRealtimeClock();
   const [customMedicines, setCustomMedicines] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [editingData, setEditingData] = useState(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState('success');
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewingKomposisi, setViewingKomposisi] = useState(null);
+
+  const getAuthHeaders = (includeJsonContentType = false) => {
+    const headers = {};
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+
+    return headers;
+  };
 
   const fetchCustomMedicines = async () => {
     try {
       setIsLoading(true);
       setErrorMessage('');
-      const response = await fetch(API_BASE_URL);
+      const response = await fetch(API_BASE_URL, {
+        headers: getAuthHeaders(),
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -51,17 +70,20 @@ const ManajemenObatRacikan = ({ onLogout }) => {
 
   const handleAddNew = () => {
     setEditingId(null);
+    setEditingData(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (medicine) => {
     setEditingId(medicine.id);
+    setEditingData(medicine);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
+    setEditingData(null);
   };
 
   const handleSave = async (formData) => {
@@ -76,7 +98,7 @@ const ManajemenObatRacikan = ({ onLogout }) => {
       if (editingId) {
         const response = await fetch(`${API_BASE_URL}/${editingId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload),
         });
         const result = await response.json();
@@ -91,7 +113,7 @@ const ManajemenObatRacikan = ({ onLogout }) => {
       } else {
         const response = await fetch(API_BASE_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload),
         });
         const result = await response.json();
@@ -99,7 +121,7 @@ const ManajemenObatRacikan = ({ onLogout }) => {
           throw new Error(result.message || 'Gagal menambahkan obat racikan.');
         }
 
-        setCustomMedicines((prev) => [result.data, ...prev]);
+        setCustomMedicines((prev) => [...prev, result.data]);
         showNotificationMessage('Obat racikan baru berhasil ditambahkan', 'success');
       }
       handleCloseModal();
@@ -112,7 +134,10 @@ const ManajemenObatRacikan = ({ onLogout }) => {
   const handleDelete = async (id) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus obat racikan ini?')) {
       try {
-        const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
+        const response = await fetch(`${API_BASE_URL}/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
         const result = await response.json();
         if (!response.ok) {
           throw new Error(result.message || 'Gagal menghapus obat racikan.');
@@ -146,7 +171,7 @@ const ManajemenObatRacikan = ({ onLogout }) => {
         <div className="header">
           <h1>Manajemen Obat Racikan</h1>
           <div className="user-info">
-            <span className="date">{new Date().toLocaleDateString('id-ID')}</span>
+            <span className="date">{clock}</span>
           </div>
         </div>
 
@@ -209,7 +234,11 @@ const ManajemenObatRacikan = ({ onLogout }) => {
                         </span>
                       </td>
                       <td className="komposisi-cell">
-                        <button className="btn-view-komposisi" title="Lihat Komposisi">
+                        <button
+                          className="btn-view-komposisi"
+                          title="Lihat Komposisi"
+                          onClick={() => setViewingKomposisi(medicine)}
+                        >
                           {medicine.komposisi.length} bahan
                         </button>
                       </td>
@@ -265,7 +294,47 @@ const ManajemenObatRacikan = ({ onLogout }) => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleSave}
+        authToken={authToken}
+        editData={editingData}
       />
+
+      {/* Modal Lihat Komposisi */}
+      {viewingKomposisi && (
+        <div className="modal-overlay" onClick={() => setViewingKomposisi(null)}>
+          <div className="komposisi-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="komposisi-modal-header">
+              <h3>Komposisi: {viewingKomposisi.nama}</h3>
+              <button className="close-button" onClick={() => setViewingKomposisi(null)}>✕</button>
+            </div>
+            <div className="komposisi-modal-body">
+              {viewingKomposisi.komposisi.length === 0 ? (
+                <p className="empty-komposisi">Belum ada komposisi</p>
+              ) : (
+                <table className="komposisi-detail-table">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Nama Bahan</th>
+                      <th>Jumlah</th>
+                      <th>Satuan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewingKomposisi.komposisi.map((comp, idx) => (
+                      <tr key={comp.id || idx}>
+                        <td>{idx + 1}</td>
+                        <td>{comp.bahan}</td>
+                        <td>{comp.jumlah}</td>
+                        <td>{comp.satuan}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showNotification && (
         <div className={`notification ${notificationType}`}>

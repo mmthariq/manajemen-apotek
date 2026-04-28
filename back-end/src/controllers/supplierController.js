@@ -3,7 +3,7 @@ const pool = require('../config/database');
 const getAllSuppliers = async (req, res, next) => {
   try {
     const result = await pool.query(
-      'SELECT "id", "name", "contactPerson", "phone", "address", "createdAt", "updatedAt" FROM "Supplier" ORDER BY "id" DESC'
+      'SELECT "id", "name", "contactPerson", "phone", "email", "address", "createdAt", "updatedAt" FROM "suppliers" ORDER BY "id" ASC'
     );
 
     res.status(200).json({
@@ -18,17 +18,17 @@ const getAllSuppliers = async (req, res, next) => {
 
 const createSupplier = async (req, res, next) => {
   try {
-    const { name, contactPerson, phone, address } = req.body;
+    const { name, contactPerson, phone, email, address } = req.body;
 
     if (!name || !String(name).trim()) {
       return res.status(400).json({ message: 'Nama supplier harus diisi.' });
     }
 
     const result = await pool.query(
-      `INSERT INTO "Supplier" ("name", "contactPerson", "phone", "address")
-       VALUES ($1, $2, $3, $4)
-       RETURNING "id", "name", "contactPerson", "phone", "address", "createdAt", "updatedAt"`,
-      [String(name).trim(), contactPerson || null, phone || null, address || null]
+      `INSERT INTO "suppliers" ("name", "contactPerson", "phone", "email", "address", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       RETURNING "id", "name", "contactPerson", "phone", "email", "address", "createdAt", "updatedAt"`,
+      [String(name).trim(), contactPerson || null, phone || null, email || null, address || null]
     );
 
     res.status(201).json({
@@ -43,9 +43,9 @@ const createSupplier = async (req, res, next) => {
 const updateSupplier = async (req, res, next) => {
   try {
     const { idSupplier } = req.params;
-    const { name, contactPerson, phone, address } = req.body;
+    const { name, contactPerson, phone, email, address } = req.body;
 
-    const existingResult = await pool.query('SELECT * FROM "Supplier" WHERE "id" = $1', [idSupplier]);
+    const existingResult = await pool.query('SELECT * FROM "suppliers" WHERE "id" = $1', [idSupplier]);
     if (existingResult.rowCount === 0) {
       return res.status(404).json({ message: `Supplier dengan ID ${idSupplier} tidak ditemukan.` });
     }
@@ -58,18 +58,20 @@ const updateSupplier = async (req, res, next) => {
     }
 
     const result = await pool.query(
-      `UPDATE "Supplier"
+        `UPDATE "suppliers"
        SET "name" = $1,
            "contactPerson" = $2,
            "phone" = $3,
-           "address" = $4,
+           "email" = $4,
+           "address" = $5,
            "updatedAt" = NOW()
-       WHERE "id" = $5
-       RETURNING "id", "name", "contactPerson", "phone", "address", "createdAt", "updatedAt"`,
+       WHERE "id" = $6
+       RETURNING "id", "name", "contactPerson", "phone", "email", "address", "createdAt", "updatedAt"`,
       [
         nextName,
         contactPerson === undefined ? existing.contactPerson : contactPerson,
         phone === undefined ? existing.phone : phone,
+        email === undefined ? existing.email : email,
         address === undefined ? existing.address : address,
         idSupplier,
       ]
@@ -89,7 +91,7 @@ const deleteSupplier = async (req, res, next) => {
     const { idSupplier } = req.params;
 
     const result = await pool.query(
-      'DELETE FROM "Supplier" WHERE "id" = $1 RETURNING "id"',
+      'DELETE FROM "suppliers" WHERE "id" = $1 RETURNING "id"',
       [idSupplier]
     );
 

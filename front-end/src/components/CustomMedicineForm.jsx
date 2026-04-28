@@ -1,20 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/CustomMedicineForm.css';
 
-const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
+const DRUG_API_URL = 'http://localhost:3000/api/obat';
+
+const CustomMedicineForm = ({ isOpen, onClose, onSave, authToken, editData }) => {
   const initialFormData = {
     nama: '',
     deskripsi: '',
     harga: '',
-    komposisi: [{ id: 1, bahan: '', jumlah: '', satuan: 'tablet' }],
+    komposisi: [{ id: 1, drugId: '', bahan: '', jumlah: '', satuan: 'tablet' }],
     petunjuk: '',
     stok: ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
+  const [drugList, setDrugList] = useState([]);
+  const [isLoadingDrugs, setIsLoadingDrugs] = useState(false);
 
   const satuan = ['tablet', 'kapsul', 'mL', 'sendok', 'gram'];
+
+  // Fetch daftar obat dari database saat modal dibuka
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchDrugs = async () => {
+      try {
+        setIsLoadingDrugs(true);
+        const headers = {};
+        if (authToken) {
+          headers.Authorization = `Bearer ${authToken}`;
+        }
+
+        const response = await fetch(DRUG_API_URL, { headers });
+        const result = await response.json();
+
+        if (response.ok && Array.isArray(result.data)) {
+          setDrugList(
+            result.data.map((item) => ({
+              id: item.id,
+              name: item.name,
+              unit: item.unit || '',
+              stock: item.stock || 0,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Gagal memuat daftar obat:', error);
+      } finally {
+        setIsLoadingDrugs(false);
+      }
+    };
+
+    fetchDrugs();
+  }, [isOpen, authToken]);
+
+  // Populate form ketika edit
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (editData) {
+      setFormData({
+        nama: editData.nama || '',
+        deskripsi: editData.deskripsi || '',
+        harga: editData.harga ?? '',
+        stok: editData.stok ?? '',
+        petunjuk: editData.petunjuk || '',
+        komposisi: Array.isArray(editData.komposisi) && editData.komposisi.length > 0
+          ? editData.komposisi.map((k, idx) => ({
+              id: k.id || idx + 1,
+              drugId: k.drugId || '',
+              bahan: k.bahan || '',
+              jumlah: k.jumlah ?? k.quantity ?? '',
+              satuan: k.satuan || k.unit || 'tablet',
+            }))
+          : [{ id: 1, drugId: '', bahan: '', jumlah: '', satuan: 'tablet' }],
+      });
+    } else {
+      setFormData(initialFormData);
+    }
+
+    setErrors({});
+  }, [isOpen, editData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,7 +99,16 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
 
   const handleKomposisiChange = (index, field, value) => {
     const newKomposisi = [...formData.komposisi];
-    newKomposisi[index][field] = value;
+
+    if (field === 'drugId') {
+      // Ketika user pilih obat dari dropdown, otomatis isi nama bahan
+      const selectedDrug = drugList.find((d) => d.id === Number(value));
+      newKomposisi[index].drugId = value ? Number(value) : '';
+      newKomposisi[index].bahan = selectedDrug ? selectedDrug.name : '';
+    } else {
+      newKomposisi[index][field] = value;
+    }
+
     setFormData({
       ...formData,
       komposisi: newKomposisi
@@ -43,7 +119,7 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
     const newId = Math.max(...formData.komposisi.map(k => k.id), 0) + 1;
     setFormData({
       ...formData,
-      komposisi: [...formData.komposisi, { id: newId, bahan: '', jumlah: '', satuan: 'tablet' }]
+      komposisi: [...formData.komposisi, { id: newId, drugId: '', bahan: '', jumlah: '', satuan: 'tablet' }]
     });
   };
 
@@ -68,8 +144,8 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
     }
 
     // Validasi komposisi
-    const validKomposisi = formData.komposisi.every((k, i) => {
-      if (!k.bahan || !k.jumlah || !k.satuan) {
+    formData.komposisi.every((k, i) => {
+      if (!k.drugId || !k.jumlah || !k.satuan) {
         if (!newErrors.komposisi) newErrors.komposisi = [];
         newErrors.komposisi[i] = 'Semua field di komposisi harus diisi';
         return false;
@@ -101,7 +177,18 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
       return;
     }
 
-    onSave(formData);
+    // Kirim data dengan drugId agar backend tidak perlu lookup by name
+    const payload = {
+      ...formData,
+      komposisi: formData.komposisi.map((k) => ({
+        drugId: Number(k.drugId),
+        bahan: k.bahan,
+        jumlah: Number(k.jumlah),
+        satuan: k.satuan,
+      })),
+    };
+
+    onSave(payload);
     setFormData(initialFormData);
     onClose();
   };
@@ -112,7 +199,7 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
     <div className="modal-overlay">
       <div className="modal-content custom-medicine-modal">
         <div className="modal-header">
-          <h2>Buat Obat Racikan Baru</h2>
+          <h2>{editData ? 'Edit Obat Racikan' : 'Buat Obat Racikan Baru'}</h2>
           <button className="close-button" onClick={onClose}>
             <svg viewBox="0 0 24 24" width="24" height="24">
               <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
@@ -206,14 +293,25 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
 
                   <div className="form-row">
                     <div className="form-group full">
-                      <label>Nama Bahan *</label>
-                      <input
-                        type="text"
-                        value={item.bahan}
-                        onChange={(e) => handleKomposisiChange(index, 'bahan', e.target.value)}
-                        placeholder="Contoh: Paracetamol 500mg"
+                      <label>Pilih Obat *</label>
+                      <select
+                        value={item.drugId}
+                        onChange={(e) => handleKomposisiChange(index, 'drugId', e.target.value)}
                         className={errors.komposisi?.[index] ? 'input-error' : ''}
-                      />
+                        disabled={isLoadingDrugs}
+                      >
+                        <option value="">
+                          {isLoadingDrugs ? 'Memuat daftar obat...' : '-- Pilih Obat --'}
+                        </option>
+                        {drugList.map((drug) => (
+                          <option key={drug.id} value={drug.id}>
+                            {drug.name} (Stok: {drug.stock} {drug.unit})
+                          </option>
+                        ))}
+                      </select>
+                      {errors.komposisi?.[index] && (
+                        <span className="error-message">{errors.komposisi[index]}</span>
+                      )}
                     </div>
                   </div>
 
@@ -225,6 +323,7 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
                         value={item.jumlah}
                         onChange={(e) => handleKomposisiChange(index, 'jumlah', e.target.value)}
                         placeholder="2"
+                        min="1"
                         className={errors.komposisi?.[index] ? 'input-error' : ''}
                       />
                     </div>
@@ -281,7 +380,7 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave }) => {
               Batal
             </button>
             <button type="submit" className="submit-button">
-              Simpan Obat Racikan
+              {editData ? 'Simpan Perubahan' : 'Simpan Obat Racikan'}
             </button>
           </div>
         </form>

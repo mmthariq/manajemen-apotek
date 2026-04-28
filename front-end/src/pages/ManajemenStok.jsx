@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
+import NotificationBell from '../components/NotificationBell';
 import '../styles/ManajemenStok.css';
 import Sidebar from '../components/Sidebar';
 import ObatForm from '../components/ObatForm';
@@ -9,7 +11,8 @@ const API_BASE_URL = 'http://localhost:3000/api/obat';
 const formatRupiah = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
 const parseRupiah = (text) => Number(String(text || '').replace(/[^\d]/g, '')) || 0;
 
-const ManajemenStok = ({ onLogout }) => {
+const ManajemenStok = ({ onLogout, authToken = null }) => {
+  const clock = useRealtimeClock();
   const [medications, setMedications] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -21,6 +24,19 @@ const ManajemenStok = ({ onLogout }) => {
     medicationCode: null,
     medicationName: ''
   });
+
+  const getAuthHeaders = (includeJsonContentType = false) => {
+    const headers = {};
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+
+    return headers;
+  };
 
   const mapDrugToMedication = (item) => ({
     id: item.id,
@@ -38,7 +54,9 @@ const ManajemenStok = ({ onLogout }) => {
     try {
       setIsLoading(true);
       setErrorMessage('');
-      const response = await fetch(API_BASE_URL);
+      const response = await fetch(API_BASE_URL, {
+        headers: getAuthHeaders(),
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -85,7 +103,10 @@ const ManajemenStok = ({ onLogout }) => {
 
     try {
       setErrorMessage('');
-      const response = await fetch(`${API_BASE_URL}/${target.id}`, { method: 'DELETE' });
+      const response = await fetch(`${API_BASE_URL}/${target.id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -121,7 +142,7 @@ const ManajemenStok = ({ onLogout }) => {
       if (currentEditData?.id) {
         const response = await fetch(`${API_BASE_URL}/${currentEditData.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload),
         });
         const result = await response.json();
@@ -135,7 +156,7 @@ const ManajemenStok = ({ onLogout }) => {
       } else {
         const response = await fetch(API_BASE_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload),
         });
         const result = await response.json();
@@ -143,7 +164,7 @@ const ManajemenStok = ({ onLogout }) => {
           throw new Error(result.message || 'Gagal menambahkan obat.');
         }
 
-        setMedications((prev) => [mapDrugToMedication(result.data), ...prev]);
+        setMedications((prev) => [...prev, mapDrugToMedication(result.data)]);
       }
 
       setIsModalOpen(false);
@@ -167,7 +188,8 @@ const ManajemenStok = ({ onLogout }) => {
         <div className="header">
           <h1>Manajemen Stok Obat</h1>
           <div className="user-info">
-            <span className="date">12 May 2025, 07:41:55</span>
+            <span className="date">{clock}</span>
+            <NotificationBell authToken={authToken} />
             <div className="admin-profile">
               <span>Admin</span>
               <div className="profile-image">

@@ -363,3 +363,101 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Komposisi Detail Modal */
+.komposisi-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: modalFadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.komposisi-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.komposisi-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.komposisi-modal-header .close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.komposisi-modal-header .close-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.komposisi-modal-body {
+  padding: 20px 24px 24px;
+}
+
+.empty-komposisi {
+  text-align: center;
+  color: #999;
+  padding: 20px 0;
+}
+
+.komposisi-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.komposisi-detail-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #eee;
+}
+
+.komposisi-detail-table td {
+  padding: 12px;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+}
+
+.komposisi-detail-table tbody tr:hover {
+  background: #f8f9ff;
+}
+
+.komposisi-detail-table tbody tr:last-child td {
+  border-bottom: none;
+}

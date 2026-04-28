@@ -10,10 +10,12 @@ import TransaksiPenjualan from './pages/TransaksiPenjualan'
 import SupplierPage from './pages/SupplierPage'
 import ManajemenPengguna from './pages/ManajemenPengguna'
 import LaporanAnalitik from './pages/LaporanAnalitik'
+import ManajemenPengadaan from './pages/ManajemenPengadaan'
 import DashboardKasir from './pages/DashboardKasir'
 import TransaksiKasir from './pages/TransaksiForm'
 import LaporanPenjualanKasir from './pages/LaporanPenjualanKasir'
 import CustomerRegistration from './pages/CustomerRegistration'
+import CustomerLoginPage from './pages/CustomerLoginPage'
 import CustomerDashboard from './pages/CustomerDashboard'
 import ManajemenObatRacikan from './pages/ManajemenObatRacikan'
 import OrderSuccess from './pages/OrderSuccess'
@@ -89,6 +91,13 @@ function App() {
               <Navigate to={getRedirectPath()} /> :
               <LoginPage onLogin={handleLogin} />
           } />
+          <Route path="/customer-login" element={
+            isAuthenticated && userRole === 'customer' ?
+              <Navigate to="/customer-dashboard" /> :
+              isAuthenticated ?
+                <Navigate to={getRedirectPath()} /> :
+                <CustomerLoginPage onLogin={handleLogin} />
+          } />
           <Route path="/customer-dashboard" element={
             isAuthenticated && userRole === 'customer' ? 
               <CustomerDashboard
@@ -111,7 +120,7 @@ function App() {
           } />
           <Route path="/dashboard" element={
             hasRole(['admin']) ?
-              <Dashboard onLogout={handleLogout} userRole={userRole} currentUser={currentUser} /> :
+              <Dashboard onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> :
               <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/dashboard-kasir" element={
@@ -121,12 +130,12 @@ function App() {
           } />
           <Route path="/manajemen-stok" element={
             hasRole(['admin']) ? 
-              <ManajemenStok onLogout={handleLogout} /> : 
+              <ManajemenStok onLogout={handleLogout} authToken={authToken} /> : 
               <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/manajemen-obat-racikan" element={
             hasRole(['admin']) ? 
-              <ManajemenObatRacikan onLogout={handleLogout} /> : 
+              <ManajemenObatRacikan onLogout={handleLogout} authToken={authToken} /> : 
               <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/transaksi" element={
@@ -146,17 +155,22 @@ function App() {
           } />
           <Route path="/supplier" element={
             hasRole(['admin']) ? 
-              <SupplierPage onLogout={handleLogout} /> : 
+              <SupplierPage onLogout={handleLogout} authToken={authToken} /> : 
+              <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
+          } />
+          <Route path="/pengadaan" element={
+            hasRole(['admin', 'kasir']) ?
+              <ManajemenPengadaan onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> :
               <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/manajemen-pengguna" element={
             hasRole(['admin']) ? 
-              <ManajemenPengguna onLogout={handleLogout} /> : 
+              <ManajemenPengguna onLogout={handleLogout} authToken={authToken} /> : 
               <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           <Route path="/laporan" element={
             hasRole(['admin', 'owner']) ? 
-              <LaporanAnalitik onLogout={handleLogout} userRole={userRole} currentUser={currentUser} /> : 
+              <LaporanAnalitik onLogout={handleLogout} userRole={userRole} currentUser={currentUser} authToken={authToken} /> : 
               <Navigate to={isAuthenticated ? getRedirectPath() : '/login'} />
           } />
           {/* Customer Routes */}

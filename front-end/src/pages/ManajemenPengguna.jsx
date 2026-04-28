@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
+import NotificationBell from '../components/NotificationBell';
 import '../styles/ManajemenPengguna.css';
 import Sidebar from '../components/Sidebar';
 import PenggunaForm from '../components/PenggunaForm';
@@ -34,7 +36,8 @@ const mapApiUserToUi = (user) => {
   };
 };
 
-const ManajemenPengguna = ({ onLogout }) => {
+const ManajemenPengguna = ({ onLogout, authToken = null }) => {
+  const clock = useRealtimeClock();
   const [users, setUsers] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -52,12 +55,27 @@ const ManajemenPengguna = ({ onLogout }) => {
   });
   const itemsPerPage = 10;
 
+  const getAuthHeaders = (includeJsonContentType = false) => {
+    const headers = {};
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+
+    return headers;
+  };
+
   const fetchUsers = async () => {
     try {
       setIsLoadingUsers(true);
       setApiError('');
 
-      const response = await fetch(API_BASE_URL);
+      const response = await fetch(API_BASE_URL, {
+        headers: getAuthHeaders(),
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -121,6 +139,7 @@ const ManajemenPengguna = ({ onLogout }) => {
 
         const response = await fetch(`${API_BASE_URL}/${idToDelete}`, {
           method: 'DELETE',
+          headers: getAuthHeaders(),
         });
 
         const result = await response.json();
@@ -160,9 +179,7 @@ const ManajemenPengguna = ({ onLogout }) => {
       if (currentEditData) {
         const response = await fetch(`${API_BASE_URL}/${currentEditData.apiId ?? currentEditData.id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload),
         });
 
@@ -173,9 +190,7 @@ const ManajemenPengguna = ({ onLogout }) => {
       } else {
         const response = await fetch(API_BASE_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload),
         });
 
@@ -226,7 +241,8 @@ const ManajemenPengguna = ({ onLogout }) => {
         <div className="header">
           <h1>Manajemen Pengguna</h1>
           <div className="user-info">
-            <span className="date">12 May 2025, 07:41:55</span>
+            <span className="date">{clock}</span>
+            <NotificationBell authToken={authToken} />
             <div className="admin-profile">
               <span>Admin</span>
               <div className="profile-image">

@@ -7,6 +7,8 @@ const dashboardRoutes = require('./dashboardRoutes'); // Akan dibuat
 const customerRoutes = require('./customerRoutes'); // Fitur customer membership
 const customMedicineRoutes = require('./customMedicineRoutes'); // Fitur obat racikan
 const orderRoutes = require('./orderRoutes'); // Fitur pesanan online
+const purchaseRoutes = require('./purchaseRoutes');
+const reportRoutes = require('./reportRoutes');
 
 const router = express.Router();
 
@@ -28,5 +30,7 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/customers', customerRoutes); // Fitur customer membership & online shopping
 router.use('/custom-medicine', customMedicineRoutes); // Fitur obat racikan
 router.use('/orders', orderRoutes); // Fitur pesanan online
+router.use('/purchases', purchaseRoutes); // Fitur pengadaan
+router.use('/reports', reportRoutes); // Export laporan
 
 module.exports = router;

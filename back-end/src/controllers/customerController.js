@@ -14,33 +14,21 @@ const toCustomerPayload = (row) => ({
   updatedAt: row.updatedAt ?? row.updatedat,
 });
 
-const isRelationMissingError = (error, relationName) => {
-  if (!error || error.code !== '42P01') {
-    return false;
-  }
-
-  if (!relationName) {
-    return true;
-  }
-
-  return String(error.message || '').toLowerCase().includes(`\"${String(relationName).toLowerCase()}\"`);
-};
-
-const getCustomerSummaryFromLegacyTransactions = async (customerId) => {
+const getCustomerSummary = async (customerId) => {
   const txSummaryResult = await pool.query(
     `SELECT COALESCE(SUM("totalPrice"), 0) AS "totalPurchase", COUNT(*)::int AS "totalTransaction"
-     FROM "Transaction"
+    FROM "transactions"
      WHERE "customerId" = $1`,
     [customerId]
   );
 
   const historyResult = await pool.query(
     `SELECT t."id", t."createdAt", t."totalPrice", COALESCE(SUM(td."quantity"), 0)::int AS "items"
-     FROM "Transaction" t
-     LEFT JOIN "TransactionDetail" td ON td."transactionId" = t."id"
+    FROM "transactions" t
+    LEFT JOIN "transaction_details" td ON td."transactionId" = t."id"
      WHERE t."customerId" = $1
      GROUP BY t."id", t."createdAt", t."totalPrice"
-     ORDER BY t."createdAt" DESC
+     ORDER BY t."id" ASC
      LIMIT 20`,
     [customerId]
   );
@@ -52,106 +40,15 @@ const getCustomerSummaryFromLegacyTransactions = async (customerId) => {
   };
 };
 
-const getCustomerSummaryFromOnlineOrders = async (customerId) => {
-  const txSummaryResult = await pool.query(
-    `SELECT COALESCE(SUM(total_amount), 0) AS "totalPurchase", COUNT(*)::int AS "totalTransaction"
-     FROM online_orders
-     WHERE "customerId" = $1`,
-    [customerId]
-  );
-
-  const historyResult = await pool.query(
-    `SELECT o."id",
-            o.order_time AS "createdAt",
-            o.total_amount AS "totalPrice",
-            COALESCE(SUM(oi.quantity), 0)::int AS "items"
-     FROM online_orders o
-     LEFT JOIN online_order_items oi ON oi.online_order_id = o.id
-     WHERE o."customerId" = $1
-     GROUP BY o."id", o.order_time, o.total_amount
-     ORDER BY o.order_time DESC
-     LIMIT 20`,
-    [customerId]
-  );
-
-  return {
-    totalPurchase: Number(txSummaryResult.rows[0]?.totalPurchase || 0),
-    totalTransaction: Number(txSummaryResult.rows[0]?.totalTransaction || 0),
-    purchaseHistory: historyResult.rows,
-  };
-};
-
-const getCustomerSummary = async (customerId) => {
-  try {
-    return await getCustomerSummaryFromLegacyTransactions(customerId);
-  } catch (error) {
-    if (!isRelationMissingError(error, 'Transaction')) {
-      throw error;
-    }
-
-    try {
-      return await getCustomerSummaryFromOnlineOrders(customerId);
-    } catch (onlineOrdersError) {
-      if (!isRelationMissingError(onlineOrdersError, 'online_orders')) {
-        throw onlineOrdersError;
-      }
-
-      return {
-        totalPurchase: 0,
-        totalTransaction: 0,
-        purchaseHistory: [],
-      };
-    }
-  }
-};
-
-const getAllCustomersWithLegacyTransactions = async () => pool.query(
+const getAllCustomersWithSummary = async () => pool.query(
   `SELECT u."id", u."username", u."email", u."phone", u."address", u."membershipStatus", u."isMember", u."createdAt",
           COALESCE(SUM(t."totalPrice"), 0) AS "totalPurchase"
-   FROM "User" u
-   LEFT JOIN "Transaction" t ON t."customerId" = u."id"
+  FROM "users" u
+  LEFT JOIN "transactions" t ON t."customerId" = u."id"
    WHERE u."role" = 'CUSTOMER'
    GROUP BY u."id", u."username", u."email", u."phone", u."address", u."membershipStatus", u."isMember", u."createdAt"
-   ORDER BY u."id" DESC`
+   ORDER BY u."id" ASC`
 );
-
-const getAllCustomersWithOnlineOrders = async () => pool.query(
-  `SELECT u."id", u."username", u."email", u."phone", u."address", u."membershipStatus", u."isMember", u."createdAt",
-          COALESCE(SUM(o.total_amount), 0) AS "totalPurchase"
-   FROM "User" u
-   LEFT JOIN online_orders o ON o."customerId" = u."id"
-   WHERE u."role" = 'CUSTOMER'
-   GROUP BY u."id", u."username", u."email", u."phone", u."address", u."membershipStatus", u."isMember", u."createdAt"
-   ORDER BY u."id" DESC`
-);
-
-const getAllCustomersWithoutTransactions = async () => pool.query(
-  `SELECT u."id", u."username", u."email", u."phone", u."address", u."membershipStatus", u."isMember", u."createdAt",
-          0::double precision AS "totalPurchase"
-   FROM "User" u
-   WHERE u."role" = 'CUSTOMER'
-   ORDER BY u."id" DESC`
-);
-
-const getAllCustomersWithSummary = async () => {
-  try {
-    return await getAllCustomersWithLegacyTransactions();
-  } catch (error) {
-    if (!isRelationMissingError(error, 'Transaction')) {
-      throw error;
-    }
-
-    try {
-      return await getAllCustomersWithOnlineOrders();
-    } catch (onlineOrdersError) {
-      if (!isRelationMissingError(onlineOrdersError, 'online_orders')) {
-        throw onlineOrdersError;
-      }
-
-      return getAllCustomersWithoutTransactions();
-    }
-  }
-};
 
 const registerCustomer = async (req, res, next) => {
   try {
@@ -161,11 +58,7 @@ const registerCustomer = async (req, res, next) => {
       return res.status(400).json({ message: 'Nama, email, dan password harus diisi.' });
     }
 
-    const existingCustomer = await pool.query(
-      'SELECT "id" FROM "User" WHERE "email" = $1',
-      [email]
-    );
-
+    const existingCustomer = await pool.query('SELECT "id" FROM "users" WHERE "email" = $1', [email]);
     if (existingCustomer.rowCount > 0) {
       return res.status(409).json({ message: 'Email sudah terdaftar. Silakan gunakan email lain.' });
     }
@@ -177,7 +70,7 @@ const registerCustomer = async (req, res, next) => {
     let suffix = 1;
 
     while (true) {
-      const usernameCheck = await pool.query('SELECT "id" FROM "User" WHERE "username" = $1', [usernameCandidate]);
+      const usernameCheck = await pool.query('SELECT "id" FROM "users" WHERE "username" = $1', [usernameCandidate]);
       if (usernameCheck.rowCount === 0) {
         break;
       }
@@ -186,7 +79,7 @@ const registerCustomer = async (req, res, next) => {
     }
 
     const newCustomerResult = await pool.query(
-      `INSERT INTO "User" ("username", "email", "password", "role", "phone", "address", "isMember", "membershipStatus", "updatedAt")
+      `INSERT INTO "users" ("username", "email", "password", "role", "phone", "address", "isMember", "membershipStatus", "updatedAt")
        VALUES ($1, $2, $3, 'CUSTOMER', $4, $5, $6, $7, NOW())
        RETURNING "id", "username", "email", "role", "phone", "address", "isMember", "membershipStatus", "createdAt", "updatedAt"`,
       [usernameCandidate, email, passwordHash, phone || null, address || null, true, 'active']
@@ -198,7 +91,7 @@ const registerCustomer = async (req, res, next) => {
       message: 'Registrasi pelanggan berhasil! Silakan kembali ke halaman login.',
       data: {
         id: newCustomer.id,
-        name: name,
+        name,
         email: newCustomer.email,
         username: newCustomer.username,
         role: 'customer',
@@ -224,7 +117,7 @@ const getCustomerProfile = async (req, res, next) => {
 
     const customerResult = await pool.query(
       `SELECT "id", "username", "email", "phone", "address", "role", "isMember", "membershipStatus", "createdAt", "updatedAt"
-       FROM "User"
+      FROM "users"
        WHERE "id" = $1 AND "role" = 'CUSTOMER'`,
       [customerId]
     );
@@ -234,7 +127,6 @@ const getCustomerProfile = async (req, res, next) => {
     }
 
     const summary = await getCustomerSummary(customerId);
-
     const customer = customerResult.rows[0];
 
     res.status(200).json({
@@ -264,7 +156,7 @@ const updateCustomerProfile = async (req, res, next) => {
     }
 
     const existingResult = await pool.query(
-      'SELECT * FROM "User" WHERE "id" = $1 AND "role" = $2::"Role"',
+      'SELECT * FROM "users" WHERE "id" = $1 AND "role" = $2::"Role"',
       [customerId, 'CUSTOMER']
     );
 
@@ -275,7 +167,7 @@ const updateCustomerProfile = async (req, res, next) => {
     const existing = existingResult.rows[0];
 
     const updatedResult = await pool.query(
-      `UPDATE "User"
+        `UPDATE "users"
        SET "username" = $1,
            "phone" = $2,
            "address" = $3,

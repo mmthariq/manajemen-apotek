@@ -27,7 +27,7 @@ const mapUser = (row) => ({
 const getAllUsers = async (req, res, next) => {
   try {
     const result = await pool.query(
-      'SELECT "id", "username", "email", "role", "phone", "address", "isMember", "membershipStatus", "createdAt", "updatedAt" FROM "User" ORDER BY "id" DESC'
+      'SELECT "id", "username", "email", "role", "phone", "address", "isMember", "membershipStatus", "createdAt", "updatedAt" FROM "users" ORDER BY "id" ASC'
     );
 
     res.status(200).json({
@@ -57,7 +57,7 @@ const createUser = async (req, res, next) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO "User" ("username", "email", "password", "role", "phone", "address", "isMember", "membershipStatus", "updatedAt")
+      `INSERT INTO "users" ("username", "email", "password", "role", "phone", "address", "isMember", "membershipStatus", "updatedAt")
        VALUES ($1, $2, $3, $4::"Role", $5, $6, $7, $8, NOW())
        RETURNING "id", "username", "email", "role", "phone", "address", "isMember", "membershipStatus", "createdAt", "updatedAt"`,
       [
@@ -92,7 +92,7 @@ const getUserById = async (req, res, next) => {
     const { idUser } = req.params;
 
     const result = await pool.query(
-      'SELECT "id", "username", "email", "role", "phone", "address", "isMember", "membershipStatus", "createdAt", "updatedAt" FROM "User" WHERE "id" = $1',
+      'SELECT "id", "username", "email", "role", "phone", "address", "isMember", "membershipStatus", "createdAt", "updatedAt" FROM "users" WHERE "id" = $1',
       [idUser]
     );
 
@@ -114,7 +114,7 @@ const updateUser = async (req, res, next) => {
     const { idUser } = req.params;
     const { name, username, email, role, phone, address, isMember, membershipStatus, password } = req.body;
 
-    const existingResult = await pool.query('SELECT * FROM "User" WHERE "id" = $1', [idUser]);
+    const existingResult = await pool.query('SELECT * FROM "users" WHERE "id" = $1', [idUser]);
     if (existingResult.rowCount === 0) {
       return res.status(404).json({ message: `Pengguna dengan ID ${idUser} tidak ditemukan.` });
     }
@@ -130,7 +130,7 @@ const updateUser = async (req, res, next) => {
       : existingUser.password;
 
     const updatedResult = await pool.query(
-      `UPDATE "User"
+        `UPDATE "users"
        SET "username" = $1,
            "email" = $2,
            "password" = $3,
@@ -175,7 +175,7 @@ const deleteUser = async (req, res, next) => {
     const { idUser } = req.params;
 
     const result = await pool.query(
-      'DELETE FROM "User" WHERE "id" = $1 RETURNING "id"',
+      'DELETE FROM "users" WHERE "id" = $1 RETURNING "id"',
       [idUser]
     );
 

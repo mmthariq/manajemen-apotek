@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // MUI Components
-import { 
-  Box, Button, Container, TextField, Typography, Paper, 
+import {
+  Box, Button, Container, TextField, Typography, Paper,
   InputAdornment, IconButton, CircularProgress, Stack,
   Snackbar, Alert, Grid, Checkbox, FormControlLabel, Link
 } from '@mui/material';
@@ -30,11 +30,11 @@ const theme = createTheme({
       main: '#10b981', // Soft Green
     },
     background: {
-      default: '#f8fafc', 
+      default: '#f8fafc',
     },
     text: {
-      primary: '#334155', 
-      secondary: '#64748b', 
+      primary: '#334155',
+      secondary: '#64748b',
     }
   },
   typography: {
@@ -56,7 +56,7 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
   const [notificationType, setNotificationType] = useState('success');
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
-  
+
   // State untuk toggle mata password
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -148,7 +148,7 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
 
       setIsRegistered(true);
       showNotificationMessage('Pendaftaran berhasil!', 'success');
-      
+
       if (onRegistrationSuccess) {
         onRegistrationSuccess(result.data);
       }
@@ -173,15 +173,15 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-        
+
         {/* Left Section - Gradient & Branding */}
-        <Box 
-          sx={{ 
-            display: { xs: 'none', md: 'flex' }, 
-            flex: 1, 
+        <Box
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            flex: 1,
             background: 'linear-gradient(135deg, #d1fae5 0%, #e0f2fe 100%)',
-            flexDirection: 'column', 
-            justifyContent: 'center', 
+            flexDirection: 'column',
+            justifyContent: 'center',
             alignItems: 'center',
             p: 6,
             position: 'fixed', // Agar tidak ikut scroll jika form di kanan panjang
@@ -195,14 +195,14 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
           <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: 300, height: 300, bgcolor: 'rgba(14, 165, 233, 0.1)', borderRadius: '50%', filter: 'blur(40px)' }} />
 
           <Box sx={{ zIndex: 1, textAlign: 'center', maxWidth: 450 }}>
-            <Box 
-              sx={{ 
-                width: 80, height: 80, 
-                bgcolor: 'white', 
-                borderRadius: '24px', 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
+            <Box
+              sx={{
+                width: 80, height: 80,
+                bgcolor: 'white',
+                borderRadius: '24px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
                 mx: 'auto', mb: 4,
                 boxShadow: '0 10px 25px rgba(16, 185, 129, 0.15)'
               }}
@@ -215,7 +215,7 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
             <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400, lineHeight: 1.6, mb: 4 }}>
               Daftarkan diri Anda untuk kemudahan berbelanja obat secara online dan nikmati layanan dari apoteker kami.
             </Typography>
-            
+
             <Stack spacing={2} sx={{ textAlign: 'left', display: 'inline-flex' }}>
               {['Ribuan produk obat berkualitas', 'Pengiriman cepat dan aman', 'Poin reward setiap pembelian'].map((benefit, idx) => (
                 <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -228,11 +228,11 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
         </Box>
 
         {/* Right Section - Form / Success Status */}
-        <Box 
-          sx={{ 
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             p: { xs: 3, md: 6 },
@@ -241,11 +241,11 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
           }}
         >
           <Container maxWidth="sm" disableGutters>
-            
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: { xs: 4, sm: 5 }, 
+
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 4, sm: 5 },
                 borderRadius: '24px',
                 bgcolor: 'rgba(255, 255, 255, 0.9)',
                 backdropFilter: 'blur(10px)',
@@ -253,7 +253,7 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
                 border: '1px solid rgba(255, 255, 255, 0.5)'
               }}
             >
-              
+
               {!isRegistered ? (
                 // --- FORM REGISTRASI ---
                 <>
@@ -369,7 +369,7 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
                         onChange={handleInputChange}
                         error={!!errors.address}
                         helperText={errors.address}
-                        sx={{...inputStyles, '& .MuiOutlinedInput-root': { ...inputStyles['& .MuiOutlinedInput-root'], padding: '12px 14px' } }}
+                        sx={{ ...inputStyles, '& .MuiOutlinedInput-root': { ...inputStyles['& .MuiOutlinedInput-root'], padding: '12px 14px' } }}
                         InputProps={{
                           startAdornment: <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 0.5 }}><HomeOutlinedIcon sx={{ color: 'text.secondary' }} /></InputAdornment>,
                         }}
@@ -380,10 +380,10 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
                         variant="contained"
                         fullWidth
                         disabled={isLoading}
-                        sx={{ 
-                          py: 1.8, 
+                        sx={{
+                          py: 1.8,
                           mt: 2,
-                          fontSize: '1rem', 
+                          fontSize: '1rem',
                           borderRadius: '50px',
                           background: 'linear-gradient(135deg, #10b981 0%, #0ea5e9 100%)',
                           boxShadow: '0 8px 20px rgba(14, 165, 233, 0.25)',
@@ -428,13 +428,13 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
                   <Box sx={{ mt: 4, textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
                       Sudah memiliki akun? {' '}
-                      <Typography 
-                        component="span" 
-                        variant="body2" 
-                        color="primary.main" 
+                      <Typography
+                        component="span"
+                        variant="body2"
+                        color="primary.main"
                         fontWeight={600}
                         sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                        onClick={() => navigate('/Login')}
+                        onClick={() => navigate('/customer-login')}
                       >
                         Masuk di sini
                       </Typography>
@@ -444,13 +444,13 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
               ) : (
                 // --- SUCCESS STATE ---
                 <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Box 
-                    sx={{ 
-                      width: 80, height: 80, 
-                      borderRadius: '50%', 
-                      bgcolor: '#d1fae5', 
-                      display: 'flex', 
-                      justifyContent: 'center', 
+                  <Box
+                    sx={{
+                      width: 80, height: 80,
+                      borderRadius: '50%',
+                      bgcolor: '#d1fae5',
+                      display: 'flex',
+                      justifyContent: 'center',
                       alignItems: 'center',
                       mx: 'auto', mb: 3
                     }}
@@ -460,7 +460,7 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
                   <Typography variant="h4" fontWeight="bold" color="text.primary" gutterBottom>
                     Pendaftaran Berhasil! 🎉
                   </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ mb: 4, px: {xs: 0, sm: 2} }}>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 4, px: { xs: 0, sm: 2 } }}>
                     Akun untuk email <strong>{formData.email}</strong> sudah berhasil dibuat.
                   </Typography>
 
@@ -480,8 +480,8 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
                     variant="outlined"
                     fullWidth
                     onClick={() => navigate('/')}
-                    sx={{ 
-                      py: 1.5, 
+                    sx={{
+                      py: 1.5,
                       borderRadius: '50px',
                       color: 'primary.main',
                       borderColor: 'primary.main',
@@ -502,15 +502,15 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
       </Box>
 
       {/* Snackbar untuk Notifikasi */}
-      <Snackbar 
-        open={showNotification} 
-        autoHideDuration={4000} 
+      <Snackbar
+        open={showNotification}
+        autoHideDuration={4000}
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={handleCloseNotification} 
-          severity={notificationType} 
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notificationType}
           variant="filled"
           sx={{ width: '100%', borderRadius: '12px' }}
         >

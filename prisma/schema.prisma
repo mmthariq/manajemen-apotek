@@ -13,15 +13,27 @@ enum Role {
   OWNER
 }
 
+enum OrderType {
+  ONLINE
+  OFFLINE
+}
+
+enum Status {
+  PENDING
+  VERIFIED
+  COMPLETED
+  CANCELLED
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String?  @unique
+  id        Int     @id @default(autoincrement())
+  username  String  @unique
+  email     String? @unique
   password  String
   role      Role
 
-  phone     String?
-  address   String?
+  phone   String?
+  address String?
 
   isMember         Boolean  @default(false)
   membershipStatus String?
@@ -29,9 +41,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relasi
   transactionsAsCashier Transaction[] @relation("CashierTransaction")
   transactionsAsCustomer Transaction[] @relation("CustomerTransaction")
+  @@map("users")
 }
 
 model Supplier {
@@ -39,12 +51,13 @@ model Supplier {
   name          String
   contactPerson String?
   phone         String?
+  email         String?
   address       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  drugs     Drug[]
   purchases Purchase[]
+  @@map("suppliers")
 }
 
 model Drug {
@@ -58,12 +71,11 @@ model Drug {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  supplierId Int?
-  supplier   Supplier? @relation(fields: [supplierId], references: [id])
-
   transactionDetails TransactionDetail[]
   purchaseDetails    PurchaseDetail[]
   components         CustomMedicineComponent[]
+
+  @@map("drugs")
 }
 
 model CustomMedicine {
@@ -76,58 +88,90 @@ model CustomMedicine {
 
   components CustomMedicineComponent[]
   transactionDetails TransactionDetail[]
+
+  @@map("custom_medicines")
 }
 
 model CustomMedicineComponent {
-  id               Int @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   customMedicineId Int
   drugId           Int
   quantity         Int
   unit             String
 
-  customMedicine CustomMedicine @relation(fields: [customMedicineId], references: [id])
-  drug           Drug           @relation(fields: [drugId], references: [id])
+  customMedicine CustomMedicine @relation(fields: [customMedicineId], references: [id], onDelete: Cascade)
+  drug           Drug           @relation(fields: [drugId], references: [id], onDelete: Restrict)
+
+  @@index([customMedicineId])
+  @@index([drugId])
+  @@map("custom_medicine_components")
 }
 
 model Transaction {
-  id         Int      @id @default(autoincrement())
-  totalPrice Float
-  createdAt  DateTime @default(now())
+  id                   Int       @id @default(autoincrement())
+  orderCode            String    @unique @default(cuid())
+  type                 OrderType
+  status               Status    @default(PENDING)
+  totalPrice           Float
+  paymentProofImageUrl String?
+  prescriptionImageUrl String?
+  usageInstructions    String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
-  cashierId  Int
+  cashierId  Int?
   customerId Int?
 
-  cashier  User  @relation("CashierTransaction", fields: [cashierId], references: [id])
-  customer User? @relation("CustomerTransaction", fields: [customerId], references: [id])
+  cashier  User? @relation("CashierTransaction", fields: [cashierId], references: [id], onDelete: SetNull)
+  customer User? @relation("CustomerTransaction", fields: [customerId], references: [id], onDelete: SetNull)
 
   details TransactionDetail[]
+
+  @@index([type])
+  @@index([status])
+  @@index([cashierId])
+  @@index([customerId])
+  @@map("transactions")
 }
 
 model TransactionDetail {
   id Int @id @default(autoincrement())
 
-  transactionId Int
-  drugId        Int?
+  transactionId    Int
+  drugId           Int?
   customMedicineId Int?
 
-  quantity Int
-  price    Float
+  quantity  Int
+  unitPrice Float
+  subtotal  Float
 
-  transaction    Transaction     @relation(fields: [transactionId], references: [id])
-  drug           Drug?           @relation(fields: [drugId], references: [id])
-  customMedicine CustomMedicine? @relation(fields: [customMedicineId], references: [id])
+  componentsSnapshot String?  // JSON snapshot komposisi racikan saat dibeli
+
+  transaction    Transaction     @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  drug           Drug?           @relation(fields: [drugId], references: [id], onDelete: SetNull)
+  customMedicine CustomMedicine? @relation(fields: [customMedicineId], references: [id], onDelete: SetNull)
+
+  @@index([transactionId])
+  @@index([drugId])
+  @@index([customMedicineId])
+  @@map("transaction_details")
 }
 
 model Purchase {
   id         Int      @id @default(autoincrement())
+  purchaseCode String  @unique @default(cuid())
   totalPrice Float
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   supplierId Int
-  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
 
   details PurchaseDetail[]
+
+  @@index([supplierId])
+  @@map("purchases")
 }
 
 model PurchaseDetail {
@@ -136,8 +180,13 @@ model PurchaseDetail {
   purchaseId Int
   drugId     Int
   quantity   Int
-  price      Float
+  unitPrice  Float
+  subtotal   Float
 
-  purchase Purchase @relation(fields: [purchaseId], references: [id])
-  drug     Drug     @relation(fields: [drugId], references: [id])
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  drug     Drug     @relation(fields: [drugId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseId])
+  @@index([drugId])
+  @@map("purchase_details")
 }

@@ -1,12 +1,11 @@
 const express = require('express');
 const dashboardController = require('../controllers/dashboardController'); // Akan dibuat
-// const authMiddleware = require('../middlewares/authMiddleware'); // Akan dibuat
+const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-// Middleware untuk proteksi dan role (misalnya, hanya admin atau apoteker)
-// router.use(authMiddleware.protect);
-// router.use(authMiddleware.restrictTo('admin', 'apoteker'));
+router.use(authMiddleware.protect);
+router.use(authMiddleware.restrictTo('ADMIN', 'KASIR', 'OWNER'));
 
 // GET /api/dashboard/summary - Mendapatkan rangkuman statistik utama
 router.get(
@@ -17,6 +16,11 @@ router.get(
 router.get(
   '/analytics',
   dashboardController.getDashboardAnalytics
+);
+
+router.get(
+  '/notifications',
+  dashboardController.getDashboardNotifications
 );
 
 module.exports = router;

@@ -1,21 +1,7 @@
 const pool = require('../config/database');
 
 const resolveDrugTable = async () => {
-  const tableCheck = await pool.query(
-    `SELECT
-       to_regclass('public."Drug"') AS "drugTable",
-       to_regclass('public.products') AS "legacyDrugTable"`
-  );
-
-  if (tableCheck.rows[0]?.drugTable) {
-    return '"Drug"';
-  }
-
-  if (tableCheck.rows[0]?.legacyDrugTable) {
-    return 'products';
-  }
-
-  return '"Drug"';
+  return '"drugs"';
 };
 
 const mapCustomMedicineRow = (row) => ({
@@ -30,6 +16,8 @@ const mapCustomMedicineRow = (row) => ({
   updatedAt: row.updatedAt ?? row.updatedat,
 });
 
+const generateOrderCode = () => `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
 const getAllCustomMedicines = async (req, res, next) => {
   try {
     const drugTable = await resolveDrugTable();
@@ -37,13 +25,13 @@ const getAllCustomMedicines = async (req, res, next) => {
     const medicinesResult = await pool.query(
       `SELECT cm."id", cm."name", cm."price", cm."stock", cm."createdAt", cm."updatedAt",
               ''::text AS "description", ''::text AS "instruction"
-       FROM "CustomMedicine" cm
-       ORDER BY cm."id" DESC`
+      FROM "custom_medicines" cm
+       ORDER BY cm."id" ASC`
     );
 
     const componentsResult = await pool.query(
       `SELECT c."id", c."customMedicineId", c."drugId", c."quantity", c."unit", d."name" AS "drugName"
-       FROM "CustomMedicineComponent" c
+      FROM "custom_medicine_components" c
        JOIN ${drugTable} d ON d."id" = c."drugId"
        ORDER BY c."id" ASC`
     );
@@ -100,8 +88,8 @@ const createCustomMedicine = async (req, res, next) => {
     await client.query('BEGIN');
 
     const medicineResult = await client.query(
-      `INSERT INTO "CustomMedicine" ("name", "price", "stock")
-       VALUES ($1, $2, $3)
+      `INSERT INTO "custom_medicines" ("name", "price", "stock", "updatedAt")
+       VALUES ($1, $2, $3, NOW())
        RETURNING "id", "name", "price", "stock", "createdAt", "updatedAt"`,
       [medicineName, Number(price ?? harga ?? 0), Number(stock ?? stok ?? 0)]
     );
@@ -121,7 +109,7 @@ const createCustomMedicine = async (req, res, next) => {
       }
 
       await client.query(
-        `INSERT INTO "CustomMedicineComponent" ("customMedicineId", "drugId", "quantity", "unit")
+        `INSERT INTO "custom_medicine_components" ("customMedicineId", "drugId", "quantity", "unit")
          VALUES ($1, $2, $3, $4)`,
         [medicine.id, drugId, Number(item.jumlah ?? item.quantity ?? 0), String(item.satuan || item.unit || 'unit')]
       );
@@ -155,7 +143,7 @@ const getCustomMedicineById = async (req, res, next) => {
     const medicineResult = await pool.query(
       `SELECT cm."id", cm."name", cm."price", cm."stock", cm."createdAt", cm."updatedAt",
               ''::text AS "description", ''::text AS "instruction"
-       FROM "CustomMedicine" cm
+      FROM "custom_medicines" cm
        WHERE cm."id" = $1`,
       [medicineId]
     );
@@ -166,7 +154,7 @@ const getCustomMedicineById = async (req, res, next) => {
 
     const componentsResult = await pool.query(
       `SELECT c."id", c."drugId", c."quantity", c."unit", d."name" AS "drugName"
-       FROM "CustomMedicineComponent" c
+      FROM "custom_medicine_components" c
        JOIN ${drugTable} d ON d."id" = c."drugId"
        WHERE c."customMedicineId" = $1
        ORDER BY c."id" ASC`,
@@ -201,7 +189,7 @@ const updateCustomMedicine = async (req, res, next) => {
     const { medicineId } = req.params;
     const { nama, name, harga, price, stok, stock, komposisi } = req.body;
 
-    const existingResult = await client.query('SELECT * FROM "CustomMedicine" WHERE "id" = $1', [medicineId]);
+    const existingResult = await client.query('SELECT * FROM "custom_medicines" WHERE "id" = $1', [medicineId]);
     if (existingResult.rowCount === 0) {
       return res.status(404).json({ message: `Obat racikan dengan ID ${medicineId} tidak ditemukan.` });
     }
@@ -211,7 +199,7 @@ const updateCustomMedicine = async (req, res, next) => {
     await client.query('BEGIN');
 
     const updatedResult = await client.query(
-      `UPDATE "CustomMedicine"
+        `UPDATE "custom_medicines"
        SET "name" = $1,
            "price" = $2,
            "stock" = $3,
@@ -227,7 +215,7 @@ const updateCustomMedicine = async (req, res, next) => {
     );
 
     if (Array.isArray(komposisi)) {
-      await client.query('DELETE FROM "CustomMedicineComponent" WHERE "customMedicineId" = $1', [medicineId]);
+      await client.query('DELETE FROM "custom_medicine_components" WHERE "customMedicineId" = $1', [medicineId]);
 
       for (const item of komposisi) {
         let drugId = item.drugId;
@@ -242,7 +230,7 @@ const updateCustomMedicine = async (req, res, next) => {
         }
 
         await client.query(
-          `INSERT INTO "CustomMedicineComponent" ("customMedicineId", "drugId", "quantity", "unit")
+          `INSERT INTO "custom_medicine_components" ("customMedicineId", "drugId", "quantity", "unit")
            VALUES ($1, $2, $3, $4)`,
           [medicineId, drugId, Number(item.jumlah ?? item.quantity ?? 0), String(item.satuan || item.unit || 'unit')]
         );
@@ -273,7 +261,7 @@ const deleteCustomMedicine = async (req, res, next) => {
   try {
     const { medicineId } = req.params;
 
-    const result = await pool.query('DELETE FROM "CustomMedicine" WHERE "id" = $1 RETURNING "id"', [medicineId]);
+    const result = await pool.query('DELETE FROM "custom_medicines" WHERE "id" = $1 RETURNING "id"', [medicineId]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: `Obat racikan dengan ID ${medicineId} tidak ditemukan.` });
@@ -298,7 +286,7 @@ const recordCustomMedicineTransaction = async (req, res, next) => {
       return res.status(400).json({ message: 'Jumlah transaksi harus lebih dari 0.' });
     }
 
-    const medicineResult = await client.query('SELECT * FROM "CustomMedicine" WHERE "id" = $1', [medicineId]);
+    const medicineResult = await client.query('SELECT * FROM "custom_medicines" WHERE "id" = $1', [medicineId]);
     if (medicineResult.rowCount === 0) {
       return res.status(404).json({ message: `Obat racikan dengan ID ${medicineId} tidak ditemukan.` });
     }
@@ -311,7 +299,7 @@ const recordCustomMedicineTransaction = async (req, res, next) => {
 
     let resolvedCashierId = cashierId;
     if (!resolvedCashierId) {
-      const cashierResult = await client.query('SELECT "id" FROM "User" WHERE "role" = $1::"Role" ORDER BY "id" ASC LIMIT 1', ['KASIR']);
+      const cashierResult = await client.query('SELECT "id" FROM "users" WHERE CAST("role" AS text) = $1 ORDER BY "id" ASC LIMIT 1', ['KASIR']);
       resolvedCashierId = cashierResult.rows[0]?.id;
     }
 
@@ -323,28 +311,90 @@ const recordCustomMedicineTransaction = async (req, res, next) => {
 
     const computedTotal = Number(totalPrice ?? (Number(medicine.price) * Number(quantity)));
 
+    const orderCode = generateOrderCode();
+
+    // Ambil komposisi bahan racikan
+    const drugTable = await resolveDrugTable();
+    const componentsResult = await client.query(
+      `SELECT c."drugId", c."quantity", c."unit", d."name" AS "drugName"
+       FROM "custom_medicine_components" c
+       JOIN ${drugTable} d ON d."id" = c."drugId"
+       WHERE c."customMedicineId" = $1
+       ORDER BY c."id" ASC`,
+      [medicineId]
+    );
+
+    // Validasi stok bahan baku
+    for (const comp of componentsResult.rows) {
+      const drugId = comp.drugId ?? comp.drugid;
+      const compQty = Number(comp.quantity ?? 0);
+      const neededQty = compQty * Number(quantity);
+
+      const drugStockResult = await client.query(
+        `SELECT "id", "name", "stock" FROM ${drugTable} WHERE "id" = $1 FOR UPDATE`,
+        [drugId]
+      );
+
+      if (drugStockResult.rowCount > 0) {
+        const currentStock = Number(drugStockResult.rows[0].stock ?? 0);
+        if (currentStock < neededQty) {
+          throw new Error(
+            `Stok bahan ${drugStockResult.rows[0].name} tidak mencukupi (tersedia: ${currentStock}, dibutuhkan: ${neededQty}).`
+          );
+        }
+      }
+    }
+
+    // Snapshot komposisi racikan
+    const componentsSnapshot = JSON.stringify(
+      componentsResult.rows.map((comp) => ({
+        drugId: comp.drugId ?? comp.drugid,
+        drugName: comp.drugName ?? comp.drugname,
+        quantity: Number(comp.quantity ?? 0),
+        unit: comp.unit,
+      }))
+    );
+
     const transactionResult = await client.query(
-      `INSERT INTO "Transaction" ("totalPrice", "cashierId", "customerId")
-       VALUES ($1, $2, $3)
-       RETURNING "id", "totalPrice", "createdAt", "cashierId", "customerId"`,
-      [computedTotal, resolvedCashierId, customerId || null]
+      `INSERT INTO "transactions" ("orderCode", "totalPrice", "cashierId", "customerId", "type", "status", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+       RETURNING "id", "totalPrice", "createdAt", "cashierId", "customerId", "type", "status"`,
+      [orderCode, computedTotal, resolvedCashierId, customerId || null, 'OFFLINE', 'COMPLETED']
     );
 
     const transaction = transactionResult.rows[0];
 
     await client.query(
-      `INSERT INTO "TransactionDetail" ("transactionId", "customMedicineId", "quantity", "price")
-       VALUES ($1, $2, $3, $4)`,
-      [transaction.id, medicineId, Number(quantity), Number(medicine.price)]
+      `INSERT INTO "transaction_details" ("transactionId", "customMedicineId", "quantity", "unitPrice", "subtotal", "componentsSnapshot")
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [transaction.id, medicineId, Number(quantity), Number(medicine.price), Number(medicine.price) * Number(quantity), componentsSnapshot]
     );
 
+    // Kurangi stok racikan
     await client.query(
-      `UPDATE "CustomMedicine"
+        `UPDATE "custom_medicines"
        SET "stock" = "stock" - $1,
            "updatedAt" = NOW()
        WHERE "id" = $2`,
       [Number(quantity), medicineId]
     );
+
+    // Kurangi stok bahan baku (drugs)
+    for (const comp of componentsResult.rows) {
+      const drugId = comp.drugId ?? comp.drugid;
+      const compQty = Number(comp.quantity ?? 0);
+      const neededQty = compQty * Number(quantity);
+
+      if (neededQty > 0) {
+        await client.query(
+          `UPDATE ${drugTable}
+           SET "stock" = "stock" - $1,
+               "updatedAt" = NOW()
+           WHERE "id" = $2`,
+          [neededQty, drugId]
+        );
+      }
+    }
 
     await client.query('COMMIT');
 

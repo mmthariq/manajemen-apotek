@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
+import NotificationBell from '../components/NotificationBell';
 import '../styles/SupplierPage.css';
 import Sidebar from '../components/Sidebar';
 import SupplierForm from '../components/SupplierForm';
@@ -6,7 +8,8 @@ import ConfirmModal from '../components/ConfirmModal';
 
 const API_BASE_URL = 'http://localhost:3000/api/suppliers';
 
-const SupplierPage = ({ onLogout }) => {
+const SupplierPage = ({ onLogout, authToken = null }) => {
+  const clock = useRealtimeClock();
   const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -19,11 +22,26 @@ const SupplierPage = ({ onLogout }) => {
     supplierName: ''
   });
 
+  const getAuthHeaders = (includeJsonContentType = false) => {
+    const headers = {};
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+
+    return headers;
+  };
+
   const fetchSuppliers = async () => {
     try {
       setIsLoading(true);
       setErrorMessage('');
-      const response = await fetch(API_BASE_URL);
+      const response = await fetch(API_BASE_URL, {
+        headers: getAuthHeaders(),
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -64,7 +82,8 @@ const SupplierPage = ({ onLogout }) => {
     try {
       setErrorMessage('');
       const response = await fetch(`${API_BASE_URL}/${confirmModal.supplierId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders(),
       });
       const result = await response.json();
 
@@ -93,15 +112,14 @@ const SupplierPage = ({ onLogout }) => {
         name: formData.name,
         address: formData.address,
         phone: formData.phone,
+        email: formData.email || null,
         contactPerson: formData.contactPerson,
       };
 
       if (currentEditData) {
         const response = await fetch(`${API_BASE_URL}/${currentEditData.id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload)
         });
         const result = await response.json();
@@ -116,9 +134,7 @@ const SupplierPage = ({ onLogout }) => {
       } else {
         const response = await fetch(API_BASE_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(payload)
         });
         const result = await response.json();
@@ -127,7 +143,7 @@ const SupplierPage = ({ onLogout }) => {
           throw new Error(result.message || 'Gagal menambahkan supplier.');
         }
 
-        setSuppliers((prev) => [result.data, ...prev]);
+        setSuppliers((prev) => [...prev, result.data]);
       }
 
       setIsModalOpen(false);
@@ -152,7 +168,8 @@ const SupplierPage = ({ onLogout }) => {
         <div className="header">
           <h1>Manajemen Supplier</h1>
           <div className="user-info">
-            <div className="date">12 May 2025, 07:41:55</div>
+            <div className="date">{clock}</div>
+            <NotificationBell authToken={authToken} />
             <div className="admin-profile">
               <span>Admin</span>
               <div className="profile-image">👤</div>
@@ -194,7 +211,7 @@ const SupplierPage = ({ onLogout }) => {
                   <td>{supplier.name}</td>
                   <td>{supplier.address}</td>
                   <td>{supplier.phone}</td>
-                  <td>-</td>
+                  <td>{supplier.email || '-'}</td>
                   <td>{supplier.contactPerson}</td>
                   <td>
                     <div className="actions">

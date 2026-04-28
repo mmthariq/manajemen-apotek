@@ -9,8 +9,6 @@ const ROLE_MAP = {
   owner: 'OWNER',
 };
 
-const isMissingTableError = (error) => error && error.code === '42P01';
-
 const verifyPassword = async (inputPassword, user) => {
   if (user.password_hash) {
     return bcrypt.compare(inputPassword, user.password_hash);
@@ -43,39 +41,17 @@ const login = async (req, res, next) => {
 
     let user;
     if (normalizedRole === 'customer') {
-      try {
-        const result = await pool.query('SELECT * FROM customers WHERE email = $1', [email]);
-        user = result.rows[0];
-      } catch (error) {
-        if (!isMissingTableError(error)) {
-          throw error;
-        }
-      }
-
-      if (!user) {
-        const result = await pool.query(
-          'SELECT * FROM "User" WHERE LOWER(CAST("role" AS text)) = $2 AND (email = $1 OR username = $1)',
-          [email, normalizedRole]
-        );
-        user = result.rows[0];
-      }
+      const result = await pool.query(
+        'SELECT * FROM "users" WHERE LOWER(CAST("role" AS text)) = $2 AND ("email" = $1 OR "username" = $1)',
+        [email, normalizedRole]
+      );
+      user = result.rows[0];
     } else {
-      try {
-        const result = await pool.query('SELECT * FROM users WHERE username = $1 AND LOWER(role) = $2', [email, normalizedRole]);
-        user = result.rows[0];
-      } catch (error) {
-        if (!isMissingTableError(error)) {
-          throw error;
-        }
-      }
-
-      if (!user) {
-        const result = await pool.query(
-          'SELECT * FROM "User" WHERE username = $1 AND LOWER(CAST("role" AS text)) = $2',
-          [email, normalizedRole]
-        );
-        user = result.rows[0];
-      }
+      const result = await pool.query(
+        'SELECT * FROM "users" WHERE "username" = $1 AND LOWER(CAST("role" AS text)) = $2',
+        [email, normalizedRole]
+      );
+      user = result.rows[0];
     }
 
     if (!user) {
@@ -139,7 +115,7 @@ const logout = async (req, res, next) => {
 const me = async (req, res, next) => {
   try {
     const userResult = await pool.query(
-      'SELECT "id", "username", "email", "role" FROM "User" WHERE "id" = $1 LIMIT 1',
+      'SELECT "id", "username", "email", "role" FROM "users" WHERE "id" = $1 LIMIT 1',
       [req.user.id]
     );
 

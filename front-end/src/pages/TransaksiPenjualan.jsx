@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
 import '../styles/TransaksiPenjualan.css';
 import Sidebar from '../components/Sidebar';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
 
 const TransaksiPenjualan = ({ onLogout, authToken }) => {
+  const clock = useRealtimeClock();
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -67,7 +69,7 @@ const TransaksiPenjualan = ({ onLogout, authToken }) => {
         <div className="header">
           <h1>Transaksi Penjualan</h1>
           <div className="user-info">
-            <span className="date">{new Date().toLocaleString('id-ID')}</span>
+            <span className="date">{clock}</span>
           </div>
         </div>
 
@@ -100,10 +102,10 @@ const TransaksiPenjualan = ({ onLogout, authToken }) => {
                 transactions.map((trx) => (
                   <tr key={trx.id}>
                     <td>TRX-{String(trx.id).padStart(4, '0')}</td>
-                    <td>{trx.order_time ? new Date(trx.order_time).toLocaleString('id-ID') : '-'}</td>
-                    <td>{Number(trx.total_items || 0)}</td>
-                    <td>{formatToRupiah(trx.total_amount)}</td>
-                    <td>{resolveStatusLabel(trx.order_status)}</td>
+                    <td>{trx.createdAt ? new Date(trx.createdAt).toLocaleString('id-ID') : '-'}</td>
+                    <td>{Number(trx.totalItems || 0)}</td>
+                    <td>{formatToRupiah(trx.totalPrice)}</td>
+                    <td>{resolveStatusLabel(trx.orderStatus)}</td>
                   </tr>
                 ))
               )}

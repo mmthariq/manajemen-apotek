@@ -1,32 +1,34 @@
 const pool = require('../config/database');
 
-const resolveDrugTable = async () => {
-  const tableCheck = await pool.query(
-    `SELECT
-       to_regclass('public."Drug"') AS "drugTable",
-       to_regclass('public.products') AS "legacyDrugTable"`
-  );
-
-  if (tableCheck.rows[0]?.drugTable) {
-    return '"Drug"';
-  }
-
-  if (tableCheck.rows[0]?.legacyDrugTable) {
-    return 'products';
-  }
-
-  return '"Drug"';
-};
-
 const getAllDrugs = async (req, res, next) => {
   try {
-    const drugTable = await resolveDrugTable();
-
+    // Ambil supplier terbaru per obat berdasarkan riwayat pengadaan (purchase_details → purchases → suppliers)
     const result = await pool.query(
-      `SELECT d."id", d."name", d."description", d."stock", d."unit", d."price", d."expiredDate", d."supplierId", s."name" AS "supplierName", d."createdAt", d."updatedAt"
-       FROM ${drugTable} d
-       LEFT JOIN "Supplier" s ON s."id" = d."supplierId"
-       ORDER BY d."id" DESC`
+      `SELECT
+         d."id",
+         d."name",
+         d."description",
+         d."stock",
+         d."unit",
+         d."price",
+         d."expiredDate",
+         d."createdAt",
+         d."updatedAt",
+         latest_supply."supplierId",
+         latest_supply."supplierName"
+       FROM "drugs" d
+       LEFT JOIN LATERAL (
+         SELECT
+           s."id"   AS "supplierId",
+           s."name" AS "supplierName"
+         FROM "purchase_details" pd
+         JOIN "purchases"  p ON p."id"  = pd."purchaseId"
+         JOIN "suppliers"  s ON s."id"  = p."supplierId"
+         WHERE pd."drugId" = d."id"
+         ORDER BY p."createdAt" DESC
+         LIMIT 1
+       ) latest_supply ON true
+       ORDER BY d."id" ASC`
     );
 
     res.status(200).json({
@@ -41,8 +43,7 @@ const getAllDrugs = async (req, res, next) => {
 
 const createDrug = async (req, res, next) => {
   try {
-    const drugTable = await resolveDrugTable();
-    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId } = req.body;
+    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate } = req.body;
 
     const resolvedName = String(name || nama || '').trim();
     const resolvedStock = Number(stock ?? stok);
@@ -55,9 +56,9 @@ const createDrug = async (req, res, next) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO ${drugTable} ("name", "description", "stock", "unit", "price", "expiredDate", "supplierId")
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
+      `INSERT INTO "drugs" ("name", "description", "stock", "unit", "price", "expiredDate", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
+       RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "createdAt", "updatedAt"`,
       [
         resolvedName,
         description ?? deskripsi ?? null,
@@ -65,7 +66,6 @@ const createDrug = async (req, res, next) => {
         String(unit).trim(),
         resolvedPrice,
         expiredDate || null,
-        supplierId || null,
       ]
     );
 
@@ -74,23 +74,18 @@ const createDrug = async (req, res, next) => {
       data: result.rows[0],
     });
   } catch (error) {
-    if (error.code === '23503') {
-      return res.status(400).json({ message: 'Supplier tidak ditemukan.' });
-    }
     next(error);
   }
 };
 
 const getDrugById = async (req, res, next) => {
   try {
-    const drugTable = await resolveDrugTable();
     const { idObat } = req.params;
 
     const result = await pool.query(
-      `SELECT d."id", d."name", d."description", d."stock", d."unit", d."price", d."expiredDate", d."supplierId", s."name" AS "supplierName", d."createdAt", d."updatedAt"
-       FROM ${drugTable} d
-       LEFT JOIN "Supplier" s ON s."id" = d."supplierId"
-       WHERE d."id" = $1`,
+      `SELECT "id", "name", "description", "stock", "unit", "price", "expiredDate", "createdAt", "updatedAt"
+       FROM "drugs"
+       WHERE "id" = $1`,
       [idObat]
     );
 
@@ -109,11 +104,10 @@ const getDrugById = async (req, res, next) => {
 
 const updateDrug = async (req, res, next) => {
   try {
-    const drugTable = await resolveDrugTable();
     const { idObat } = req.params;
-    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId } = req.body;
+    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate } = req.body;
 
-    const existingResult = await pool.query(`SELECT * FROM ${drugTable} WHERE "id" = $1`, [idObat]);
+    const existingResult = await pool.query('SELECT * FROM "drugs" WHERE "id" = $1', [idObat]);
     if (existingResult.rowCount === 0) {
       return res.status(404).json({ message: `Obat dengan ID ${idObat} tidak ditemukan.` });
     }
@@ -124,22 +118,21 @@ const updateDrug = async (req, res, next) => {
     const nextStock = stock ?? stok ?? existing.stock;
     const nextPrice = price ?? harga ?? existing.price;
 
-    if (!nextName || !unit && !existing.unit) {
+    if (!nextName || (!unit && !existing.unit)) {
       return res.status(400).json({ message: 'Nama obat dan unit harus diisi.' });
     }
 
     const result = await pool.query(
-      `UPDATE ${drugTable}
+        `UPDATE "drugs"
        SET "name" = $1,
            "description" = $2,
            "stock" = $3,
            "unit" = $4,
            "price" = $5,
            "expiredDate" = $6,
-           "supplierId" = $7,
            "updatedAt" = NOW()
-       WHERE "id" = $8
-       RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
+       WHERE "id" = $7
+       RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "createdAt", "updatedAt"`,
       [
         String(nextName).trim(),
         nextDescription,
@@ -147,7 +140,6 @@ const updateDrug = async (req, res, next) => {
         String(unit ?? existing.unit).trim(),
         Number(nextPrice),
         expiredDate === undefined ? existing.expiredDate : expiredDate,
-        supplierId === undefined ? existing.supplierId : supplierId,
         idObat,
       ]
     );
@@ -157,22 +149,15 @@ const updateDrug = async (req, res, next) => {
       data: result.rows[0],
     });
   } catch (error) {
-    if (error.code === '23503') {
-      return res.status(400).json({ message: 'Supplier tidak ditemukan.' });
-    }
     next(error);
   }
 };
 
 const deleteDrug = async (req, res, next) => {
   try {
-    const drugTable = await resolveDrugTable();
     const { idObat } = req.params;
 
-    const result = await pool.query(
-      `DELETE FROM ${drugTable} WHERE "id" = $1 RETURNING "id"`,
-      [idObat]
-    );
+    const result = await pool.query('DELETE FROM "drugs" WHERE "id" = $1 RETURNING "id"', [idObat]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: `Obat dengan ID ${idObat} tidak ditemukan.` });

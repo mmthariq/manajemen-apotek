@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
+import NotificationBell from '../components/NotificationBell';
 import { useSearchParams } from 'react-router-dom';
 import '../styles/Dashboard.css';
 import DashboardLayout from '../components/DashboardLayout';
@@ -7,13 +9,34 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const ORDER_API_BASE_URL = 'http://localhost:3000/api/orders';
 const ANALYTICS_API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
 
+const DB_STATUS_TO_LABEL = {
+  PENDING: 'Menunggu Pembayaran',
+  VERIFIED: 'Diproses',
+  COMPLETED: 'Siap Diambil/Dikirim',
+  CANCELLED: 'Dibatalkan',
+};
+
+const normalizeDbOrderStatus = (status) => {
+  const value = String(status || '').trim().toUpperCase();
+
+  if (value === 'PENDING' || value === 'PENDING_PAYMENT') return 'PENDING';
+  if (value === 'PAYMENT_UPLOADED' || value === 'PAID' || value === 'PROCESSED' || value === 'VERIFIED') return 'VERIFIED';
+  if (value === 'COMPLETED' || value === 'SELESAI') return 'COMPLETED';
+  if (value === 'CANCELLED' || value === 'DIBATALKAN') return 'CANCELLED';
+
+  return 'PENDING';
+};
+
 const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
+  const clock = useRealtimeClock();
   const [searchParams] = useSearchParams();
   const isVerificationMode = searchParams.get('tab') === 'verification';
   const [onlineOrders, setOnlineOrders] = useState([]);
   const [isOrdersLoading, setIsOrdersLoading] = useState(false);
   const [ordersMessage, setOrdersMessage] = useState('');
   const [processingOrderId, setProcessingOrderId] = useState(null);
+  const [finishingOrderId, setFinishingOrderId] = useState(null);
+  const [usageInstructionsInput, setUsageInstructionsInput] = useState('');
   const [hourlySalesData, setHourlySalesData] = useState([]);
   const [summary, setSummary] = useState({
     penjualanHariIni: 0,
@@ -28,7 +51,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   const normalizedOrders = useMemo(
     () => onlineOrders.map((order) => ({
       ...order,
-      resolvedStatus: String(order?.order_status || '').toLowerCase(),
+      resolvedStatus: normalizeDbOrderStatus(order?.orderStatus || order?.status || order?.order_status),
     })),
     [onlineOrders]
   );
@@ -68,7 +91,9 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
 
   const fetchDashboardAnalytics = async () => {
     try {
-      const response = await fetch(ANALYTICS_API_BASE_URL);
+      const response = await fetch(ANALYTICS_API_BASE_URL, {
+        headers: buildHeaders(),
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -128,7 +153,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
     }
   };
 
-  const handleUpdateStatus = async (orderId, status) => {
+  const handleUpdateStatus = async (orderId, status, usageInstructions = '') => {
     try {
       setProcessingOrderId(orderId);
       setOrdersMessage('');
@@ -136,7 +161,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
       const response = await fetch(`${ORDER_API_BASE_URL}/${orderId}/status`, {
         method: 'PATCH',
         headers: buildHeaders(true),
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ orderStatus: status, usageInstructions }),
       });
       const result = await response.json();
 
@@ -153,28 +178,35 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
     }
   };
 
-  const renderStatusLabel = (status) => {
-    switch (status) {
-      case 'pending_payment':
-        return 'Menunggu Pembayaran';
-      case 'payment_uploaded':
-        return 'Menunggu Verifikasi Kasir';
-      case 'paid':
-        return 'Dibayar';
-      case 'processed':
-        return 'Diproses';
-      case 'completed':
-        return 'Selesai';
-      case 'cancelled':
-        return 'Dibatalkan';
-      default:
-        return status || '-';
+  const handleOpenCompleteForm = (orderId) => {
+    setFinishingOrderId(orderId);
+    setUsageInstructionsInput('');
+    setOrdersMessage('');
+  };
+
+  const handleSubmitCompleteOrder = async () => {
+    if (!finishingOrderId) {
+      return;
     }
+
+    const normalized = usageInstructionsInput.trim();
+    if (!normalized) {
+      setOrdersMessage('Aturan pakai wajib diisi sebelum menyelesaikan pesanan.');
+      return;
+    }
+
+    await handleUpdateStatus(finishingOrderId, 'COMPLETED', normalized);
+    setFinishingOrderId(null);
+    setUsageInstructionsInput('');
+  };
+
+  const renderStatusLabel = (status) => {
+    return DB_STATUS_TO_LABEL[status] || status || '-';
   };
 
   const getStatusClassName = (status) => {
-    if (status === 'completed') return 'completed';
-    if (status === 'cancelled') return 'cancelled';
+    if (status === 'COMPLETED') return 'completed';
+    if (status === 'CANCELLED') return 'cancelled';
     return 'pending';
   };
 
@@ -196,7 +228,8 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
         <div className="header">
           <h1>Dashboard Kasir</h1>
           <div className="user-info">
-            <span className="date">12 May 2025, 07:41:55</span>
+            <span className="date">{clock}</span>
+            <NotificationBell authToken={authToken} />
             <div className="admin-profile">
               <span>Kasir</span>
               <div className="profile-image">
@@ -275,6 +308,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
                   <th>ID Pesanan</th>
                   <th>Total</th>
                   <th>Waktu</th>
+                  <th>Resep</th>
                   <th>Bukti Upload</th>
                   <th>Status</th>
                   <th>Aksi Kasir</th>
@@ -283,19 +317,32 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
               <tbody>
                 {normalizedOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>Belum ada pesanan online.</td>
+                    <td colSpan={7}>Belum ada pesanan online.</td>
                   </tr>
                 ) : (
                   normalizedOrders.slice(0, 15).map((order) => (
                     <tr key={order.id}>
                       <td>#{order.id}</td>
-                      <td>{formatToRupiah(Number(order.total_amount || 0))}</td>
-                      <td>{order.order_time ? new Date(order.order_time).toLocaleString('id-ID') : '-'}</td>
+                      <td>{formatToRupiah(Number(order.totalPrice || 0))}</td>
+                      <td>{order.createdAt ? new Date(order.createdAt).toLocaleString('id-ID') : '-'}</td>
                       <td>
-                        {order.payment_proof_image_url ? (
-                          <a href={resolveProofImageUrl(order.payment_proof_image_url)} target="_blank" rel="noreferrer">
+                        {order.prescriptionImageUrl ? (
+                          <a href={resolveProofImageUrl(order.prescriptionImageUrl)} target="_blank" rel="noreferrer">
                             <img
-                              src={resolveProofImageUrl(order.payment_proof_image_url)}
+                              src={resolveProofImageUrl(order.prescriptionImageUrl)}
+                              alt={`Resep ${order.id}`}
+                              className="payment-proof-thumb"
+                            />
+                          </a>
+                        ) : (
+                          <span className="action-muted">Tidak ada resep</span>
+                        )}
+                      </td>
+                      <td>
+                        {order.paymentProofImageUrl ? (
+                          <a href={resolveProofImageUrl(order.paymentProofImageUrl)} target="_blank" rel="noreferrer">
+                            <img
+                              src={resolveProofImageUrl(order.paymentProofImageUrl)}
                               alt={`Bukti bayar ${order.id}`}
                               className="payment-proof-thumb"
                             />
@@ -311,7 +358,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
                       </td>
                       <td>
                         <div className="cashier-actions">
-                          {order.resolvedStatus === 'payment_uploaded' && (
+                          {order.resolvedStatus === 'PENDING' && order.paymentProofImageUrl && (
                             <button
                               className="action-btn approve"
                               onClick={() => handleVerifyPayment(order.id)}
@@ -320,25 +367,16 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
                               Verifikasi
                             </button>
                           )}
-                          {order.resolvedStatus === 'paid' && (
-                            <button
-                              className="action-btn process"
-                              onClick={() => handleUpdateStatus(order.id, 'processed')}
-                              disabled={processingOrderId === order.id}
-                            >
-                              Proses
-                            </button>
-                          )}
-                          {order.resolvedStatus === 'processed' && (
+                          {order.resolvedStatus === 'VERIFIED' && (
                             <button
                               className="action-btn complete"
-                              onClick={() => handleUpdateStatus(order.id, 'completed')}
+                              onClick={() => handleOpenCompleteForm(order.id)}
                               disabled={processingOrderId === order.id}
                             >
                               Selesaikan
                             </button>
                           )}
-                          {!['payment_uploaded', 'paid', 'processed'].includes(order.resolvedStatus) && (
+                          {!['PENDING', 'VERIFIED'].includes(order.resolvedStatus) && (
                             <span className="action-muted">Tidak ada aksi</span>
                           )}
                         </div>
@@ -367,8 +405,8 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
               {normalizedOrders.slice(0, 5).map((order) => (
                 <tr key={`recent-${order.id}`}>
                   <td>#{order.id}</td>
-                  <td>{order.order_time ? new Date(order.order_time).toLocaleTimeString('id-ID') : '-'}</td>
-                  <td>{formatToRupiah(Number(order.total_amount || 0))}</td>
+                  <td>{order.createdAt ? new Date(order.createdAt).toLocaleTimeString('id-ID') : '-'}</td>
+                  <td>{formatToRupiah(Number(order.totalPrice || 0))}</td>
                   <td>
                     <span className={`status-badge ${getStatusClassName(order.resolvedStatus)}`}>
                       {renderStatusLabel(order.resolvedStatus)}
@@ -378,6 +416,41 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
               ))}
             </tbody>
           </table>
+        </div>
+        )}
+
+        {finishingOrderId && (
+        <div className="table-section full-width">
+          <h2>Isi Aturan Pakai</h2>
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <label htmlFor="usageInstructionsInput">Aturan pakai untuk pesanan #{finishingOrderId}</label>
+            <textarea
+              id="usageInstructionsInput"
+              value={usageInstructionsInput}
+              onChange={(event) => setUsageInstructionsInput(event.target.value)}
+              placeholder="Contoh: 3x1 sesudah makan selama 5 hari"
+              rows={4}
+            />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                className="action-btn complete"
+                onClick={handleSubmitCompleteOrder}
+                disabled={processingOrderId === finishingOrderId}
+              >
+                Simpan dan Selesaikan
+              </button>
+              <button
+                className="action-btn"
+                onClick={() => {
+                  setFinishingOrderId(null);
+                  setUsageInstructionsInput('');
+                }}
+                disabled={processingOrderId === finishingOrderId}
+              >
+                Batal
+              </button>
+            </div>
+          </div>
         </div>
         )}
       </div>

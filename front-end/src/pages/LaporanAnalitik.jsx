@@ -1,22 +1,41 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
+import NotificationBell from '../components/NotificationBell';
 import '../styles/LaporanAnalitik.css';
 import Sidebar from '../components/Sidebar';
 import ExportModal from '../components/ExportModal';
 
 const API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
+const REPORT_EXPORT_URL = 'http://localhost:3000/api/reports/analytics/export';
 
 const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
   style: 'currency',
   currency: 'IDR',
 }).format(Number(value || 0));
 
-const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) => {
+const getCurrentMonthDateRange = () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const toIsoDate = (date) => date.toISOString().slice(0, 10);
+
+  return {
+    startDate: toIsoDate(start),
+    endDate: toIsoDate(end),
+  };
+};
+
+const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null, authToken = null }) => {
+  const clock = useRealtimeClock();
+  const defaultDateRange = useMemo(() => getCurrentMonthDateRange(), []);
   // Default date range for the report
-  const [startDate, setStartDate] = useState('2025-01-01');
-  const [endDate, setEndDate] = useState('2025-01-31');
+  const [startDate, setStartDate] = useState(defaultDateRange.startDate);
+  const [endDate, setEndDate] = useState(defaultDateRange.endDate);
   const [selectedCategory, setSelectedCategory] = useState('Semua Kategori');
   const [summaryData, setSummaryData] = useState(null);
   const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [recentPurchases, setRecentPurchases] = useState([]);
   const [availableCategories, setAvailableCategories] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   
@@ -48,7 +67,11 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) =
         query.set('category', selectedCategory);
       }
 
-      const response = await fetch(`${API_BASE_URL}?${query.toString()}`);
+      const headers = authToken
+        ? { Authorization: `Bearer ${authToken}` }
+        : {};
+
+      const response = await fetch(`${API_BASE_URL}?${query.toString()}`, { headers });
       const result = await response.json();
 
       if (!response.ok) {
@@ -58,6 +81,7 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) =
       const data = result.data || {};
       setSummaryData(data.summary || null);
       setLowStockProducts(Array.isArray(data.lowStockProducts) ? data.lowStockProducts : []);
+      setRecentPurchases(Array.isArray(data.recentPurchases) ? data.recentPurchases : []);
       setAvailableCategories(Array.isArray(data.categories) ? data.categories.map((item) => item.name) : []);
     } catch (error) {
       setErrorMessage(error.message || 'Terjadi kesalahan saat memuat analitik.');
@@ -90,24 +114,55 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) =
   };
   
   // Function to confirm export
-  const handleConfirmExport = () => {
+  const handleConfirmExport = async () => {
     const { type } = exportModal;
-    
-    // Show loading state (you can add a loading spinner here)
-    console.log(`Exporting report as ${type.toUpperCase()}...`);
-    
-    // Simulate export process
-    setTimeout(() => {
-      console.log(`${type.toUpperCase()} export completed!`);
-      // You can show a success notification here
+
+    try {
+      const query = new URLSearchParams({
+        startDate,
+        endDate,
+        type: type === 'excel' ? 'excel' : 'pdf',
+      });
+
+      if (selectedCategory !== 'Semua Kategori') {
+        query.set('category', selectedCategory);
+      }
+
+      const headers = authToken
+        ? { Authorization: `Bearer ${authToken}` }
+        : {};
+
+      const response = await fetch(`${REPORT_EXPORT_URL}?${query.toString()}`, { headers });
+
+      if (!response.ok) {
+        let message = 'Gagal mengekspor laporan.';
+        try {
+          const result = await response.json();
+          message = result.message || message;
+        } catch (error) {
+          // Abaikan parse error saat response bukan JSON.
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const extension = type === 'excel' ? 'xlsx' : 'pdf';
+      const fileName = `laporan-analitik-${Date.now()}.${extension}`;
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
       setExportModal({ isOpen: false, type: null });
-    }, 2000);
-    
-    // In a real application, this would:
-    // 1. Send request to backend
-    // 2. Generate the file
-    // 3. Download the file
-    // 4. Show success/error message
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat mengekspor laporan.');
+      setExportModal({ isOpen: false, type: null });
+    }
   };
   
   // Function to handle report print
@@ -131,7 +186,8 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) =
         <div className="header">
           <h1>Dashboard</h1>
           <div className="user-info">
-            <span className="date">12 May 2025, 07:41:55</span>
+            <span className="date">{clock}</span>
+            <NotificationBell authToken={authToken} />
             <div className="admin-profile">
               <span>{profileLabel}</span>
               <div className="profile-image">
@@ -213,7 +269,7 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) =
           {errorMessage && <p>{errorMessage}</p>}
           <div className="summary-card">
             <h3>Total Penjualan</h3>
-            <p className="card-value">{formatCurrency(summaryData?.penjualanHariIni || 0)}</p>
+            <p className="card-value">{formatCurrency(summaryData?.penjualanPeriode || 0)}</p>
           </div>
           <div className="summary-card">
             <h3>Obat Terlaris</h3>
@@ -230,6 +286,14 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) =
           <div className="summary-card">
             <h3>Pendapatan</h3>
             <p className="card-value">{formatCurrency(summaryData?.pendapatanPeriode || 0)}</p>
+          </div>
+          <div className="summary-card">
+            <h3>Total Pembelian</h3>
+            <p className="card-value">{formatCurrency(summaryData?.pembelianPeriode || 0)}</p>
+          </div>
+          <div className="summary-card">
+            <h3>Laba Kotor</h3>
+            <p className="card-value">{formatCurrency(summaryData?.labaKotorPeriode || 0)}</p>
           </div>
         </div>
         
@@ -257,6 +321,33 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null }) =
                         {product.status}
                       </span>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="low-stock-section">
+          <h3>Riwayat Pembelian</h3>
+
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Supplier</th>
+                  <th>Tanggal</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentPurchases.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.id}</td>
+                    <td>{item.supplierName || '-'}</td>
+                    <td>{item.createdAt ? new Date(item.createdAt).toLocaleString('id-ID') : '-'}</td>
+                    <td>{formatCurrency(item.totalPrice || 0)}</td>
                   </tr>
                 ))}
               </tbody>
