@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import useRealtimeClock from '../hooks/useRealtimeClock';
-import NotificationBell from '../components/NotificationBell';
+import DashboardHeader from '../components/header/DashboardHeader';
 import '../styles/LaporanAnalitik.css';
 import Sidebar from '../components/Sidebar';
 import ExportModal from '../components/ExportModal';
@@ -27,7 +26,6 @@ const getCurrentMonthDateRange = () => {
 };
 
 const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null, authToken = null }) => {
-  const clock = useRealtimeClock();
   const defaultDateRange = useMemo(() => getCurrentMonthDateRange(), []);
   // Default date range for the report
   const [startDate, setStartDate] = useState(defaultDateRange.startDate);
@@ -49,11 +47,6 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null, aut
     () => ['Semua Kategori', ...availableCategories],
     [availableCategories]
   );
-
-  const profileLabel =
-    currentUser?.name ||
-    currentUser?.username ||
-    (String(userRole).toLowerCase() === 'owner' ? 'Owner' : 'Admin');
 
   const fetchAnalytics = async () => {
     try {
@@ -183,21 +176,7 @@ const LaporanAnalitik = ({ onLogout, userRole = 'admin', currentUser = null, aut
       <Sidebar onLogout={onLogout} userRole={userRole} currentUser={currentUser} />
       
       <div className="main-content">
-        <div className="header">
-          <h1>Dashboard</h1>
-          <div className="user-info">
-            <span className="date">{clock}</span>
-            <NotificationBell authToken={authToken} />
-            <div className="admin-profile">
-              <span>{profileLabel}</span>
-              <div className="profile-image">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardHeader userRole={userRole} authToken={authToken} />
         
         <div className="analytics-header">
           <div className="title-section">

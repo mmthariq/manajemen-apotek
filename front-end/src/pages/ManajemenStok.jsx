@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import useRealtimeClock from '../hooks/useRealtimeClock';
-import NotificationBell from '../components/NotificationBell';
+import DashboardHeader from '../components/header/DashboardHeader';
 import '../styles/ManajemenStok.css';
 import Sidebar from '../components/Sidebar';
 import ObatForm from '../components/ObatForm';
@@ -12,7 +11,6 @@ const formatRupiah = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')
 const parseRupiah = (text) => Number(String(text || '').replace(/[^\d]/g, '')) || 0;
 
 const ManajemenStok = ({ onLogout, authToken = null }) => {
-  const clock = useRealtimeClock();
   const [medications, setMedications] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -185,21 +183,7 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
       <Sidebar onLogout={onLogout} />
       
       <div className="main-content">
-        <div className="header">
-          <h1>Manajemen Stok Obat</h1>
-          <div className="user-info">
-            <span className="date">{clock}</span>
-            <NotificationBell authToken={authToken} />
-            <div className="admin-profile">
-              <span>Admin</span>
-              <div className="profile-image">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardHeader authToken={authToken} />
         
         <div className="content-header">
           <h2>Manajemen Stok Obat</h2>

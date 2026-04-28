@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import NotificationBell from '../components/NotificationBell';
+import DashboardHeader from '../components/header/DashboardHeader';
 import DashboardLayout from '../components/DashboardLayout';
 import '../styles/ManajemenPengadaan.css';
 
@@ -198,6 +198,7 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
 
   return (
     <DashboardLayout onLogout={onLogout} userRole={userRole} currentUser={currentUser}>
+      <DashboardHeader userRole={userRole} authToken={authToken} />
       <div className="pengadaan-page">
         <div className="pengadaan-header">
           <h1>Manajemen Pengadaan</h1>

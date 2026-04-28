@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import useRealtimeClock from '../hooks/useRealtimeClock';
+import DashboardHeader from '../components/header/DashboardHeader';
 import Sidebar from '../components/Sidebar';
 import CustomMedicineForm from '../components/CustomMedicineForm';
+import ConfirmModal from '../components/ConfirmModal';
 import '../styles/ManajemenObatRacikan.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/custom-medicine';
 
 const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
-  const clock = useRealtimeClock();
   const [customMedicines, setCustomMedicines] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -20,6 +20,11 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
   const [notificationType, setNotificationType] = useState('success');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingKomposisi, setViewingKomposisi] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    medicineId: null,
+    medicineName: ''
+  });
 
   const getAuthHeaders = (includeJsonContentType = false) => {
     const headers = {};
@@ -131,25 +136,43 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus obat racikan ini?')) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/${id}`, {
-          method: 'DELETE',
-          headers: getAuthHeaders(),
-        });
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.message || 'Gagal menghapus obat racikan.');
-        }
+  const handleDeleteClick = (medicine) => {
+    setConfirmModal({
+      isOpen: true,
+      medicineId: medicine.id,
+      medicineName: medicine.nama
+    });
+  };
 
-        setCustomMedicines((prev) => prev.filter(med => med.id !== id));
-        showNotificationMessage('Obat racikan berhasil dihapus', 'success');
-      } catch (error) {
-        setErrorMessage(error.message || 'Terjadi kesalahan saat menghapus obat racikan.');
-        showNotificationMessage(error.message || 'Gagal menghapus data', 'error');
-      }
+  const handleConfirmDelete = async () => {
+    const targetId = confirmModal.medicineId;
+    if (!targetId) {
+      setConfirmModal({ isOpen: false, medicineId: null, medicineName: '' });
+      return;
     }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/${targetId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal menghapus obat racikan.');
+      }
+
+      setCustomMedicines((prev) => prev.filter(med => med.id !== targetId));
+      showNotificationMessage('Obat racikan berhasil dihapus', 'success');
+    } catch (error) {
+      setErrorMessage(error.message || 'Terjadi kesalahan saat menghapus obat racikan.');
+      showNotificationMessage(error.message || 'Gagal menghapus data', 'error');
+    } finally {
+      setConfirmModal({ isOpen: false, medicineId: null, medicineName: '' });
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmModal({ isOpen: false, medicineId: null, medicineName: '' });
   };
 
   const filteredMedicines = customMedicines.filter(med =>
@@ -168,12 +191,7 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
       <Sidebar onLogout={onLogout} />
 
       <div className="main-content">
-        <div className="header">
-          <h1>Manajemen Obat Racikan</h1>
-          <div className="user-info">
-            <span className="date">{clock}</span>
-          </div>
-        </div>
+        <DashboardHeader authToken={authToken} />
 
         <div className="content-section">
           {/* Tools Bar */}
@@ -248,14 +266,22 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
                           onClick={() => handleEdit(medicine)}
                           title="Edit"
                         >
-                          ✎
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
                         </button>
                         <button
                           className="btn-delete"
-                          onClick={() => handleDelete(medicine.id)}
+                          onClick={() => handleDeleteClick(medicine)}
                           title="Hapus"
                         >
-                          ✕
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                          </svg>
                         </button>
                       </td>
                     </tr>
@@ -296,6 +322,17 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
         onSave={handleSave}
         authToken={authToken}
         editData={editingData}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Obat Racikan"
+        message={`Apakah Anda yakin ingin menghapus obat racikan "${confirmModal.medicineName}"? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        type="danger"
       />
 
       {/* Modal Lihat Komposisi */}

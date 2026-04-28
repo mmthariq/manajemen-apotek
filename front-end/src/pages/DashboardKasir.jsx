@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import useRealtimeClock from '../hooks/useRealtimeClock';
-import NotificationBell from '../components/NotificationBell';
+import DashboardHeader from '../components/header/DashboardHeader';
 import { useSearchParams } from 'react-router-dom';
 import '../styles/Dashboard.css';
 import DashboardLayout from '../components/DashboardLayout';
@@ -28,7 +27,6 @@ const normalizeDbOrderStatus = (status) => {
 };
 
 const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
-  const clock = useRealtimeClock();
   const [searchParams] = useSearchParams();
   const isVerificationMode = searchParams.get('tab') === 'verification';
   const [onlineOrders, setOnlineOrders] = useState([]);
@@ -225,21 +223,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   return (
     <DashboardLayout onLogout={onLogout} userRole={userRole} currentUser={currentUser}>
       <div className="main-content">
-        <div className="header">
-          <h1>Dashboard Kasir</h1>
-          <div className="user-info">
-            <span className="date">{clock}</span>
-            <NotificationBell authToken={authToken} />
-            <div className="admin-profile">
-              <span>Kasir</span>
-              <div className="profile-image">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardHeader userRole={userRole} authToken={authToken} />
         
         {!isVerificationMode && (
         <div className="stats-container">

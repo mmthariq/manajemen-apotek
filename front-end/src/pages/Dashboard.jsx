@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import useRealtimeClock from '../hooks/useRealtimeClock';
-import NotificationBell from '../components/NotificationBell';
+import DashboardHeader from '../components/header/DashboardHeader';
 import '../styles/Dashboard.css';
 import DashboardLayout from '../components/DashboardLayout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
@@ -9,7 +8,6 @@ const API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
 const NOTIFICATION_API_BASE_URL = 'http://localhost:3000/api/dashboard/notifications';
 
 const Dashboard = ({ onLogout, userRole, currentUser, authToken = null }) => {
-  const clock = useRealtimeClock();
   const [weeklySalesData, setWeeklySalesData] = useState([]);
   const [medicineCategoryData, setMedicineCategoryData] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
@@ -97,21 +95,7 @@ const Dashboard = ({ onLogout, userRole, currentUser, authToken = null }) => {
   return (
     <DashboardLayout onLogout={onLogout} userRole={userRole} currentUser={currentUser}>
       <div className="main-content">
-        <div className="header">
-          <h1>Dashboard</h1>
-          <div className="user-info">
-            <span className="date">{clock}</span>
-            <NotificationBell authToken={authToken} />
-            <div className="admin-profile">
-              <span>Admin</span>
-              <div className="profile-image">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardHeader userRole={userRole} authToken={authToken} />
         
         <div className="stats-container">
           {errorMessage && <p>{errorMessage}</p>}

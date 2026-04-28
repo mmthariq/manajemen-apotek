@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import useRealtimeClock from '../hooks/useRealtimeClock';
+import DashboardHeader from '../components/header/DashboardHeader';
 import '../styles/TransaksiPenjualan.css';
 import Sidebar from '../components/Sidebar';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
 
 const TransaksiPenjualan = ({ onLogout, authToken }) => {
-  const clock = useRealtimeClock();
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -66,12 +65,7 @@ const TransaksiPenjualan = ({ onLogout, authToken }) => {
       <Sidebar onLogout={onLogout} />
 
       <div className="main-content">
-        <div className="header">
-          <h1>Transaksi Penjualan</h1>
-          <div className="user-info">
-            <span className="date">{clock}</span>
-          </div>
-        </div>
+        <DashboardHeader authToken={authToken} />
 
         <div className="content-header">
           <h2>Transaksi Penjualan</h2>
