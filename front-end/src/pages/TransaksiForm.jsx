@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
+import NotificationBell from '../components/NotificationBell';
 import Sidebar from '../components/Sidebar';
 import '../styles/TransaksiKasir.css';
 
@@ -6,6 +8,7 @@ const DRUG_API_BASE_URL = 'http://localhost:3000/api/obat';
 const ORDER_API_BASE_URL = 'http://localhost:3000/api/orders';
 
 const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
+  const clock = useRealtimeClock();
   // State for form input values
   const [selectedObat, setSelectedObat] = useState('');
   const [stokTersedia, setStokTersedia] = useState(0);
@@ -22,7 +25,11 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
     const fetchDrugs = async () => {
       try {
         setErrorMessage('');
-        const response = await fetch(DRUG_API_BASE_URL);
+        const headers = authToken
+          ? { Authorization: `Bearer ${authToken}` }
+          : {};
+
+        const response = await fetch(DRUG_API_BASE_URL, { headers });
         const result = await response.json();
 
         if (!response.ok) {
@@ -204,7 +211,8 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
         <div className="header">
           <h1>Transaksi Penjualan</h1>
           <div className="user-info">
-            <span className="date">12 May 2025, 07:41:55</span>
+            <span className="date">{clock}</span>
+            <NotificationBell authToken={authToken} />
             <div className="admin-profile">
               <span>Kasir</span>
               <div className="profile-image">
