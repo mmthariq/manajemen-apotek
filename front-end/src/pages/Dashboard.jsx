@@ -1,20 +1,29 @@
 import React, { useEffect, useState } from 'react';
+import useRealtimeClock from '../hooks/useRealtimeClock';
+import NotificationBell from '../components/NotificationBell';
 import '../styles/Dashboard.css';
 import DashboardLayout from '../components/DashboardLayout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 const API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
+const NOTIFICATION_API_BASE_URL = 'http://localhost:3000/api/dashboard/notifications';
 
-const Dashboard = ({ onLogout, userRole, currentUser }) => {
+const Dashboard = ({ onLogout, userRole, currentUser, authToken = null }) => {
+  const clock = useRealtimeClock();
   const [weeklySalesData, setWeeklySalesData] = useState([]);
   const [medicineCategoryData, setMedicineCategoryData] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [expiringSoonProducts, setExpiringSoonProducts] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [summaryData, setSummaryData] = useState({
     totalObat: 0,
     transaksiHariIni: 0,
     totalSupplier: 0,
     totalPengguna: 0,
+  });
+  const [alertSummary, setAlertSummary] = useState({
+    totalAlerts: 0,
+    highPriorityAlerts: 0,
   });
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -30,17 +39,34 @@ const Dashboard = ({ onLogout, userRole, currentUser }) => {
     const fetchAnalytics = async () => {
       try {
         setErrorMessage('');
-        const response = await fetch(API_BASE_URL);
-        const result = await response.json();
+        const headers = authToken
+          ? { Authorization: `Bearer ${authToken}` }
+          : {};
 
-        if (!response.ok) {
+        const [analyticsResponse, notificationResponse] = await Promise.all([
+          fetch(API_BASE_URL, { headers }),
+          fetch(NOTIFICATION_API_BASE_URL, { headers }),
+        ]);
+
+        const result = await analyticsResponse.json();
+
+        if (!analyticsResponse.ok) {
           throw new Error(result.message || 'Gagal memuat dashboard.');
+        }
+
+        if (notificationResponse.ok) {
+          const notificationResult = await notificationResponse.json();
+          setAlertSummary({
+            totalAlerts: Number(notificationResult?.data?.totalAlerts || 0),
+            highPriorityAlerts: Number(notificationResult?.data?.highPriorityAlerts || 0),
+          });
         }
 
         const data = result.data || {};
         setWeeklySalesData(Array.isArray(data.weeklySales) ? data.weeklySales : []);
         setMedicineCategoryData(Array.isArray(data.categories) ? data.categories : []);
         setLowStockProducts(Array.isArray(data.lowStockProducts) ? data.lowStockProducts.slice(0, 5) : []);
+        setExpiringSoonProducts(Array.isArray(data.expiringSoonProducts) ? data.expiringSoonProducts.slice(0, 5) : []);
         setRecentTransactions(Array.isArray(data.recentTransactions) ? data.recentTransactions.slice(0, 5) : []);
         setSummaryData(data.summary || {
           totalObat: 0,
@@ -74,7 +100,8 @@ const Dashboard = ({ onLogout, userRole, currentUser }) => {
         <div className="header">
           <h1>Dashboard</h1>
           <div className="user-info">
-            <span className="date">12 May 2025, 07:41:55</span>
+            <span className="date">{clock}</span>
+            <NotificationBell authToken={authToken} />
             <div className="admin-profile">
               <span>Admin</span>
               <div className="profile-image">
@@ -88,6 +115,30 @@ const Dashboard = ({ onLogout, userRole, currentUser }) => {
         
         <div className="stats-container">
           {errorMessage && <p>{errorMessage}</p>}
+          <div className="stat-card">
+            <div className="stat-info">
+              <span className="stat-label">Total Alert</span>
+              <h2 className="stat-value">{alertSummary.totalAlerts}</h2>
+            </div>
+            <div className="stat-icon transaction-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <path fill="currentColor" d="M13,13H11V7H13M13,17H11V15H13M1,21H23L12,2" />
+              </svg>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-info">
+              <span className="stat-label">Alert Prioritas Tinggi</span>
+              <h2 className="stat-value">{alertSummary.highPriorityAlerts}</h2>
+            </div>
+            <div className="stat-icon supplier-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <path fill="currentColor" d="M13,13H11V7H13M13,17H11V15H13M1,21H23L12,2" />
+              </svg>
+            </div>
+          </div>
+
           <div className="stat-card">
             <div className="stat-info">
               <span className="stat-label">Total Obat</span>
@@ -204,6 +255,26 @@ const Dashboard = ({ onLogout, userRole, currentUser }) => {
                   <tr key={item.id}>
                     <td>{item.name}</td>
                     <td>{item.stock}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="table-section">
+            <h2>Mendekati Kedaluwarsa (30 Hari)</h2>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Nama Obat</th>
+                  <th>Kedaluwarsa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {expiringSoonProducts.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.name}</td>
+                    <td>{item.expiredDate ? new Date(item.expiredDate).toLocaleDateString('id-ID') : '-'}</td>
                   </tr>
                 ))}
               </tbody>
