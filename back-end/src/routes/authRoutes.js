@@ -15,14 +15,18 @@ router.post(
 // POST /api/auth/forgot-password
 router.post(
   '/forgot-password',
-  // validateForgotPassword, // Middleware validasi
   authController.forgotPassword
+);
+
+// POST /api/auth/verify-reset-otp
+router.post(
+  '/verify-reset-otp',
+  authController.verifyResetOtp
 );
 
 // POST /api/auth/reset-password
 router.post(
   '/reset-password',
-  // validateResetPassword, // Middleware validasi
   authController.resetPassword
 );
 
