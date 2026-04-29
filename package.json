@@ -5,13 +5,16 @@
     "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue.bold,bgGreen.bold\" \"npm run dev --prefix back-end\" \"npm run dev --prefix front-end\"",
     "dev:backend": "npm run dev --prefix back-end",
     "dev:frontend": "npm run dev --prefix front-end",
-    "install:all": "npm install && npm install --prefix back-end && npm install --prefix front-end"
+    "install:all": "npm install && npm install --prefix back-end && npm install --prefix front-end",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "concurrently": "^9.1.2",
     "prisma": "^7.6.0",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "wrangler": "^4.86.0"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.6.0",

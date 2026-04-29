@@ -7,3 +7,9 @@ node_modules
 back-end/uploads/
 *.timestamp-*.mjs
 prisma/examples/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
