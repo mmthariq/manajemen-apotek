@@ -5,29 +5,60 @@ import {
   InsertChartRounded,
   LocalShippingRounded,
   ArrowForwardRounded,
-  HealthAndSafetyRounded
+  HealthAndSafetyRounded,
+  AdminPanelSettingsRounded,
+  PointOfSaleRounded,
+  ShoppingCartRounded,
+  AssessmentRounded,
 } from '@mui/icons-material';
 import '../styles/LandingPage.css';
 
 const LandingPage = ({ isAuthenticated, redirectPath }) => {
   const primaryCtaPath = isAuthenticated ? redirectPath : '/login';
-  const primaryCtaLabel = isAuthenticated ? 'Masuk ke Dashboard' : 'Mulai Sistem Sekarang';
+  const primaryCtaLabel = isAuthenticated ? 'Masuk ke Dashboard' : 'Masuk ke Sistem';
 
   const featurePreviewItems = [
     {
-      title: 'Manajemen Stok Otomatis',
-      description: 'Sinkronisasi stok masuk, keluar, dan peringatan minimum stok secara real-time.',
+      title: 'Manajemen Stok Obat',
+      description: 'Pencatatan stok masuk dan keluar secara otomatis, dilengkapi peringatan stok minimum dan kedaluwarsa.',
       icon: <Inventory2Rounded fontSize="large" sx={{ color: '#10b981' }} />,
     },
     {
-      title: 'Dashboard Penjualan',
-      description: 'Pantau performa harian hingga bulanan dalam satu tampilan grafis yang ringkas.',
+      title: 'Pencatatan Transaksi',
+      description: 'Pencatatan penjualan harian yang terintegrasi dengan data stok untuk mengurangi kesalahan pencatatan manual.',
       icon: <InsertChartRounded fontSize="large" sx={{ color: '#0ea5e9' }} />,
     },
     {
-      title: 'Integrasi Supplier',
-      description: 'Kelola data supplier dan histori pemesanan dengan jauh lebih terstruktur.',
+      title: 'Pengelolaan Supplier',
+      description: 'Data supplier dan riwayat pengadaan obat tersimpan rapi untuk mempermudah proses pemesanan ulang.',
       icon: <LocalShippingRounded fontSize="large" sx={{ color: '#8b5cf6' }} />,
+    },
+  ];
+
+  const workflowSteps = [
+    {
+      step: '01',
+      title: 'Admin',
+      description: 'Mengelola data master obat, supplier, pengguna, serta memantau seluruh operasional.',
+      icon: <AdminPanelSettingsRounded sx={{ color: '#10b981', fontSize: 30 }} />,
+    },
+    {
+      step: '02',
+      title: 'Kasir',
+      description: 'Memproses transaksi penjualan langsung dan mencatat setiap detail pembayaran.',
+      icon: <PointOfSaleRounded sx={{ color: '#0ea5e9', fontSize: 30 }} />,
+    },
+    {
+      step: '03',
+      title: 'Pelanggan',
+      description: 'Melihat katalog obat dan melakukan pemesanan melalui portal secara mandiri.',
+      icon: <ShoppingCartRounded sx={{ color: '#8b5cf6', fontSize: 30 }} />,
+    },
+    {
+      step: '04',
+      title: 'Laporan',
+      description: 'Laporan penjualan, stok, dan pengadaan dihasilkan otomatis untuk evaluasi manajemen.',
+      icon: <AssessmentRounded sx={{ color: '#f59e0b', fontSize: 30 }} />,
     },
   ];
 
@@ -37,7 +68,7 @@ const LandingPage = ({ isAuthenticated, redirectPath }) => {
       <Box className="landing-aurora landing-aurora-right" />
 
       <Container maxWidth="lg" className="landing-container">
-        {/* 1. Navigasi - Tombol 'Daftar Customer' di sini sudah dihapus */}
+        {/* Navigasi */}
         <Box className="landing-nav">
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Box className="landing-brand-emblem" aria-hidden="true">
@@ -49,35 +80,32 @@ const LandingPage = ({ isAuthenticated, redirectPath }) => {
               Apotek Pemuda Farma
             </Typography>
           </Stack>
-          <Stack direction="row" spacing={1.5}>
-            <Button component={Link} to="/login" variant="outlined" className="landing-nav-btn-outline">
-              Login
-            </Button>
-          </Stack>
         </Box>
 
-        {/* 2. Hero Section - Tombol tetap ada */}
+        {/* Hero Section */}
         <Box className="landing-hero-grid">
           <Box className="landing-copy">
-            <Chip label="Transformasi Digital Apotek" className="landing-chip" size="small" />
+            <Chip label="Apotek Pemuda Farma — Bojonegoro" className="landing-chip" size="small" />
             <Typography variant="h2" className="landing-title">
-              Solusi Apotek <span className="text-gradient">Cepat, Rapi,</span> dan Terintegrasi.
+              Sistem Informasi{' '}
+              <span className="text-gradient">Manajemen Apotek</span>{' '}
+              Berbasis Web
             </Typography>
             <Typography variant="body1" className="landing-subtitle">
-              Tinggalkan cara manual. Kelola stok obat, transaksi harian, data supplier, hingga laporan penjualan dalam satu dashboard cerdas untuk Apotek Pemuda Farma.
+              Sistem ini dirancang untuk mengelola data obat, transaksi penjualan, pengadaan, hingga pelaporan secara terintegrasi guna meminimalisir kesalahan operasional di Apotek Pemuda Farma.
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} className="landing-cta-wrap">
-              <Button 
-                component={Link} 
-                to={primaryCtaPath} 
-                variant="contained" 
+              <Button
+                component={Link}
+                to={primaryCtaPath}
+                variant="contained"
                 className="landing-cta-primary"
                 endIcon={<ArrowForwardRounded />}
               >
                 {primaryCtaLabel}
               </Button>
-              <Button component={Link} to="/register-customer" variant="outlined" className="landing-cta-secondary">
-                Daftar Member
+              <Button component={Link} to="/customer-login" variant="outlined" className="landing-cta-secondary">
+                Portal Pelanggan
               </Button>
             </Stack>
           </Box>
@@ -94,14 +122,14 @@ const LandingPage = ({ isAuthenticated, redirectPath }) => {
           </Box>
         </Box>
 
-        {/* Fitur Section */}
+        {/* Modul Utama Sistem */}
         <Box className="landing-section-block">
           <Box className="landing-section-head">
             <Typography variant="h4" className="landing-section-title">
-              Fitur Unggulan Sistem
+              Modul Utama Sistem
             </Typography>
             <Typography variant="body1" className="landing-section-subtitle">
-              Rangkaian fitur yang dirancang khusus untuk mempermudah operasional apotek Anda.
+              Modul-modul yang dirancang untuk mendigitalisasi proses operasional harian apotek.
             </Typography>
           </Box>
 
@@ -122,18 +150,33 @@ const LandingPage = ({ isAuthenticated, redirectPath }) => {
           </Box>
         </Box>
 
-        {/* 3. Section Bawah - Tombol tetap ada */}
-        <Box className="landing-section-block landing-testimonial-block">
-          <Box className="landing-testimonial-content">
+        {/* Alur Kerja Sistem */}
+        <Box className="landing-section-block landing-workflow-block">
+          <Box className="landing-section-head">
             <Typography variant="h4" className="landing-section-title">
-              Jadilah Bagian dari Perubahan
+              Alur Kerja Sistem
             </Typography>
-            <Typography variant="body1" className="landing-section-subtitle" sx={{ mb: 3 }}>
-              Sistem kami sedang dalam tahap penyempurnaan akhir. Segera daftarkan diri Anda dan jadilah yang pertama memberikan testimoni tentang kemudahan operasional bersama kami.
+            <Typography variant="body1" className="landing-section-subtitle">
+              Sistem ini melibatkan beberapa peran pengguna yang saling terintegrasi dalam satu platform.
             </Typography>
-            <Button component={Link} to="/register-customer" variant="contained" className="landing-cta-primary">
-              Gabung Sebagai Customer Pertama
-            </Button>
+          </Box>
+
+          <Box className="landing-workflow-grid">
+            {workflowSteps.map((item, index) => (
+              <Box key={item.step} className="landing-workflow-step">
+                <Box className="landing-workflow-number">{item.step}</Box>
+                <Box className="landing-workflow-icon">{item.icon}</Box>
+                <Typography variant="h6" className="landing-workflow-title">
+                  {item.title}
+                </Typography>
+                <Typography variant="body2" className="landing-workflow-desc">
+                  {item.description}
+                </Typography>
+                {index < workflowSteps.length - 1 && (
+                  <Box className="landing-workflow-connector" aria-hidden="true" />
+                )}
+              </Box>
+            ))}
           </Box>
         </Box>
 
@@ -145,7 +188,10 @@ const LandingPage = ({ isAuthenticated, redirectPath }) => {
                 Apotek Pemuda Farma
               </Typography>
               <Typography variant="body2" className="landing-footer-text">
-                Jl. Pemuda, Bojonegoro • Senin - Sabtu, 08.00 - 21.00
+                Jl. Pemuda Timur No.120, Bojonegoro
+              </Typography>
+              <Typography variant="body2" className="landing-footer-text">
+                Senin - Sabtu, 08.00 - 21.00
               </Typography>
             </Box>
             <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>

@@ -5,7 +5,7 @@
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  font-family: 'Plus Jakarta Sans', sans-serif; /* Terapkan ke seluruh root */
+  font-family: 'Plus Jakarta Sans', sans-serif;
   background:
     radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.15), transparent 40%),
     radial-gradient(circle at 90% 0%, rgba(14, 165, 233, 0.15), transparent 40%),
@@ -277,8 +277,7 @@
   max-width: 600px;
   margin-left: auto !important;
   margin-right: auto !important;
-} /* Kurung penutup harus di sini */
-
+}
 
 /* Fitur Grid */
 .landing-feature-grid {
@@ -334,16 +333,86 @@
   text-align: left !important;
 }
 
-/* Block Ajakan Bergabung */
-.landing-testimonial-block {
+/* ========================== */
+/* Alur Kerja Sistem (Workflow) */
+/* ========================== */
+.landing-workflow-block {
   background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
   border: 1px solid #bae6fd;
-  text-align: center;
 }
 
-.landing-testimonial-content {
-  max-width: 700px;
-  margin: 0 auto;
+.landing-workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  position: relative;
+}
+
+.landing-workflow-step {
+  position: relative;
+  text-align: center;
+  padding: 20px 16px;
+}
+
+.landing-workflow-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.landing-workflow-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.landing-workflow-step:hover .landing-workflow-icon {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.landing-workflow-title {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  font-size: 1.05rem !important;
+  margin-bottom: 6px !important;
+}
+
+.landing-workflow-desc {
+  color: #475569 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.55 !important;
+  max-width: 200px;
+  margin: 0 auto !important;
+}
+
+/* Connector line between workflow steps */
+.landing-workflow-connector {
+  position: absolute;
+  top: 38px;
+  right: -18px;
+  width: 36px;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #0ea5e9);
+  opacity: 0.5;
+  z-index: 1;
 }
 
 /* Footer */
@@ -391,6 +460,13 @@
   .landing-feature-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .landing-workflow-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .landing-workflow-connector {
+    display: none;
+  }
 
   .landing-brand-emblem {
     width: 40px;
@@ -422,6 +498,10 @@
   }
   .landing-feature-grid {
     grid-template-columns: 1fr;
+  }
+  .landing-workflow-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
   .landing-title {
     font-size: 2.2rem !important;

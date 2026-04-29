@@ -18,13 +18,17 @@
   border-radius: 12px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
   width: 90%;
-  max-width: 400px;
+  max-width: 420px;
   animation: slideIn 0.3s ease-out;
   overflow: hidden;
 }
 
 .modal-header {
-  padding: 24px 24px 16px 24px;
+  padding: 22px 24px 12px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   text-align: center;
 }
 
@@ -57,7 +61,7 @@
 }
 
 .modal-body {
-  padding: 0 24px 24px 24px;
+  padding: 0 24px 20px 24px;
   text-align: center;
 }
 
@@ -65,7 +69,8 @@
   color: #6b7280;
   font-size: 0.95rem;
   line-height: 1.5;
-  margin: 0;
+  margin: 0 auto;
+  max-width: 320px;
 }
 
 .modal-footer {
@@ -82,7 +87,8 @@
   border: none;
   border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
+  min-height: 44px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -90,6 +96,7 @@
 .btn-cancel {
   background-color: #f3f4f6;
   color: #374151;
+  border: 1px solid #e5e7eb;
 }
 
 .btn-cancel:hover {
