@@ -16,6 +16,7 @@ import TransaksiKasir from './pages/TransaksiForm'
 import LaporanPenjualanKasir from './pages/LaporanPenjualanKasir'
 import CustomerRegistration from './pages/CustomerRegistration'
 import CustomerLoginPage from './pages/CustomerLoginPage'
+import CustomerForgotPasswordPage from './pages/CustomerForgotPasswordPage'
 import CustomerDashboard from './pages/CustomerDashboard'
 import ManajemenObatRacikan from './pages/ManajemenObatRacikan'
 import OrderSuccess from './pages/OrderSuccess'
@@ -176,6 +177,9 @@ function App() {
           {/* Customer Routes */}
           <Route path="/register-customer" element={
             <CustomerRegistration />
+          } />
+          <Route path="/lupa-password" element={
+            <CustomerForgotPasswordPage />
           } />
           {/* Add more routes for other pages as needed */}
         </Routes>

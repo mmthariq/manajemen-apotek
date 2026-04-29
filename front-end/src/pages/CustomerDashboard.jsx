@@ -20,6 +20,12 @@ import {
   Stack,
   TextField,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -35,6 +41,8 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import InputAdornment from '@mui/material/InputAdornment';
+import LockIcon from '@mui/icons-material/Lock';
+import EmailIcon from '@mui/icons-material/Email';
 import DashboardLayout from '../components/DashboardLayout';
 import '../styles/CustomerDashboard.css';
 
@@ -103,6 +111,19 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [profileMessage, setProfileMessage] = useState({ type: '', text: '' });
   const [catalogMessage, setCatalogMessage] = useState('');
+
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [securityTab, setSecurityTab] = useState('email'); // 'email' or 'password'
+  const [securityStep, setSecurityStep] = useState(1); // 1: input data, 2: verify code
+  const [securityForm, setSecurityForm] = useState({
+    newEmail: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    verificationCode: ''
+  });
+  const [securityMessage, setSecurityMessage] = useState({ type: '', text: '' });
+  const [isSecurityProcessing, setIsSecurityProcessing] = useState(false);
 
   const [medicines, setMedicines] = useState([]);
   const [customMedicines, setCustomMedicines] = useState([]);
@@ -226,6 +247,118 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
       setProfileMessage({ type: 'error', text: error.message || 'Terjadi kesalahan saat menyimpan profil.' });
     } finally {
       setIsProfileSaving(false);
+    }
+  };
+
+  const handleSecurityInputChange = (field) => (event) => {
+    setSecurityForm((prev) => ({ ...prev, [field]: event.target.value }));
+    setSecurityMessage({ type: '', text: '' });
+  };
+
+  const handleOpenSecurityModal = () => {
+    setIsSecurityModalOpen(true);
+    setSecurityTab('email');
+    setSecurityStep(1);
+    setSecurityForm({
+      newEmail: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+      verificationCode: ''
+    });
+    setSecurityMessage({ type: '', text: '' });
+  };
+
+  const handleRequestVerificationCode = async () => {
+    if (securityTab === 'email') {
+      if (!securityForm.newEmail || !/^\\S+@\\S+\\.\\S+$/.test(securityForm.newEmail)) {
+        setSecurityMessage({ type: 'error', text: 'Email baru tidak valid.' });
+        return;
+      }
+    } else {
+      if (!securityForm.currentPassword || !securityForm.newPassword || !securityForm.confirmPassword) {
+        setSecurityMessage({ type: 'error', text: 'Semua kolom password harus diisi.' });
+        return;
+      }
+      if (securityForm.newPassword !== securityForm.confirmPassword) {
+        setSecurityMessage({ type: 'error', text: 'Konfirmasi password tidak cocok.' });
+        return;
+      }
+    }
+
+    setIsSecurityProcessing(true);
+    try {
+      const endpoint = securityTab === 'email'
+        ? `${CUSTOMER_API_BASE_URL}/security/request-email-otp`
+        : `${CUSTOMER_API_BASE_URL}/security/request-password-otp`;
+
+      const payload = securityTab === 'email'
+        ? { newEmail: securityForm.newEmail }
+        : {
+          currentPassword: securityForm.currentPassword,
+          newPassword: securityForm.newPassword,
+          confirmPassword: securityForm.confirmPassword,
+        };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: getAuthHeaders(true),
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Gagal mengirim kode verifikasi.');
+      }
+
+      setSecurityMessage({ type: 'success', text: result.message || 'Kode verifikasi telah dikirim ke email Anda.' });
+      setSecurityStep(2);
+    } catch (err) {
+      setSecurityMessage({ type: 'error', text: 'Gagal mengirim kode verifikasi.' });
+    } finally {
+      setIsSecurityProcessing(false);
+    }
+  };
+
+  const handleVerifyAndSaveSecurity = async () => {
+    if (!securityForm.verificationCode) {
+      setSecurityMessage({ type: 'error', text: 'Kode verifikasi wajib diisi.' });
+      return;
+    }
+
+    setIsSecurityProcessing(true);
+    try {
+      const endpoint = securityTab === 'email'
+        ? `${CUSTOMER_API_BASE_URL}/security/verify-email`
+        : `${CUSTOMER_API_BASE_URL}/security/verify-password`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: getAuthHeaders(true),
+        body: JSON.stringify({ verificationCode: securityForm.verificationCode }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Verifikasi gagal.');
+      }
+
+      setSecurityMessage({ type: 'success', text: result.message || `${securityTab === 'email' ? 'Email' : 'Password'} berhasil diperbarui!` });
+      setTimeout(() => {
+        setIsSecurityModalOpen(false);
+        // hydrate if email changed
+        if (securityTab === 'email' && result.data) {
+          const updated = { ...customerData, ...result.data, role: 'customer' };
+          setCustomerData(updated);
+          if (typeof onUserUpdate === 'function') onUserUpdate(updated);
+          hydrateProfileForm(updated);
+        }
+      }, 1500);
+
+    } catch (err) {
+      setSecurityMessage({ type: 'error', text: err.message || 'Verifikasi gagal.' });
+    } finally {
+      setIsSecurityProcessing(false);
     }
   };
 
@@ -769,9 +902,10 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
         {/* ════ HERO BANNER ════ */}
         <div className="customer-hero-banner">
           <div className="hero-content">
-            <h1 className="hero-greeting">Halo, {customerName}! 👋</h1>
+            <h1 className="hero-greeting">Halo, {customerName}👋</h1>
             <p className="hero-subtitle">
-              Temukan obat yang Anda butuhkan dengan mudah. Pesan sekarang, ambil nanti atau kirim ke rumah.
+              Temukan obat yang Anda butuhkan dengan mudah.
+              <p>Pesan sekarang, ambil nanti. Bebas Antre !!</p>
             </p>
             <div className="hero-stats">
               <div className="hero-stat-card">
@@ -906,8 +1040,16 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
                     label="Email"
                     value={profileForm.email}
                     InputProps={{ readOnly: true }}
-                    helperText="Email saat ini hanya dapat diubah oleh admin."
+                    helperText="Untuk alasan keamanan, perubahan email dan password memerlukan verifikasi."
                   />
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={handleOpenSecurityModal}
+                    sx={{ mt: 0.5, textTransform: 'none', fontWeight: 600, color: '#0f766e' }}
+                  >
+                    Ubah Email / Password
+                  </Button>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <TextField
@@ -1475,6 +1617,147 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
           </div>
         </Box>
       </Drawer>
+
+      {/* ════ SECURITY MODAL (EMAIL / PASSWORD) ════ */}
+      <Dialog
+        open={isSecurityModalOpen}
+        onClose={() => !isSecurityProcessing && setIsSecurityModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ pb: 1, fontWeight: 700 }}>Pengaturan Keamanan</DialogTitle>
+        <DialogContent sx={{ pb: 2 }}>
+          {securityStep === 1 ? (
+            <>
+              <Tabs
+                value={securityTab}
+                onChange={(e, newValue) => {
+                  setSecurityTab(newValue);
+                  setSecurityMessage({ type: '', text: '' });
+                }}
+                variant="fullWidth"
+                sx={{ mb: 3 }}
+              >
+                <Tab icon={<EmailIcon fontSize="small" />} iconPosition="start" label="Email" value="email" sx={{ textTransform: 'none', fontWeight: 600 }} />
+                <Tab icon={<LockIcon fontSize="small" />} iconPosition="start" label="Password" value="password" sx={{ textTransform: 'none', fontWeight: 600 }} />
+              </Tabs>
+
+              {securityMessage.text && (
+                <Alert severity={securityMessage.type || 'info'} sx={{ mb: 2, borderRadius: 2 }}>
+                  {securityMessage.text}
+                </Alert>
+              )}
+
+              {securityTab === 'email' ? (
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Email Saat Ini"
+                    value={profileForm.email}
+                    InputProps={{ readOnly: true }}
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Email Baru"
+                    value={securityForm.newEmail}
+                    onChange={handleSecurityInputChange('newEmail')}
+                    placeholder="Masukkan email baru Anda"
+                    size="small"
+                  />
+                </Stack>
+              ) : (
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    type="password"
+                    label="Password Saat Ini"
+                    value={securityForm.currentPassword}
+                    onChange={handleSecurityInputChange('currentPassword')}
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    type="password"
+                    label="Password Baru"
+                    value={securityForm.newPassword}
+                    onChange={handleSecurityInputChange('newPassword')}
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    type="password"
+                    label="Konfirmasi Password Baru"
+                    value={securityForm.confirmPassword}
+                    onChange={handleSecurityInputChange('confirmPassword')}
+                    size="small"
+                  />
+                </Stack>
+              )}
+            </>
+          ) : (
+            <>
+              <Typography mb={2} color="text.secondary" fontSize={14}>
+                Kode verifikasi 6 digit telah dikirim ke email <b>{profileForm.email}</b>. Masukkan kode tersebut di bawah ini untuk melanjutkan. Kode berlaku selama 5 menit.
+              </Typography>
+
+              {securityMessage.text && (
+                <Alert severity={securityMessage.type || 'info'} sx={{ mb: 2, borderRadius: 2 }}>
+                  {securityMessage.text}
+                </Alert>
+              )}
+
+              <TextField
+                fullWidth
+                label="Kode Verifikasi"
+                value={securityForm.verificationCode}
+                onChange={handleSecurityInputChange('verificationCode')}
+                placeholder="Masukkan 6 digit kode"
+                size="small"
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            onClick={() => setIsSecurityModalOpen(false)}
+            disabled={isSecurityProcessing}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            Batal
+          </Button>
+          {securityStep === 1 ? (
+            <Button
+              variant="contained"
+              onClick={handleRequestVerificationCode}
+              disabled={isSecurityProcessing}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #0f766e 0%, #0e7490 100%)'
+              }}
+            >
+              {isSecurityProcessing ? 'Memproses...' : 'Kirim Kode Verifikasi'}
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              onClick={handleVerifyAndSaveSecurity}
+              disabled={isSecurityProcessing}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #0f766e 0%, #0e7490 100%)'
+              }}
+            >
+              {isSecurityProcessing ? 'Memverifikasi...' : 'Verifikasi & Simpan'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </DashboardLayout>
   );
 };
