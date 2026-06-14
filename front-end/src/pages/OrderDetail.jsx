@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import DashboardLayout from '../components/DashboardLayout';
+import PaymentInstructions from '../components/PaymentInstructions';
 import '../styles/OrderDetail.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
@@ -113,6 +114,15 @@ const OrderDetail = ({ authToken, onLogout, currentUser }) => {
         </Typography>
 
         <Divider sx={{ mb: 2 }} />
+
+        {/* Payment Instructions (only for pending) */}
+        <Box sx={{ mb: 2 }}>
+          <PaymentInstructions
+            totalAmount={order.total_amount || 0}
+            status={order?.order_status || order?.status || 'pending_payment'}
+            variant="compact"
+          />
+        </Box>
 
         <Typography variant="h6" fontWeight={700} mb={1}>Daftar Item</Typography>
         {items.length === 0 ? (

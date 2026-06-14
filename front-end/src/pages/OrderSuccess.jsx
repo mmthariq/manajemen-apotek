@@ -4,6 +4,7 @@ import { Box, Button, Card, Divider, List, ListItem, ListItemText, Stack, Typogr
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import PaymentInstructions from '../components/PaymentInstructions';
 
 const OrderSuccess = () => {
   const navigate = useNavigate();
@@ -187,6 +188,14 @@ const OrderSuccess = () => {
               {statusLabel}
             </Typography>
           </Box>
+        </Box>
+
+        {/* ── Payment Instructions ── */}
+        <Box sx={{ px: 4, pt: 2 }}>
+          <PaymentInstructions
+            totalAmount={order.totalPrice || order.total_amount || 0}
+            status={resolvedStatus}
+          />
         </Box>
 
         {/* ── Order Items ── */}
