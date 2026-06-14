@@ -52,7 +52,7 @@ const getPurchaseById = async (req, res, next) => {
 
     const detailsResult = await pool.query(
       `SELECT pd."id", pd."purchaseId", pd."drugId", d."name" AS "drugName",
-              pd."quantity", pd."unitPrice", pd."subtotal"
+              pd."quantity", pd."unitPrice", pd."subtotal", pd."expiredDate"
        FROM "purchase_details" pd
        JOIN "drugs" d ON d."id" = pd."drugId"
        WHERE pd."purchaseId" = $1
@@ -72,6 +72,7 @@ const getPurchaseById = async (req, res, next) => {
           quantity: Number(item.quantity || 0),
           unitPrice: Number(item.unitPrice ?? item.unitprice ?? 0),
           subtotal: Number(item.subtotal || 0),
+          expiredDate: item.expiredDate ?? item.expireddate,
         })),
       },
     });
@@ -99,6 +100,7 @@ const createPurchase = async (req, res, next) => {
       drugId: Number(item.drugId ?? item.idObat ?? item.productId),
       quantity: Number(item.quantity ?? item.jumlah ?? 0),
       unitPrice: Number(item.unitPrice ?? item.harga ?? item.price ?? 0),
+      expiredDate: item.expiredDate || null,
     }));
 
     for (const item of normalizedItems) {
@@ -144,18 +146,21 @@ const createPurchase = async (req, res, next) => {
       const subtotal = item.quantity * item.unitPrice;
 
       const detailResult = await client.query(
-        `INSERT INTO "purchase_details" ("purchaseId", "drugId", "quantity", "unitPrice", "subtotal")
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING "id", "purchaseId", "drugId", "quantity", "unitPrice", "subtotal"`,
-        [purchase.id, item.drugId, item.quantity, item.unitPrice, subtotal]
+        `INSERT INTO "purchase_details" ("purchaseId", "drugId", "quantity", "unitPrice", "subtotal", "expiredDate")
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING "id", "purchaseId", "drugId", "quantity", "unitPrice", "subtotal", "expiredDate"`,
+        [purchase.id, item.drugId, item.quantity, item.unitPrice, subtotal, item.expiredDate]
       );
 
       await client.query(
         `UPDATE "drugs"
          SET "stock" = "stock" + $1,
+             "price" = ROUND(($3 * 1.15)::numeric, 2),
+             "purchasePrice" = $3,
+             "expiredDate" = LEAST("expiredDate", CAST($4 AS timestamp)),
              "updatedAt" = NOW()
          WHERE "id" = $2`,
-        [item.quantity, item.drugId]
+        [item.quantity, item.drugId, item.unitPrice, item.expiredDate]
       );
 
       detailRows.push(detailResult.rows[0]);
@@ -174,6 +179,7 @@ const createPurchase = async (req, res, next) => {
           quantity: Number(item.quantity || 0),
           unitPrice: Number(item.unitPrice ?? item.unitprice ?? 0),
           subtotal: Number(item.subtotal || 0),
+          expiredDate: item.expiredDate ?? item.expireddate,
         })),
       },
     });

@@ -2,21 +2,24 @@ const pool = require('../config/database');
 
 const getAllDrugs = async (req, res, next) => {
   try {
-    // Ambil supplier terbaru per obat berdasarkan riwayat pengadaan (purchase_details → purchases → suppliers)
-    const result = await pool.query(
-      `SELECT
-         d."id",
-         d."name",
-         d."description",
-         d."stock",
-         d."unit",
-         d."price",
-         d."expiredDate",
+    // Cek peran pangguna (pastikan req.user sudah di-inject oleh authMiddleware)
+    // Jika tidak login, atau role = 'CUSTOMER', sembunyikan purchasePrice (Harga Pokok)
+    const isCustomer = !req.user || req.user.role === 'CUSTOMER';
+
+    const selectFields = isCustomer
+      ? `d."id", d."name", d."description", d."category", d."stock", d."unit", d."price", d."expiredDate"`
+      : `d."id", d."name", d."description", d."category", d."stock", d."unit", d."price", d."purchasePrice", d."expiredDate"`;
+
+    const query = `
+      SELECT
+         ${selectFields},
+         d."supplierId"  AS "directSupplierId",
          d."createdAt",
          d."updatedAt",
-         latest_supply."supplierId",
-         latest_supply."supplierName"
+         COALESCE(ds."id",   latest_supply."supplierId")   AS "supplierId",
+         COALESCE(ds."name", latest_supply."supplierName") AS "supplierName"
        FROM "drugs" d
+       LEFT JOIN "suppliers" ds ON ds."id" = d."supplierId"
        LEFT JOIN LATERAL (
          SELECT
            s."id"   AS "supplierId",
@@ -27,9 +30,11 @@ const getAllDrugs = async (req, res, next) => {
          WHERE pd."drugId" = d."id"
          ORDER BY p."createdAt" DESC
          LIMIT 1
-       ) latest_supply ON true
-       ORDER BY d."id" ASC`
-    );
+       ) latest_supply ON d."supplierId" IS NULL
+       ORDER BY d."id" ASC
+    `;
+
+    const result = await pool.query(query);
 
     res.status(200).json({
       message: 'Data semua obat berhasil diambil.',
@@ -43,11 +48,12 @@ const getAllDrugs = async (req, res, next) => {
 
 const createDrug = async (req, res, next) => {
   try {
-    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate } = req.body;
+    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId, category } = req.body;
 
     const resolvedName = String(name || nama || '').trim();
     const resolvedStock = Number(stock ?? stok);
     const resolvedPrice = Number(price ?? harga);
+    const resolvedSupplierId = supplierId ? Number(supplierId) : null;
 
     if (!resolvedName || Number.isNaN(resolvedStock) || Number.isNaN(resolvedPrice) || !unit) {
       return res.status(400).json({
@@ -55,23 +61,45 @@ const createDrug = async (req, res, next) => {
       });
     }
 
+    const validCategories = ['BEBAS', 'BEBAS_TERBATAS', 'KERAS'];
+    const resolvedCategory = validCategories.includes(String(category).toUpperCase())
+      ? String(category).toUpperCase()
+      : 'BEBAS';
+
+    // Validasi supplierId jika diberikan
+    if (resolvedSupplierId) {
+      const supplierCheck = await pool.query('SELECT "id" FROM "suppliers" WHERE "id" = $1', [resolvedSupplierId]);
+      if (supplierCheck.rowCount === 0) {
+        return res.status(400).json({ message: `Supplier dengan ID ${resolvedSupplierId} tidak ditemukan.` });
+      }
+    }
+
     const result = await pool.query(
-      `INSERT INTO "drugs" ("name", "description", "stock", "unit", "price", "expiredDate", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())
-       RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "createdAt", "updatedAt"`,
+      `INSERT INTO "drugs" ("name", "description", "category", "stock", "unit", "price", "expiredDate", "supplierId", "updatedAt")
+       VALUES ($1, $2, $3::"DrugCategory", $4, $5, $6, $7, $8, NOW())
+       RETURNING "id", "name", "description", "category", "stock", "unit", "price", "purchasePrice", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
       [
         resolvedName,
         description ?? deskripsi ?? null,
+        resolvedCategory,
         resolvedStock,
         String(unit).trim(),
         resolvedPrice,
         expiredDate || null,
+        resolvedSupplierId,
       ]
     );
 
+    // Ambil nama supplier jika ada
+    const drug = result.rows[0];
+    if (drug.supplierId) {
+      const supResult = await pool.query('SELECT "name" FROM "suppliers" WHERE "id" = $1', [drug.supplierId]);
+      drug.supplierName = supResult.rows[0]?.name || null;
+    }
+
     res.status(201).json({
       message: 'Obat baru berhasil ditambahkan.',
-      data: result.rows[0],
+      data: drug,
     });
   } catch (error) {
     next(error);
@@ -83,7 +111,7 @@ const getDrugById = async (req, res, next) => {
     const { idObat } = req.params;
 
     const result = await pool.query(
-      `SELECT "id", "name", "description", "stock", "unit", "price", "expiredDate", "createdAt", "updatedAt"
+      `SELECT "id", "name", "description", "category", "stock", "unit", "price", "purchasePrice", "expiredDate", "createdAt", "updatedAt"
        FROM "drugs"
        WHERE "id" = $1`,
       [idObat]
@@ -105,7 +133,7 @@ const getDrugById = async (req, res, next) => {
 const updateDrug = async (req, res, next) => {
   try {
     const { idObat } = req.params;
-    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate } = req.body;
+    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId, category } = req.body;
 
     const existingResult = await pool.query('SELECT * FROM "drugs" WHERE "id" = $1', [idObat]);
     if (existingResult.rowCount === 0) {
@@ -117,36 +145,61 @@ const updateDrug = async (req, res, next) => {
     const nextDescription = description ?? deskripsi ?? existing.description;
     const nextStock = stock ?? stok ?? existing.stock;
     const nextPrice = price ?? harga ?? existing.price;
+    const nextSupplierId = supplierId !== undefined ? (supplierId ? Number(supplierId) : null) : existing.supplierId;
+
+    const validCategories = ['BEBAS', 'BEBAS_TERBATAS', 'KERAS'];
+    const nextCategory = category !== undefined
+      ? (validCategories.includes(String(category).toUpperCase()) ? String(category).toUpperCase() : existing.category)
+      : existing.category;
 
     if (!nextName || (!unit && !existing.unit)) {
       return res.status(400).json({ message: 'Nama obat dan unit harus diisi.' });
+    }
+
+    // Validasi supplierId jika diberikan
+    if (nextSupplierId) {
+      const supplierCheck = await pool.query('SELECT "id" FROM "suppliers" WHERE "id" = $1', [nextSupplierId]);
+      if (supplierCheck.rowCount === 0) {
+        return res.status(400).json({ message: `Supplier dengan ID ${nextSupplierId} tidak ditemukan.` });
+      }
     }
 
     const result = await pool.query(
         `UPDATE "drugs"
        SET "name" = $1,
            "description" = $2,
-           "stock" = $3,
-           "unit" = $4,
-           "price" = $5,
-           "expiredDate" = $6,
+           "category" = $3::"DrugCategory",
+           "stock" = $4,
+           "unit" = $5,
+           "price" = $6,
+           "expiredDate" = $7,
+           "supplierId" = $8,
            "updatedAt" = NOW()
-       WHERE "id" = $7
-       RETURNING "id", "name", "description", "stock", "unit", "price", "expiredDate", "createdAt", "updatedAt"`,
+       WHERE "id" = $9
+       RETURNING "id", "name", "description", "category", "stock", "unit", "price", "purchasePrice", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
       [
         String(nextName).trim(),
         nextDescription,
+        nextCategory,
         Number(nextStock),
         String(unit ?? existing.unit).trim(),
         Number(nextPrice),
         expiredDate === undefined ? existing.expiredDate : expiredDate,
+        nextSupplierId,
         idObat,
       ]
     );
 
+    // Ambil nama supplier jika ada
+    const drug = result.rows[0];
+    if (drug.supplierId) {
+      const supResult = await pool.query('SELECT "name" FROM "suppliers" WHERE "id" = $1', [drug.supplierId]);
+      drug.supplierName = supResult.rows[0]?.name || null;
+    }
+
     res.status(200).json({
       message: `Data obat dengan ID ${idObat} berhasil diperbarui.`,
-      data: result.rows[0],
+      data: drug,
     });
   } catch (error) {
     next(error);

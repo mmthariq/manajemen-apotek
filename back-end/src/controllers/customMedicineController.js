@@ -87,14 +87,8 @@ const createCustomMedicine = async (req, res, next) => {
 
     await client.query('BEGIN');
 
-    const medicineResult = await client.query(
-      `INSERT INTO "custom_medicines" ("name", "price", "stock", "updatedAt")
-       VALUES ($1, $2, $3, NOW())
-       RETURNING "id", "name", "price", "stock", "createdAt", "updatedAt"`,
-      [medicineName, Number(price ?? harga ?? 0), Number(stock ?? stok ?? 0)]
-    );
-
-    const medicine = medicineResult.rows[0];
+    let computedPrice = 0;
+    const resolvedComponents = [];
 
     for (const item of komposisi) {
       let drugId = item.drugId;
@@ -108,10 +102,31 @@ const createCustomMedicine = async (req, res, next) => {
         throw new Error(`Bahan racikan tidak ditemukan: ${item.bahan || 'unknown'}`);
       }
 
+      const drugInfo = await client.query(`SELECT "price" FROM ${drugTable} WHERE "id" = $1 LIMIT 1`, [drugId]);
+      const drugPrice = Number(drugInfo.rows[0]?.price || 0);
+      computedPrice += drugPrice * Number(item.jumlah ?? item.quantity ?? 0);
+
+      resolvedComponents.push({
+        drugId,
+        quantity: Number(item.jumlah ?? item.quantity ?? 0),
+        unit: String(item.satuan || item.unit || 'unit')
+      });
+    }
+
+    const medicineResult = await client.query(
+      `INSERT INTO "custom_medicines" ("name", "price", "stock", "updatedAt")
+       VALUES ($1, $2, $3, NOW())
+       RETURNING "id", "name", "price", "stock", "createdAt", "updatedAt"`,
+      [medicineName, computedPrice, Number(stock ?? stok ?? 0)]
+    );
+
+    const medicine = medicineResult.rows[0];
+
+    for (const comp of resolvedComponents) {
       await client.query(
         `INSERT INTO "custom_medicine_components" ("customMedicineId", "drugId", "quantity", "unit")
          VALUES ($1, $2, $3, $4)`,
-        [medicine.id, drugId, Number(item.jumlah ?? item.quantity ?? 0), String(item.satuan || item.unit || 'unit')]
+        [medicine.id, comp.drugId, comp.quantity, comp.unit]
       );
     }
 
@@ -198,25 +213,11 @@ const updateCustomMedicine = async (req, res, next) => {
 
     await client.query('BEGIN');
 
-    const updatedResult = await client.query(
-        `UPDATE "custom_medicines"
-       SET "name" = $1,
-           "price" = $2,
-           "stock" = $3,
-           "updatedAt" = NOW()
-       WHERE "id" = $4
-       RETURNING "id", "name", "price", "stock", "createdAt", "updatedAt"`,
-      [
-        String(nama || name || existing.name).trim(),
-        Number(price ?? harga ?? existing.price),
-        Number(stock ?? stok ?? existing.stock),
-        medicineId,
-      ]
-    );
+    let computedPrice = Number(existing.price);
+    const resolvedComponents = [];
 
     if (Array.isArray(komposisi)) {
-      await client.query('DELETE FROM "custom_medicine_components" WHERE "customMedicineId" = $1', [medicineId]);
-
+      computedPrice = 0;
       for (const item of komposisi) {
         let drugId = item.drugId;
 
@@ -229,10 +230,42 @@ const updateCustomMedicine = async (req, res, next) => {
           throw new Error(`Bahan racikan tidak ditemukan: ${item.bahan || 'unknown'}`);
         }
 
+        const drugInfo = await client.query(`SELECT "price" FROM ${drugTable} WHERE "id" = $1 LIMIT 1`, [drugId]);
+        const drugPrice = Number(drugInfo.rows[0]?.price || 0);
+        computedPrice += drugPrice * Number(item.jumlah ?? item.quantity ?? 0);
+
+        resolvedComponents.push({
+          drugId,
+          quantity: Number(item.jumlah ?? item.quantity ?? 0),
+          unit: String(item.satuan || item.unit || 'unit')
+        });
+      }
+    }
+
+    const updatedResult = await client.query(
+        `UPDATE "custom_medicines"
+       SET "name" = $1,
+           "price" = $2,
+           "stock" = $3,
+           "updatedAt" = NOW()
+       WHERE "id" = $4
+       RETURNING "id", "name", "price", "stock", "createdAt", "updatedAt"`,
+      [
+        String(nama || name || existing.name).trim(),
+        computedPrice,
+        Number(stock ?? stok ?? existing.stock),
+        medicineId,
+      ]
+    );
+
+    if (Array.isArray(komposisi)) {
+      await client.query('DELETE FROM "custom_medicine_components" WHERE "customMedicineId" = $1', [medicineId]);
+
+      for (const comp of resolvedComponents) {
         await client.query(
           `INSERT INTO "custom_medicine_components" ("customMedicineId", "drugId", "quantity", "unit")
            VALUES ($1, $2, $3, $4)`,
-          [medicineId, drugId, Number(item.jumlah ?? item.quantity ?? 0), String(item.satuan || item.unit || 'unit')]
+          [medicineId, comp.drugId, comp.quantity, comp.unit]
         );
       }
     }

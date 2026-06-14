@@ -319,12 +319,55 @@ const createOrder = async (req, res, next) => {
       }
     }
 
+    let hasKeras = false;
+    let hasNonKeras = false;
+
+    // Validasi obat keras: maksimal 1 strip per transaksi, dilarang campur dengan obat bebas
+    const regularItems = normalizedItems.filter((item) => item.productType === 'regular');
+    for (const item of regularItems) {
+      if (item.productId === null) continue;
+
+      const categoryResult = await client.query(
+        'SELECT "category" FROM "drugs" WHERE "id" = $1 LIMIT 1',
+        [item.productId]
+      );
+
+      if (categoryResult.rowCount > 0) {
+        const drugCategory = categoryResult.rows[0].category;
+        if (drugCategory === 'KERAS') {
+          hasKeras = true;
+          if (item.quantity > 1) {
+            return res.status(400).json({
+              message: `Obat keras hanya dapat dibeli maksimal 1 strip per transaksi.`,
+            });
+          }
+        } else {
+          hasNonKeras = true;
+        }
+      }
+    }
+
+    if (hasKeras && hasNonKeras) {
+      return res.status(400).json({
+        message: 'Obat keras tidak boleh dibeli bersamaan dengan obat bebas/bebas terbatas dalam satu pesanan.',
+      });
+    }
+
     const resolvedOrderType = isCustomerRequest(req) ? ORDER_TYPE.ONLINE : ORDER_TYPE.OFFLINE;
+    
+    if (hasKeras && !prescriptionFile) {
+      return res.status(400).json({
+        message: resolvedOrderType === ORDER_TYPE.ONLINE 
+          ? 'Pembelian obat keras secara online wajib menyertakan (upload) resep dokter.' 
+          : 'Pembelian obat keras wajib menyertakan (upload) resep dokter.',
+      });
+    }
+
     const initialOrderStatus = resolvedOrderType === ORDER_TYPE.ONLINE ? ORDER_STATUS.PENDING : ORDER_STATUS.COMPLETED;
 
     const hasPrescriptionColumn = await hasTransactionPrescriptionColumn(client);
     const hasUsageInstructionsColumn = await hasTransactionUsageInstructionsColumn(client);
-    const prescriptionImageUrl = resolvedOrderType === ORDER_TYPE.ONLINE && prescriptionFile
+    const prescriptionImageUrl = prescriptionFile
       ? `/uploads/prescriptions/${prescriptionFile.filename}`
       : null;
 
@@ -406,12 +449,11 @@ const createOrder = async (req, res, next) => {
         }
 
         const unitPrice = Number(customMedicineRow.price ?? 0);
-        const subtotal = unitPrice * item.quantity;
-        computedTotalPrice += subtotal;
 
         // Snapshot komposisi racikan saat ini agar riwayat transaksi tidak berubah
+        // Sekaligus hitung harga berdasarkan komponen (bukan dari custom_medicines.price)
         const componentsResult = await client.query(
-          `SELECT c."drugId", c."quantity", c."unit", d."name" AS "drugName"
+          `SELECT c."drugId", c."quantity", c."unit", d."name" AS "drugName", d."price" AS "drugPrice"
            FROM "custom_medicine_components" c
            JOIN "drugs" d ON d."id" = c."drugId"
            WHERE c."customMedicineId" = $1
@@ -419,12 +461,34 @@ const createOrder = async (req, res, next) => {
           [customMedicineRow.id]
         );
 
+        // Hitung harga racikan dari total harga komponen penyusun
+        let computedUnitPrice = 0;
+        for (const comp of componentsResult.rows) {
+          const compQty = Number(comp.quantity ?? 0);
+          const compPrice = Number(comp.drugPrice ?? comp.drugprice ?? 0);
+          computedUnitPrice += compPrice * compQty;
+        }
+
+        // Gunakan harga yang dihitung dari komponen; fallback ke harga di tabel custom_medicines
+        const finalUnitPrice = computedUnitPrice > 0 ? computedUnitPrice : unitPrice;
+        const subtotal = finalUnitPrice * item.quantity;
+        computedTotalPrice += subtotal;
+
+        // Update harga custom_medicines agar sinkron dengan perhitungan komponen terbaru
+        if (computedUnitPrice > 0 && computedUnitPrice !== unitPrice) {
+          await client.query(
+            'UPDATE "custom_medicines" SET "price" = $1, "updatedAt" = NOW() WHERE "id" = $2',
+            [computedUnitPrice, customMedicineRow.id]
+          );
+        }
+
         const componentsSnapshot = JSON.stringify(
           componentsResult.rows.map((comp) => ({
             drugId: comp.drugId ?? comp.drugid,
             drugName: comp.drugName ?? comp.drugname,
             quantity: Number(comp.quantity ?? 0),
             unit: comp.unit,
+            drugPrice: Number(comp.drugPrice ?? comp.drugprice ?? 0),
           }))
         );
 
@@ -432,7 +496,7 @@ const createOrder = async (req, res, next) => {
           `INSERT INTO "transaction_details" ("transactionId", "customMedicineId", "quantity", "unitPrice", "subtotal", "componentsSnapshot")
            VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING "id", "transactionId", "drugId", "customMedicineId", "quantity", "unitPrice", "subtotal", "componentsSnapshot"`,
-          [orderRow.id, customMedicineRow.id, item.quantity, unitPrice, subtotal, componentsSnapshot]
+          [orderRow.id, customMedicineRow.id, item.quantity, finalUnitPrice, subtotal, componentsSnapshot]
         );
 
         itemRows.push({
