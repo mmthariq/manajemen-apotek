@@ -17,6 +17,7 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   const [namaPembeli, setNamaPembeli] = useState('');
   const [showStruk, setShowStruk] = useState(false);
   const [obatList, setObatList] = useState([]);
+  const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   
   useEffect(() => {
@@ -40,6 +41,7 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
             nama: item.name,
             harga: Number(item.price || 0),
             stok: Number(item.stock || 0),
+            category: item.category || 'BEBAS',
           }))
           : [];
 
@@ -100,13 +102,50 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
     }
     
     const obat = obatList.find(item => item.nama === selectedObat);
+
+    // Validasi pencampuran KERAS dan BEBAS
+    const isKeras = obat.category === 'KERAS';
+    const cartCategories = cartItems.map(item => {
+      const found = obatList.find(o => o.nama === item.nama);
+      return found ? found.category : 'BEBAS';
+    });
+    
+    const hasKerasInCart = cartCategories.includes('KERAS');
+    const hasNonKerasInCart = cartCategories.some(cat => cat !== 'KERAS');
+
+    if (isKeras && hasNonKerasInCart) {
+      alert('Obat keras tidak boleh dicampur dengan obat bebas dalam satu transaksi.');
+      return;
+    }
+    
+    if (!isKeras && hasKerasInCart) {
+      alert('Obat bebas tidak boleh dicampur dengan obat keras dalam satu transaksi.');
+      return;
+    }
+
+    // Validasi obat keras: maksimal 1 strip per transaksi
+    if (isKeras && parseInt(jumlah) > 1) {
+      alert('Obat keras hanya dapat dibeli maksimal 1 strip per transaksi.');
+      return;
+    }
+
+    // Validasi obat keras: cek apakah sudah ada di keranjang
+    if (isKeras) {
+      const alreadyInCart = cartItems.find(item => item.nama === selectedObat);
+      if (alreadyInCart) {
+        alert('Obat keras ini sudah ada di keranjang. Maksimal 1 strip per transaksi.');
+        return;
+      }
+    }
+
     const total = obat.harga * parseInt(jumlah);
     
     const newItem = {
       nama: selectedObat,
       jumlah: parseInt(jumlah),
       hargaSatuan: obat.harga,
-      total: total
+      total: total,
+      category: obat.category
     };
     
     setCartItems([...cartItems, newItem]);
@@ -137,27 +176,37 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
     
     try {
       setErrorMessage('');
-      const headers = {
-        'Content-Type': 'application/json',
-      };
+      
+      const hasKerasInCart = cartItems.some(item => item.category === 'KERAS');
+      if (hasKerasInCart && !prescriptionFile) {
+        alert('Mohon unggah foto resep dokter untuk pembelian obat keras.');
+        return;
+      }
+
+      const headers = {};
       if (authToken) {
         headers.Authorization = `Bearer ${authToken}`;
       }
 
-      const payload = {
-        items: cartItems.map((item) => ({
-          product_id: obatList.find((obat) => obat.nama === item.nama)?.id || null,
-          product_name: item.nama,
-          product_type: 'regular',
-          quantity: item.jumlah,
-          price_per_unit: item.hargaSatuan,
-        })),
-      };
+      const itemsPayload = cartItems.map((item) => ({
+        product_id: obatList.find((obat) => obat.nama === item.nama)?.id || null,
+        product_name: item.nama,
+        product_type: 'regular',
+        quantity: item.jumlah,
+        price_per_unit: item.hargaSatuan,
+      }));
+
+      const formData = new FormData();
+      formData.append('items', JSON.stringify(itemsPayload));
+      
+      if (prescriptionFile) {
+        formData.append('prescriptionImage', prescriptionFile);
+      }
 
       const response = await fetch(ORDER_API_BASE_URL, {
         method: 'POST',
         headers,
-        body: JSON.stringify(payload),
+        body: formData,
       });
       const result = await response.json();
       if (!response.ok) {
@@ -185,6 +234,7 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
     setTotalHarga('Rp 0');
     setCartItems([]);
     setNamaPembeli('');
+    setPrescriptionFile(null);
     setShowStruk(false);
   };
 
@@ -223,7 +273,7 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
                     <option value="">Pilih obat...</option>
                     {obatList.map(obat => (
                       <option key={obat.id} value={obat.nama}>
-                        {obat.nama}
+                        {obat.nama} - [{obat.category === 'KERAS' ? 'Keras' : obat.category === 'BEBAS_TERBATAS' ? 'Bebas Terbatas' : 'Bebas'}]
                       </option>
                     ))}
                   </select>
@@ -305,7 +355,7 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
                     <tbody>
                       {cartItems.map((item, index) => (
                         <tr key={index}>
-                          <td>{item.nama}</td>
+                          <td>{item.nama} {item.category === 'KERAS' ? '🔴' : item.category === 'BEBAS_TERBATAS' ? '🔵' : '🟢'}</td>
                           <td>{item.jumlah}</td>
                           <td>Rp {item.hargaSatuan.toLocaleString('id-ID')}</td>
                           <td>Rp {item.total.toLocaleString('id-ID')}</td>
@@ -327,6 +377,17 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
                       placeholder="Masukkan nama pembeli"
                     />
                   </div>
+                  {cartItems.some(item => item.category === 'KERAS') && (
+                    <div className="form-group">
+                      <label>Upload Resep Dokter <span style={{color: 'red'}}>*</span></label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setPrescriptionFile(e.target.files[0])}
+                        style={{ marginTop: '8px' }}
+                      />
+                    </div>
+                  )}
                   <button 
                     className="button button-primary checkout-button"
                     onClick={handleCheckout}

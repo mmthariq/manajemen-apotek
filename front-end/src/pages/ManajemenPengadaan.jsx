@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DashboardHeader from '../components/header/DashboardHeader';
 import DashboardLayout from '../components/DashboardLayout';
+import Pagination from '../components/Pagination';
 import '../styles/ManajemenPengadaan.css';
 
 const SUPPLIER_API_BASE_URL = 'http://localhost:3000/api/suppliers';
@@ -17,7 +18,11 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
   const [selectedDrugId, setSelectedDrugId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [unitPrice, setUnitPrice] = useState('0');
+  const [expiredDate, setExpiredDate] = useState('');
   const [cartItems, setCartItems] = useState([]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -106,6 +111,10 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
       setErrorMessage('Harga satuan tidak valid.');
       return;
     }
+    if (!expiredDate) {
+      setErrorMessage('Pilih tanggal kadaluarsa terlebih dahulu.');
+      return;
+    }
 
     const drug = drugs.find((item) => item.id === resolvedDrugId);
     if (!drug) {
@@ -125,6 +134,7 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
               quantity: item.quantity + resolvedQuantity,
               unitPrice: resolvedUnitPrice,
               subtotal: (item.quantity + resolvedQuantity) * resolvedUnitPrice,
+              expiredDate: new Date(expiredDate) < new Date(item.expiredDate) ? expiredDate : item.expiredDate,
             }
             : item
         ));
@@ -138,6 +148,7 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
           quantity: resolvedQuantity,
           unitPrice: resolvedUnitPrice,
           subtotal: resolvedQuantity * resolvedUnitPrice,
+          expiredDate: expiredDate,
         },
       ];
     });
@@ -167,6 +178,7 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
           drugId: item.drugId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
+          expiredDate: item.expiredDate,
         })),
       };
 
@@ -186,6 +198,7 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
       setSelectedDrugId('');
       setQuantity('1');
       setUnitPrice('0');
+      setExpiredDate('');
       await fetchInitialData();
     } catch (error) {
       setErrorMessage(error.message || 'Terjadi kesalahan saat menyimpan pengadaan.');
@@ -195,6 +208,12 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
   };
 
   const cartTotal = cartItems.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPurchases = (purchases || []).slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil((purchases || []).length / itemsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <DashboardLayout onLogout={onLogout} userRole={userRole} currentUser={currentUser}>
@@ -242,6 +261,10 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
                 <label>Harga Satuan</label>
                 <input type="number" min="0" value={unitPrice} onChange={(event) => setUnitPrice(event.target.value)} />
               </div>
+              <div className="pengadaan-form-row">
+                <label>Kadaluarsa</label>
+                <input type="date" value={expiredDate} onChange={(event) => setExpiredDate(event.target.value)} />
+              </div>
             </div>
 
             <div className="pengadaan-actions">
@@ -260,6 +283,7 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
                     <th>Obat</th>
                     <th>Qty</th>
                     <th>Harga</th>
+                    <th>Kadaluarsa</th>
                     <th>Subtotal</th>
                     <th>Aksi</th>
                   </tr>
@@ -270,6 +294,7 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
                       <td>{item.drugName}</td>
                       <td>{item.quantity}</td>
                       <td>{formatRupiah(item.unitPrice)}</td>
+                      <td>{item.expiredDate}</td>
                       <td>{formatRupiah(item.subtotal)}</td>
                       <td>
                         <button type="button" className="pengadaan-delete" onClick={() => removeCartItem(item.drugId)}>
@@ -297,7 +322,8 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
           {purchases.length === 0 ? (
             <p>Belum ada riwayat pengadaan.</p>
           ) : (
-            <table className="pengadaan-table">
+            <div>
+              <table className="pengadaan-table">
               <thead>
                 <tr>
                   <th>Kode</th>
@@ -307,7 +333,7 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
                 </tr>
               </thead>
               <tbody>
-                {purchases.map((item) => (
+                {currentPurchases.map((item) => (
                   <tr key={item.id}>
                     <td>{item.purchaseCode || `#${item.id}`}</td>
                     <td>{item.supplierName || '-'}</td>
@@ -317,6 +343,8 @@ const ManajemenPengadaan = ({ onLogout, userRole = 'admin', currentUser = null, 
                 ))}
               </tbody>
             </table>
+            <Pagination currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
+          </div>
           )}
         </section>
       </div>

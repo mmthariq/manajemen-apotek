@@ -139,10 +139,6 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave, authToken, editData }) =>
       newErrors.nama = 'Nama obat harus diisi';
     }
 
-    if (!formData.harga || isNaN(formData.harga) || parseInt(formData.harga) <= 0) {
-      newErrors.harga = 'Harga harus berupa angka positif';
-    }
-
     // Validasi komposisi
     formData.komposisi.every((k, i) => {
       if (!k.drugId || !k.jumlah || !k.satuan) {
@@ -227,20 +223,6 @@ const CustomMedicineForm = ({ isOpen, onClose, onSave, authToken, editData }) =>
             </div>
 
             <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="harga">Harga (Rp) *</label>
-                <input
-                  type="number"
-                  id="harga"
-                  name="harga"
-                  value={formData.harga}
-                  onChange={handleInputChange}
-                  placeholder="50000"
-                  className={errors.harga ? 'input-error' : ''}
-                />
-                {errors.harga && <span className="error-message">{errors.harga}</span>}
-              </div>
-
               <div className="form-group">
                 <label htmlFor="stok">Stok *</label>
                 <input

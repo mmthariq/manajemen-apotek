@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DashboardHeader from '../components/header/DashboardHeader';
 import Sidebar from '../components/Sidebar';
+import Pagination from '../components/Pagination';
 import '../styles/LaporanPenjualanKasir.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
@@ -13,6 +14,8 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState('success'); // 'success', 'error', 'info'
   const [transactions, setTransactions] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const buildHeaders = () => {
     const headers = {};
@@ -159,6 +162,12 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
     }
   };
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = transactions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="dashboard-container">
       <Sidebar onLogout={onLogout} userRole={userRole} currentUser={currentUser} />
@@ -204,7 +213,7 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
                     <td colSpan={5} style={{ textAlign: 'center' }}>Belum ada transaksi untuk tanggal ini.</td>
                   </tr>
                 ) : (
-                  transactions.map((transaction) => (
+                  currentItems.map((transaction) => (
                     <tr key={transaction.id}>
                       <td>TRX-{String(transaction.id).padStart(4, '0')}</td>
                       <td>{transaction.createdAt ? new Date(transaction.createdAt).toLocaleTimeString('id-ID') : '-'}</td>
@@ -217,6 +226,7 @@ const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) =
               </tbody>
             </table>
           </div>
+          <Pagination currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
           
           <div className="export-container">
             <button 

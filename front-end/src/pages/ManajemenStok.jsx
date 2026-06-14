@@ -4,6 +4,7 @@ import '../styles/ManajemenStok.css';
 import Sidebar from '../components/Sidebar';
 import ObatForm from '../components/ObatForm';
 import ConfirmModal from '../components/ConfirmModal';
+import Pagination from '../components/Pagination';
 
 const API_BASE_URL = 'http://localhost:3000/api/obat';
 
@@ -14,6 +15,10 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
   const [medications, setMedications] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEditData, setCurrentEditData] = useState(null);
@@ -40,12 +45,14 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
     id: item.id,
     kode: `OBT${String(item.id).padStart(3, '0')}`,
     nama: item.name,
-    jenis: item.unit,
+    satuan: item.unit,
     stok: item.stock,
-    harga: formatRupiah(item.price),
+    hargaJual: formatRupiah(item.price),
+    hargaBeli: formatRupiah(item.purchasePrice || 0),
     kadaluarsa: item.expiredDate ? new Date(item.expiredDate).toISOString().slice(0, 10) : '',
     supplier: item.supplierName || '-',
     supplierId: item.supplierId || null,
+    category: item.category || 'BEBAS',
   });
 
   const fetchDrugs = async () => {
@@ -73,6 +80,14 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
   useEffect(() => {
     fetchDrugs();
   }, []);
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = medications.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(medications.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   // Function to handle edit medication
   const handleEdit = (kode) => {
@@ -132,9 +147,11 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
         name: formData.nama,
         stock: Number(formData.stok || 0),
         unit: formData.jenis,
+        category: formData.kategori,
         price: parseRupiah(formData.harga),
         expiredDate: formData.kadaluarsa || null,
         description: formData.nama,
+        supplierId: formData.supplierId ? Number(formData.supplierId) : null,
       };
 
       if (currentEditData?.id) {
@@ -203,7 +220,7 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
               <tr>
                 <th>Kode Obat</th>
                 <th>Nama Obat</th>
-                <th>Jenis</th>
+                <th>Satuan</th>
                 <th>Stok</th>
                 <th>Harga</th>
                 <th>Kadaluarsa</th>
@@ -212,13 +229,33 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
               </tr>
             </thead>
             <tbody>
-              {medications.map((med) => (
+              {currentItems.map((med) => (
                 <tr key={med.kode}>
                   <td>{med.kode}</td>
-                  <td>{med.nama}</td>
-                  <td>{med.jenis}</td>
+                  <td>
+                    {med.nama}
+                    <div style={{ marginTop: '4px' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        backgroundColor: med.category === 'KERAS' ? '#fee2e2' : med.category === 'BEBAS_TERBATAS' ? '#fef3c7' : '#dcfce7',
+                        color: med.category === 'KERAS' ? '#dc2626' : med.category === 'BEBAS_TERBATAS' ? '#d97706' : '#16a34a',
+                      }}>
+                        {med.category === 'KERAS' ? '🔴 Keras' : med.category === 'BEBAS_TERBATAS' ? '🔵 Bebas Terbatas' : '🟢 Bebas'}
+                      </span>
+                    </div>
+                  </td>
+                  <td>{med.satuan}</td>
                   <td>{med.stok}</td>
-                  <td>{med.harga}</td>
+                  <td>
+                    <div style={{ fontWeight: 'bold' }}>{med.hargaJual}</div>
+                    <div style={{ fontSize: '0.85em', color: 'gray', marginTop: '4px' }}>
+                      Beli: {med.hargaBeli}
+                    </div>
+                  </td>
                   <td>{med.kadaluarsa}</td>
                   <td>{med.supplier}</td>
                   <td className="actions">
@@ -250,6 +287,7 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
       </div>
       
       {/* Obat Form Modal */}
@@ -261,6 +299,7 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
         }}
         onSave={handleSaveObat}
         editData={currentEditData}
+        authToken={authToken}
       />
 
       {/* Confirm Delete Modal */}

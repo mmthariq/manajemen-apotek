@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import DashboardHeader from '../components/header/DashboardHeader';
 import '../styles/TransaksiPenjualan.css';
 import Sidebar from '../components/Sidebar';
+import Pagination from '../components/Pagination';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
 
@@ -9,6 +10,8 @@ const TransaksiPenjualan = ({ onLogout, authToken }) => {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const formatToRupiah = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
 
@@ -47,6 +50,12 @@ const TransaksiPenjualan = ({ onLogout, authToken }) => {
       fetchTransactions();
     }
   }, [authToken]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = transactions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const resolveStatusLabel = (status) => {
     switch (String(status || '').toLowerCase()) {
@@ -93,7 +102,7 @@ const TransaksiPenjualan = ({ onLogout, authToken }) => {
                   <td colSpan={5}>Belum ada transaksi.</td>
                 </tr>
               ) : (
-                transactions.map((trx) => (
+                currentItems.map((trx) => (
                   <tr key={trx.id}>
                     <td>TRX-{String(trx.id).padStart(4, '0')}</td>
                     <td>{trx.createdAt ? new Date(trx.createdAt).toLocaleString('id-ID') : '-'}</td>
@@ -106,6 +115,7 @@ const TransaksiPenjualan = ({ onLogout, authToken }) => {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
       </div>
     </div>
   );

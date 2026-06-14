@@ -1,27 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/ObatForm.css';
 
-const ObatForm = ({ isOpen, onClose, onSave, editData }) => {
+const SUPPLIER_API_URL = 'http://localhost:3000/api/suppliers';
+
+const ObatForm = ({ isOpen, onClose, onSave, editData, authToken = null }) => {
   const initialFormData = {
     kode: '',
     nama: '',
     jenis: 'Tablet',
+    kategori: 'BEBAS',
     stok: 0,
     harga: '',
     kadaluarsa: '',
-    supplier: ''
+    supplierId: ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
+  const [suppliers, setSuppliers] = useState([]);
+  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
   const isEditing = !!editData;
+
+  // Fetch daftar supplier saat modal dibuka
+  useEffect(() => {
+    if (isOpen) {
+      fetchSuppliers();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (editData) {
-      setFormData(editData);
+      setFormData({
+        ...editData,
+        jenis: editData.satuan || editData.jenis || 'Tablet',
+        kategori: editData.category || editData.kategori || 'BEBAS',
+        harga: editData.hargaJual || editData.harga || '',
+        supplierId: editData.supplierId || ''
+      });
     } else {
       setFormData(initialFormData);
     }
   }, [editData]);
+
+  const fetchSuppliers = async () => {
+    try {
+      setIsLoadingSuppliers(true);
+      const headers = {};
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+      const response = await fetch(SUPPLIER_API_URL, { headers });
+      const result = await response.json();
+      if (response.ok && Array.isArray(result.data)) {
+        setSuppliers(result.data);
+      }
+    } catch (error) {
+      console.error('Gagal memuat data supplier:', error);
+    } finally {
+      setIsLoadingSuppliers(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,6 +111,21 @@ const ObatForm = ({ isOpen, onClose, onSave, editData }) => {
               onChange={handleChange}
               required
             />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="kategori">Kategori Obat</label>
+            <select
+              id="kategori"
+              name="kategori"
+              value={formData.kategori}
+              onChange={handleChange}
+              required
+            >
+              <option value="BEBAS">Bebas</option>
+              <option value="BEBAS_TERBATAS">Bebas Terbatas</option>
+              <option value="KERAS">Keras</option>
+            </select>
           </div>
           
           <div className="form-row">
@@ -136,15 +188,23 @@ const ObatForm = ({ isOpen, onClose, onSave, editData }) => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="supplier">Supplier</label>
-            <input
-              type="text"
-              id="supplier"
-              name="supplier"
-              value={formData.supplier}
+            <label htmlFor="supplierId">Supplier</label>
+            <select
+              id="supplierId"
+              name="supplierId"
+              value={formData.supplierId}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">
+                {isLoadingSuppliers ? 'Memuat supplier...' : '-- Pilih Supplier --'}
+              </option>
+              {suppliers.map((sup) => (
+                <option key={sup.id} value={sup.id}>
+                  {sup.name}
+                </option>
+              ))}
+            </select>
           </div>
           
           <div className="form-actions">
@@ -161,4 +221,4 @@ const ObatForm = ({ isOpen, onClose, onSave, editData }) => {
   );
 };
 
-export default ObatForm; 
+export default ObatForm;

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Pagination from '../components/Pagination';
 import DashboardHeader from '../components/header/DashboardHeader';
 import '../styles/SupplierPage.css';
 import Sidebar from '../components/Sidebar';
@@ -9,6 +10,8 @@ const API_BASE_URL = 'http://localhost:3000/api/suppliers';
 
 const SupplierPage = ({ onLogout, authToken = null }) => {
   const [suppliers, setSuppliers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -157,6 +160,12 @@ const SupplierPage = ({ onLogout, authToken = null }) => {
     setIsModalOpen(true);
   };
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = (suppliers || []).slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil((suppliers || []).length / itemsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="dashboard-container supplier-page">
       <Sidebar onLogout={onLogout} />
@@ -192,7 +201,7 @@ const SupplierPage = ({ onLogout, authToken = null }) => {
               </tr>
             </thead>
             <tbody>
-              {suppliers.map((supplier) => (
+              {currentItems.map((supplier) => (
                 <tr key={supplier.id}>
                   <td>{supplier.id}</td>
                   <td>{supplier.name}</td>
@@ -230,7 +239,8 @@ const SupplierPage = ({ onLogout, authToken = null }) => {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+          <Pagination currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
       </div>
 
       {/* Supplier Form Modal */}

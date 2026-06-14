@@ -3,6 +3,7 @@ import DashboardHeader from '../components/header/DashboardHeader';
 import Sidebar from '../components/Sidebar';
 import CustomMedicineForm from '../components/CustomMedicineForm';
 import ConfirmModal from '../components/ConfirmModal';
+import Pagination from '../components/Pagination';
 import '../styles/ManajemenObatRacikan.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/custom-medicine';
@@ -11,6 +12,9 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
   const [customMedicines, setCustomMedicines] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -186,6 +190,12 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
     }).format(num);
   };
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = (filteredMedicines || []).slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil((filteredMedicines || []).length / itemsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="dashboard-container">
       <Sidebar onLogout={onLogout} />
@@ -239,7 +249,7 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredMedicines.map((medicine) => (
+                  {currentItems.map((medicine) => (
                     <tr key={medicine.id}>
                       <td className="id-cell">{medicine.id}</td>
                       <td>
@@ -290,6 +300,8 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
               </table>
             )}
           </div>
+
+          <Pagination currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
 
           {/* Info Box */}
           <div className="info-section">

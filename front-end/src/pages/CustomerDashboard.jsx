@@ -26,6 +26,7 @@ import {
   DialogActions,
   Tabs,
   Tab,
+  Pagination,
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -44,6 +45,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import DashboardLayout from '../components/DashboardLayout';
+import PaymentInstructions from '../components/PaymentInstructions';
 import '../styles/CustomerDashboard.css';
 
 const API_BASE_URL = 'http://localhost:3000/api/orders';
@@ -97,6 +99,9 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [catalogPage, setCatalogPage] = useState(1);
+  const [customPage, setCustomPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [maxPriceFilter, setMaxPriceFilter] = useState('all');
   const [sortFilter, setSortFilter] = useState('default');
@@ -435,7 +440,8 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
               id: item.id,
               nama: item.name,
               harga: Number(item.price || 0),
-              kategori: item.unit || 'Lainnya',
+              kategori: item.category || 'Lainnya',
+              category: item.category || 'BEBAS',
               stok: Number(item.stock || 0),
               popularitas: Number(item.stock || 0),
             }))
@@ -515,6 +521,25 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
     [customMedicines, searchQuery, maxPriceFilter, sortFilter]
   );
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCatalogPage(1);
+  }, [searchQuery, selectedCategory, maxPriceFilter, sortFilter]);
+
+  useEffect(() => {
+    setCustomPage(1);
+  }, [searchQuery, maxPriceFilter, sortFilter]);
+
+  const paginatedMedicines = useMemo(() => {
+    const startIndex = (catalogPage - 1) * ITEMS_PER_PAGE;
+    return filteredMedicines.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredMedicines, catalogPage, ITEMS_PER_PAGE]);
+
+  const paginatedCustomMedicines = useMemo(() => {
+    const startIndex = (customPage - 1) * ITEMS_PER_PAGE;
+    return filteredCustomMedicines.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredCustomMedicines, customPage, ITEMS_PER_PAGE]);
+
   const resolveOrderStatus = (order) => normalizeDbOrderStatus(order?.orderStatus || order?.status || order?.order_status);
 
   const resolveOrderLabel = (order) => {
@@ -546,9 +571,30 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
   }).format(value);
 
   const addToCart = (item, type = 'regular') => {
+    // Check for mixing KERAS and non-KERAS
+    const isKeras = item.category === 'KERAS';
+    const hasKerasInCart = cart.some(c => c.category === 'KERAS');
+    const hasNonKerasInCart = cart.some(c => c.category && c.category !== 'KERAS' && c.category !== 'Racikan'); // Racikan might not have category, assuming custom is fine? Wait, custom medicine category might not exist.
+    
+    // Simpler check: if we try to add KERAS and cart has non-KERAS
+    if (isKeras && cart.some(c => c.category && c.category !== 'KERAS')) {
+      setCatalogMessage('Obat keras tidak boleh dicampur dengan obat bebas dalam satu pesanan.');
+      return;
+    }
+    // If we try to add non-KERAS and cart has KERAS
+    if (item.category && item.category !== 'KERAS' && hasKerasInCart) {
+      setCatalogMessage('Obat bebas tidak boleh dicampur dengan obat keras dalam satu pesanan.');
+      return;
+    }
+
     setCart((prev) => {
       const found = prev.find((cartItem) => cartItem.id === item.id && cartItem.type === type);
       if (found) {
+        // Validate max 1 strip for KERAS
+        if (isKeras && found.quantity >= 1) {
+          setCatalogMessage('Obat keras hanya dapat dibeli maksimal 1 strip per transaksi.');
+          return prev;
+        }
         return prev.map((cartItem) => (
           cartItem.id === item.id && cartItem.type === type
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
@@ -563,6 +609,13 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
   const updateQuantity = (id, type, nextQty) => {
     if (nextQty <= 0) {
       setCart((prev) => prev.filter((item) => !(item.id === id && item.type === type)));
+      return;
+    }
+
+    // Validate max 1 strip for KERAS
+    const cartItem = cart.find(c => c.id === id && c.type === type);
+    if (cartItem && cartItem.category === 'KERAS' && nextQty > 1) {
+      setCatalogMessage('Obat keras hanya dapat dibeli maksimal 1 strip per transaksi.');
       return;
     }
 
@@ -586,6 +639,13 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
     try {
       setIsOrderLoading(true);
       setOrderError('');
+
+      const hasKeras = orderItems.some(item => item.category === 'KERAS');
+      if (hasKeras && !prescriptionFile) {
+         setOrderError('Pembelian obat keras secara online wajib menyertakan (upload) resep dokter.');
+         setIsOrderLoading(false);
+         return;
+      }
 
       const payload = {
         customerId: customerData?.id ?? null,
@@ -1264,85 +1324,146 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
               </Alert>
             )}
 
-            {/* Filters */}
-            <Grid container spacing={1.5} mb={3}>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Cari obat..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ color: '#94a3b8' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '14px',
-                      background: '#f8fafc',
-                    },
-                  }}
-                />
-              </Grid>
+              {/* Filters */}
               {showCatalog && (
-                <Grid item xs={12} md={3}>
+                <Grid container spacing={1.5} mb={3}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Cari obat..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: '#94a3b8' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '14px',
+                        background: '#f8fafc',
+                      },
+                    }}
+                  />
+                </Grid>
+                
+                  <Grid item xs={12} md={3}>
+                    <TextField
+                      fullWidth
+                      select
+                      size="small"
+                      label="Kategori"
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '14px' } }}
+                    >
+                      {categoryOptions.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {option === 'all' ? 'Semua Kategori' : option}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                
+                <Grid item xs={12} md={2.5}>
                   <TextField
                     fullWidth
                     select
                     size="small"
-                    label="Kategori"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    label="Harga"
+                    value={maxPriceFilter}
+                    onChange={(e) => setMaxPriceFilter(e.target.value)}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '14px' } }}
                   >
-                    {categoryOptions.map((option) => (
-                      <MenuItem key={option} value={option}>
-                        {option === 'all' ? 'Semua Kategori' : option}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="all">Semua Harga</MenuItem>
+                    <MenuItem value="15000">≤ Rp 15.000</MenuItem>
+                    <MenuItem value="30000">≤ Rp 30.000</MenuItem>
+                    <MenuItem value="50000">≤ Rp 50.000</MenuItem>
                   </TextField>
                 </Grid>
+                <Grid item xs={12} md={2.5}>
+                  <TextField
+                    fullWidth
+                    select
+                    size="small"
+                    label="Urutkan"
+                    value={sortFilter}
+                    onChange={(e) => setSortFilter(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '14px' } }}
+                  >
+                    <MenuItem value="default">Paling Relevan</MenuItem>
+                    <MenuItem value="popular">Popularitas</MenuItem>
+                    <MenuItem value="price_low">Harga Termurah</MenuItem>
+                    <MenuItem value="price_high">Harga Termahal</MenuItem>
+                  </TextField>
+                </Grid>
+              </Grid>
               )}
-              <Grid item xs={12} md={showCatalog ? 2.5 : 4}>
-                <TextField
-                  fullWidth
-                  select
-                  size="small"
-                  label="Harga"
-                  value={maxPriceFilter}
-                  onChange={(e) => setMaxPriceFilter(e.target.value)}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '14px' } }}
-                >
-                  <MenuItem value="all">Semua Harga</MenuItem>
-                  <MenuItem value="15000">≤ Rp 15.000</MenuItem>
-                  <MenuItem value="30000">≤ Rp 30.000</MenuItem>
-                  <MenuItem value="50000">≤ Rp 50.000</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid item xs={12} md={showCatalog ? 2.5 : 4}>
-                <TextField
-                  fullWidth
-                  select
-                  size="small"
-                  label="Urutkan"
-                  value={sortFilter}
-                  onChange={(e) => setSortFilter(e.target.value)}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '14px' } }}
-                >
-                  <MenuItem value="default">Paling Relevan</MenuItem>
-                  <MenuItem value="popular">Popularitas</MenuItem>
-                  <MenuItem value="price_low">Harga Termurah</MenuItem>
-                  <MenuItem value="price_high">Harga Termahal</MenuItem>
-                </TextField>
-              </Grid>
-            </Grid>
+
+              {showCustom && (
+                <Grid container spacing={1.5} mb={3}>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Cari obat..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: '#94a3b8' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '14px',
+                        background: '#f8fafc',
+                      },
+                    }}
+                  />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                    fullWidth
+                    select
+                    size="small"
+                    label="Harga"
+                    value={maxPriceFilter}
+                    onChange={(e) => setMaxPriceFilter(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '14px' } }}
+                  >
+                    <MenuItem value="all">Semua Harga</MenuItem>
+                    <MenuItem value="15000">≤ Rp 15.000</MenuItem>
+                    <MenuItem value="30000">≤ Rp 30.000</MenuItem>
+                    <MenuItem value="50000">≤ Rp 50.000</MenuItem>
+                  </TextField>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                    fullWidth
+                    select
+                    size="small"
+                    label="Urutkan"
+                    value={sortFilter}
+                    onChange={(e) => setSortFilter(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '14px' } }}
+                  >
+                    <MenuItem value="default">Paling Relevan</MenuItem>
+                    <MenuItem value="popular">Popularitas</MenuItem>
+                    <MenuItem value="price_low">Harga Termurah</MenuItem>
+                    <MenuItem value="price_high">Harga Termahal</MenuItem>
+                  </TextField>
+                  </Grid>
+                </Grid>
+              )}
 
             {/* Product Grid */}
-            {(showCatalog ? filteredMedicines : filteredCustomMedicines).length === 0 ? (
+            {(showCatalog ? paginatedMedicines : paginatedCustomMedicines).length === 0 ? (
               <div className="empty-catalog-state">
                 <div className="empty-catalog-icon">🔍</div>
                 <div className="empty-catalog-text">
@@ -1351,7 +1472,7 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
               </div>
             ) : (
               <Grid container spacing={2.5}>
-                {(showCatalog ? filteredMedicines : filteredCustomMedicines).map((medicine) => (
+                {(showCatalog ? paginatedMedicines : paginatedCustomMedicines).map((medicine) => (
                   <Grid item xs={12} sm={6} lg={4} key={medicine.id}>
                     <Card className="product-card-modern" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                       {/* accent strip */}
@@ -1360,9 +1481,23 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
                       <CardContent className="product-card-body" sx={{ flex: 1, pb: 0 }}>
                         <div className="product-card-header">
                           <div className="product-card-name">{medicine.nama}</div>
-                          <span className={`product-card-category ${showCatalog ? 'regular' : 'custom'}`}>
-                            {showCatalog ? medicine.kategori : 'Racikan'}
-                          </span>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                            <span className={`product-card-category ${showCatalog ? 'regular' : 'custom'}`}>
+                              {showCatalog ? 'Obat' : 'Racikan'}
+                            </span>
+                            {showCatalog && (
+                              <span 
+                                className={`product-card-category`} 
+                                style={{
+                                  backgroundColor: medicine.category === 'KERAS' ? '#fee2e2' : medicine.category === 'BEBAS_TERBATAS' ? '#fef3c7' : '#dcfce7',
+                                  color: medicine.category === 'KERAS' ? '#dc2626' : medicine.category === 'BEBAS_TERBATAS' ? '#d97706' : '#16a34a',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {medicine.category === 'KERAS' ? '🔴 Keras' : medicine.category === 'BEBAS_TERBATAS' ? '🔵 Bebas Terbatas' : '🟢 Bebas'}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {!showCatalog && medicine.deskripsi && (
@@ -1415,6 +1550,25 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
                 ))}
               </Grid>
             )}
+
+            {/* Pagination Controls */}
+            {((showCatalog ? filteredMedicines : filteredCustomMedicines).length > ITEMS_PER_PAGE) && (
+              <Box display="flex" justifyContent="center" mt={4} mb={2}>
+                <Pagination 
+                  count={Math.ceil((showCatalog ? filteredMedicines : filteredCustomMedicines).length / ITEMS_PER_PAGE)}
+                  page={showCatalog ? catalogPage : customPage}
+                  onChange={(event, value) => {
+                    if (showCatalog) setCatalogPage(value);
+                    else setCustomPage(value);
+                    // scroll to top of catalog section smoothly
+                    window.scrollTo({ top: 300, behavior: 'auto' });
+                  }}
+                  color="primary"
+                  shape="rounded"
+                  size="large"
+                />
+              </Box>
+            )}
           </div>
         )}
 
@@ -1456,6 +1610,15 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
                   </Typography>
 
                   <Divider sx={{ mb: 2 }} />
+
+                  {/* Payment Instructions (only for pending) */}
+                  <Box sx={{ mb: 2 }}>
+                    <PaymentInstructions
+                      totalAmount={selectedOrder.totalPrice ?? 0}
+                      status={resolveOrderStatus(selectedOrder)}
+                      variant="compact"
+                    />
+                  </Box>
 
                   <Typography variant="h6" fontWeight={700} mb={1}>Daftar Item</Typography>
                   {selectedOrderItems.length === 0 ? (
