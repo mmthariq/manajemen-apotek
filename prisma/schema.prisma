@@ -25,6 +25,12 @@ enum Status {
   CANCELLED
 }
 
+enum DrugCategory {
+  BEBAS
+  BEBAS_TERBATAS
+  KERAS
+}
+
 model User {
   id        Int     @id @default(autoincrement())
   username  String  @unique
@@ -57,24 +63,31 @@ model Supplier {
   updatedAt     DateTime @updatedAt
 
   purchases Purchase[]
+  drugs     Drug[]
   @@map("suppliers")
 }
 
 model Drug {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  stock       Int
-  unit        String
-  price       Float
-  expiredDate DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            Int          @id @default(autoincrement())
+  name          String
+  description   String?
+  category      DrugCategory @default(BEBAS)
+  stock         Int
+  unit          String
+  price         Float
+  purchasePrice Float?
+  expiredDate   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  supplierId Int?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
   transactionDetails TransactionDetail[]
   purchaseDetails    PurchaseDetail[]
   components         CustomMedicineComponent[]
 
+  @@index([supplierId])
   @@map("drugs")
 }
 
@@ -182,6 +195,7 @@ model PurchaseDetail {
   quantity   Int
   unitPrice  Float
   subtotal   Float
+  expiredDate DateTime?
 
   purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
   drug     Drug     @relation(fields: [drugId], references: [id], onDelete: Restrict)
