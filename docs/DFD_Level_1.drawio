@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-05-06" agent="draw.io" type="device">
+  <diagram id="dfd-level-1" name="DFD Level 1">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============ TITLE ============ -->
+        <mxCell id="title1" value="DFD Level 1 — Dekomposisi Sistem Manajemen Apotek Pemuda Farma" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=16;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="400" y="15" width="600" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============ EXTERNAL ENTITIES ============ -->
+        <mxCell id="e_customer" value="Customer" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="80" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_kasir" value="Kasir" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="560" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_admin" value="Admin" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="80" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_supplier" value="Supplier" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="560" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_owner" value="Owner" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="310" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ============ PROCESSES ============ -->
+        <mxCell id="p1" value="1.0&#xa;Manajemen&#xa;Autentikasi" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="70" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p2" value="2.0&#xa;Manajemen&#xa;Obat &amp; Stok" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="70" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p3" value="3.0&#xa;Transaksi&#xa;Penjualan" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="350" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p4" value="4.0&#xa;Pemesanan&#xa;Online" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="550" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p5" value="5.0&#xa;Manajemen&#xa;Pengadaan" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="550" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p6" value="6.0&#xa;Manajemen&#xa;Pengguna" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="200" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p7" value="7.0&#xa;Laporan &amp;&#xa;Analitik" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="350" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- ============ DATA STORES ============ -->
+        <mxCell id="ds1" value="D1: users" style="shape=partialRectangle;top=0;left=0;right=0;bottom=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="180" width="180" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ds2" value="D2: drugs" style="shape=partialRectangle;top=0;left=0;right=0;bottom=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="290" width="180" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ds3" value="D3: transactions" style="shape=partialRectangle;top=0;left=0;right=0;bottom=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="470" width="180" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ds4" value="D4: suppliers" style="shape=partialRectangle;top=0;left=0;right=0;bottom=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="680" width="180" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ds5" value="D5: purchases" style="shape=partialRectangle;top=0;left=0;right=0;bottom=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="770" width="180" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ds6" value="D6: custom_medicines" style="shape=partialRectangle;top=0;left=0;right=0;bottom=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="600" y="860" width="180" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- ============ DATA FLOWS ============ -->
+
+        <!-- === P1: Autentikasi === -->
+        <mxCell id="f_c_p1" value="Data Login / Registrasi" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_customer" target="p1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p1_c" value="Token JWT" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p1" target="e_customer">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="280" y="140" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p1_c_profil" value="Profil Pelanggan" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p1" target="e_customer">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="155" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_k_p1" value="Data Login" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_kasir" target="p1">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="280" y="400" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p1_k" value="Token JWT" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p1" target="e_kasir">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="250" y="350" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_a_p1" value="Data Login" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_admin" target="p1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p1_a" value="Token JWT" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p1" target="e_admin">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="780" y="60" /></Array></mxGeometry>
+        </mxCell>
+        <!-- Owner → P1 -->
+        <mxCell id="f_o_p1" value="Data Login" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_owner" target="p1">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1300" y="200" /><mxPoint x="600" y="80" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p1_o" value="Token JWT" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p1" target="e_owner">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="550" y="60" /><mxPoint x="1350" y="250" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p1_ds1" value="Read/Write User" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;startArrow=block;startFill=1;" edge="1" parent="1" source="p1" target="ds1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- === P2: Manajemen Obat === -->
+        <mxCell id="f_a_p2" value="Data Obat" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_admin" target="p2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p2_c" value="Info Obat" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p2" target="e_customer">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="580" y="60" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p2_ds2" value="CRUD Obat" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;startArrow=block;startFill=1;" edge="1" parent="1" source="p2" target="ds2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p2_ds6" value="CRUD Racikan" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;startArrow=block;startFill=1;" edge="1" parent="1" source="p2" target="ds6">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1060" y="880" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- === P3: Transaksi Penjualan === -->
+        <mxCell id="f_k_p3" value="Data Transaksi Offline" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_kasir" target="p3">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="280" y="500" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p3_k" value="Struk Transaksi" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p3" target="e_kasir">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="230" y="450" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p3_ds3" value="Read/Write" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;startArrow=block;startFill=1;" edge="1" parent="1" source="p3" target="ds3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p3_ds2" value="Update Stok" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;" edge="1" parent="1" source="p3" target="ds2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_k_p3_aturan" value="Aturan Pakai" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_kasir" target="p3">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="480" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p3_c_riwayat" value="Riwayat Transaksi" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p3" target="e_customer">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="300" y="300" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- === P4: Pemesanan Online === -->
+        <mxCell id="f_c_p4_pesanan" value="Pesanan Online" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_customer" target="p4">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="120" y="550" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_c_p4_bukti" value="Bukti Bayar" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_customer" target="p4">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="140" y="580" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_c_p4_resep" value="Foto Resep" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_customer" target="p4">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="160" y="610" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p4_c" value="Status Pesanan" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p4" target="e_customer">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="100" y="650" /><mxPoint x="50" y="300" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_k_p4" value="Verifikasi Pembayaran" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_kasir" target="p4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p4_ds3" value="Read/Write" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;startArrow=block;startFill=1;" edge="1" parent="1" source="p4" target="ds3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p4_ds2" value="Update Stok" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;" edge="1" parent="1" source="p4" target="ds2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="530" y="400" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- === P5: Manajemen Pengadaan === -->
+        <mxCell id="f_a_p5" value="Data Pengadaan" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_admin" target="p5">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1360" y="400" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_a_p5_supplier" value="Data Supplier" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_admin" target="p5">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1340" y="420" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p5_a" value="Konfirmasi" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p5" target="e_admin">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1380" y="440" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_s_p5" value="Informasi Supplier" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_supplier" target="p5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_s_p2" value="Katalog Obat" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_supplier" target="p2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1400" y="150" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p5_s" value="Pesanan Pengadaan Obat" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p5" target="e_supplier">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1200" y="610" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p5_ds5" value="Read/Write" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;startArrow=block;startFill=1;" edge="1" parent="1" source="p5" target="ds5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p5_ds2" value="Tambah Stok" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;" edge="1" parent="1" source="p5" target="ds2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="850" y="400" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p5_ds4" value="Read/Write Supplier" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;startArrow=block;startFill=1;" edge="1" parent="1" source="p5" target="ds4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- === P6: Manajemen Pengguna === -->
+        <mxCell id="f_a_p6" value="Data Pengguna" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_admin" target="p6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p6_a" value="Info Pengguna" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p6" target="e_admin">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1380" y="180" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p6_ds1" value="CRUD User" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;startArrow=block;startFill=1;" edge="1" parent="1" source="p6" target="ds1">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="900" y="210" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- === P7: Laporan & Analitik === -->
+        <mxCell id="f_a_p7" value="Parameter Laporan" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_admin" target="p7">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1300" y="330" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p7_a_pdf" value="Laporan PDF/Excel" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p7" target="e_admin">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1300" y="370" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p7_a_dash" value="Dashboard Analitik" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p7" target="e_admin">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1310" y="350" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p7_a_notif" value="Notifikasi Peringatan" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p7" target="e_admin">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1290" y="390" /></Array></mxGeometry>
+        </mxCell>
+        <!-- Owner → P7 -->
+        <mxCell id="f_o_p7" value="Parameter Filter" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_owner" target="p7">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1200" y="340" /></Array></mxGeometry>
+        </mxCell>
+        <!-- P7 → Owner -->
+        <mxCell id="f_p7_o" value="Dashboard Analitik,&#xa;File PDF/Excel,&#xa;Notifikasi" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p7" target="e_owner">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1200" y="380" /></Array></mxGeometry>
+        </mxCell>
+        <!-- Kasir → P7 -->
+        <mxCell id="f_k_p7" value="Filter Tanggal" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;" edge="1" parent="1" source="e_kasir" target="p7">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="650" /><mxPoint x="850" y="430" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p7_k" value="Laporan Penjualan Harian" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p7" target="e_kasir">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="850" y="460" /><mxPoint x="200" y="620" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p2_k_notif" value="Notifikasi Stok Menipis" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#333333;fontColor=#333333;dashed=1;" edge="1" parent="1" source="p2" target="e_kasir">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="850" y="150" /><mxPoint x="200" y="150" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p7_ds3" value="Read" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;" edge="1" parent="1" source="p7" target="ds3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_p7_ds5" value="Read" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;" edge="1" parent="1" source="p7" target="ds5">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="850" y="780" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f_p7_ds2" value="Read" style="endArrow=block;endFill=1;html=1;fontSize=9;strokeColor=#666666;fontColor=#666666;" edge="1" parent="1" source="p7" target="ds2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

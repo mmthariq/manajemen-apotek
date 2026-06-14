@@ -1,0 +1,345 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0">
+  <diagram name="Flowchart Permohonan" id="k3QMhKRjQB8kdPG88xhJ">
+    <mxGraphModel dx="1471" dy="853" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="e_customer" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=13;shadow=1;" value="Customer" vertex="1">
+          <mxGeometry height="60" width="160" x="80" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="e_kasir" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=13;shadow=1;" value="Kasir" vertex="1">
+          <mxGeometry height="60" width="160" x="920" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="e_admin" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=13;shadow=1;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="160" x="80" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="e_supplier" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=13;shadow=1;" value="Supplier" vertex="1">
+          <mxGeometry height="60" width="160" x="920" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="e_owner" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=13;shadow=1;" value="Owner" vertex="1">
+          <mxGeometry height="60" width="160" x="710" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="p_sistem" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontStyle=1;fontSize=12;shadow=1;aspect=fixed;" value="0&#xa;&#xa;Sistem Manajemen&#xa;Apotek Pemuda Farma" vertex="1">
+          <mxGeometry height="300" width="300" x="430" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="f1_1" edge="1" parent="1" source="e_customer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Registrasi">
+          <mxGeometry relative="1" x="0.4539" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="280" y="150" />
+              <mxPoint x="280" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f1_2" edge="1" parent="1" source="e_customer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Login">
+          <mxGeometry relative="1" x="0.4673" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="300" y="160" />
+              <mxPoint x="300" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f1_3" edge="1" parent="1" source="e_customer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Pesanan Online">
+          <mxGeometry relative="1" x="0.6111" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="320" y="170" />
+              <mxPoint x="320" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f1_4" edge="1" parent="1" source="e_customer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Bukti Bayar">
+          <mxGeometry relative="1" x="0.6231" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="340" y="180" />
+              <mxPoint x="340" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f1_5" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;entryX=0.033;entryY=0.3;entryDx=0;entryDy=0;entryPerimeter=0;" target="p_sistem" value="Foto Resep">
+          <mxGeometry relative="1" x="0.2575" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="250" y="190" />
+              <mxPoint x="250" y="340" />
+            </Array>
+            <mxPoint x="240" y="190" as="sourcePoint" />
+            <mxPoint x="420" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f2_1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" value="Info Obat">
+          <mxGeometry relative="1" x="0.1083" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="434" y="350" />
+              <mxPoint x="140" y="350" />
+            </Array>
+            <mxPoint x="437" y="350" as="sourcePoint" />
+            <mxPoint x="140" y="200" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f2_2" edge="1" parent="1" source="p_sistem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;entryX=0.313;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="e_customer" value="Status Pesanan">
+          <mxGeometry relative="1" x="-0.3319" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="130" y="360" />
+            </Array>
+            <mxPoint x="420" y="360" as="sourcePoint" />
+            <mxPoint x="129.9999999999999" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f2_3" edge="1" parent="1" source="p_sistem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;entryX=0.392;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0;exitY=0.4;exitDx=0;exitDy=0;exitPerimeter=0;" value="Profil Pelanggan">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="120" y="370" />
+            </Array>
+            <mxPoint x="407.31500838578415" y="370" as="sourcePoint" />
+            <mxPoint x="120.04000000000002" y="200" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f2_4" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;entryX=0.188;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="e_customer" value="Riwayat Transaksi">
+          <mxGeometry relative="1" x="-0.6399" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="110" y="380" />
+            </Array>
+            <mxPoint x="429.9986437626905" y="379.9999999999998" as="sourcePoint" />
+            <mxPoint x="110" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f3_1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Transaksi Offline">
+          <mxGeometry relative="1" x="0.4022" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1070" y="201" />
+              <mxPoint x="1070" y="400" />
+            </Array>
+            <mxPoint x="1070" y="210" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f3_2" edge="1" parent="1" source="e_kasir" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Login">
+          <mxGeometry relative="1" x="0.6848" y="-10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="860" y="160" />
+              <mxPoint x="860" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f3_3" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Aturan Pakai">
+          <mxGeometry relative="1" x="-0.1114" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="979" y="290" />
+              <mxPoint x="980" y="330" />
+            </Array>
+            <mxPoint x="980" y="200" as="sourcePoint" />
+            <mxPoint x="710" y="330.0000000000001" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f4_1" edge="1" parent="1" source="p_sistem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="e_kasir" value="Laporan Penjualan Harian">
+          <mxGeometry relative="1" x="0.0556" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="950" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f4_2" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;entryX=0.681;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="e_kasir" value="Struk Transaksi">
+          <mxGeometry relative="1" x="-0.084" y="-1" as="geometry">
+            <mxPoint x="-1" as="offset" />
+            <Array as="points">
+              <mxPoint x="1029" y="369" />
+            </Array>
+            <mxPoint x="730.004991614216" y="368.5000000000001" as="sourcePoint" />
+            <mxPoint x="1030" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f4_3" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Notifikasi Stok Menipis">
+          <mxGeometry relative="1" x="-0.3001" as="geometry">
+            <mxPoint x="1" as="offset" />
+            <Array as="points">
+              <mxPoint x="1009" y="350" />
+            </Array>
+            <mxPoint x="730.0013562373096" y="350.0000000000001" as="sourcePoint" />
+            <mxPoint x="1008.58" y="199.9999999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f5_1" edge="1" parent="1" source="e_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Obat">
+          <mxGeometry relative="1" x="0.1877" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="280" y="570" />
+              <mxPoint x="280" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f5_2" edge="1" parent="1" source="e_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Supplier">
+          <mxGeometry relative="1" x="0.6129" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="300" y="580" />
+              <mxPoint x="300" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f5_3" edge="1" parent="1" source="e_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Pengguna">
+          <mxGeometry relative="1" x="-0.6857" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="320" y="590" />
+              <mxPoint x="320" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f5_4" edge="1" parent="1" source="e_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Pengadaan">
+          <mxGeometry relative="1" x="0.5243" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="340" y="600" />
+              <mxPoint x="340" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f5_5" edge="1" parent="1" source="e_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Parameter Laporan">
+          <mxGeometry relative="1" x="-0.5295" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="360" y="610" />
+              <mxPoint x="360" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f6_1" edge="1" parent="1" source="p_sistem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="e_admin" value="Dashboard Analitik">
+          <mxGeometry relative="1" x="0.1047" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="180" y="470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f6_2" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Laporan PDF/Excel">
+          <mxGeometry relative="1" x="-0.4737" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="170" y="450" />
+            </Array>
+            <mxPoint x="440" y="450" as="sourcePoint" />
+            <mxPoint x="170" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f6_3" edge="1" parent="1" source="p_sistem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="e_admin" value="Notifikasi Peringatan">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f7_1" edge="1" parent="1" source="e_supplier" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Informasi Supplier">
+          <mxGeometry relative="1" x="0.3856" as="geometry">
+            <mxPoint x="-1" as="offset" />
+            <Array as="points">
+              <mxPoint x="860" y="570" />
+              <mxPoint x="860" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f7_2" edge="1" parent="1" source="e_supplier" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Katalog Obat">
+          <mxGeometry relative="1" x="-0.6229" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="840" y="590" />
+              <mxPoint x="840" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f8_1" edge="1" parent="1" source="p_sistem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="e_supplier" value="Pesanan Pengadaan Obat">
+          <mxGeometry relative="1" x="0.4675" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="820" y="510" />
+              <mxPoint x="820" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f9_1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" target="p_sistem" value="Data Login">
+          <mxGeometry relative="1" x="0.6213" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="500" y="750" />
+            </Array>
+            <mxPoint x="710" y="749.9999999999999" as="sourcePoint" />
+            <mxPoint x="499.9" y="589.91" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f9_2" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Parameter Filter Laporan">
+          <mxGeometry relative="1" x="-0.3541" y="-2" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="530" y="742" />
+              <mxPoint x="530" y="550" />
+            </Array>
+            <mxPoint x="710" y="741.6399999999999" as="sourcePoint" />
+            <mxPoint x="530" y="550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f10_1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Dashboard Analitik">
+          <mxGeometry relative="1" x="-0.1581" y="-20" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="600" y="701" />
+            </Array>
+            <mxPoint x="600" y="550" as="sourcePoint" />
+            <mxPoint x="710" y="701.3399999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f10_2" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Laporan PDF/Excel">
+          <mxGeometry relative="1" x="-0.4586" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="630" y="558.58" />
+              <mxPoint x="630" y="728.58" />
+            </Array>
+            <mxPoint x="629.9999999999998" y="550.0013562373097" as="sourcePoint" />
+            <mxPoint x="710" y="728.5799999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f10_3" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Notifikasi Peringatan">
+          <mxGeometry relative="1" x="-0.571" y="40" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="660" y="543.11" />
+              <mxPoint x="660" y="713.11" />
+            </Array>
+            <mxPoint x="660" y="530" as="sourcePoint" />
+            <mxPoint x="710" y="713.1099999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h1F5kmWnlzB8NvrbYQGD-3" edge="1" parent="1" source="e_kasir" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" value="Verifikasi Pembayaran">
+          <mxGeometry relative="1" x="0.5761" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="870" y="170" />
+              <mxPoint x="870" y="300" />
+            </Array>
+            <mxPoint x="910" y="170" as="sourcePoint" />
+            <mxPoint x="692" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h1F5kmWnlzB8NvrbYQGD-4" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;entryX=0.393;entryY=0.01;entryDx=0;entryDy=0;entryPerimeter=0;" value="Data Login">
+          <mxGeometry relative="1" x="-0.1194" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="150.12" y="399.4" />
+            </Array>
+            <mxPoint x="437.12" y="399.4" as="sourcePoint" />
+            <mxPoint x="150" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
