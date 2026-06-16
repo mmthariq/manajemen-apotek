@@ -28,6 +28,7 @@ import {
   Tab,
   Pagination,
 } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
@@ -957,15 +958,22 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
   // ─── render ───────────────────────────────────────────────────
   return (
     <DashboardLayout onLogout={onLogout} userRole="customer" currentUser={customerData}>
+      {({ toggleSidebar }) => (
+      <>
       <div className="main-content">
 
         {/* ════ HERO BANNER ════ */}
         <div className="customer-hero-banner">
           <div className="hero-content">
-            <h1 className="hero-greeting">Halo, {customerName}👋</h1>
+            <h1 className="hero-greeting">
+              <button className="customer-hamburger-btn" onClick={toggleSidebar} aria-label="Menu">
+                <MenuIcon />
+              </button>
+              Halo, {customerName}👋
+            </h1>
             <p className="hero-subtitle">
               Temukan obat yang Anda butuhkan dengan mudah.
-              <p>Pesan sekarang, ambil nanti. Bebas Antre !!</p>
+              <br />Pesan sekarang, ambil nanti. Bebas Antre !!
             </p>
             <div className="hero-stats">
               <div className="hero-stat-card">
@@ -1662,7 +1670,7 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
 
       {/* ════ CART DRAWER ════ */}
       <Drawer anchor="right" open={isCartOpen} onClose={() => setIsCartOpen(false)}>
-        <Box sx={{ width: { xs: 340, sm: 420 }, display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Box sx={{ width: { xs: '100vw', sm: 420 }, maxWidth: { xs: '100vw', sm: 420 }, display: 'flex', flexDirection: 'column', height: '100%' }}>
 
           {/* Header */}
           <div className="cart-drawer-header">
@@ -1921,6 +1929,8 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
           )}
         </DialogActions>
       </Dialog>
+      </>
+      )}
     </DashboardLayout>
   );
 };
