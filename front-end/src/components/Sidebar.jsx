@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
@@ -8,7 +8,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import '../styles/Sidebar.css';
 
-const Sidebar = ({ onLogout, userRole = 'admin', currentUser = null }) => {
+const Sidebar = ({ onLogout, userRole = 'admin', currentUser = null, isOpen = false, onClose }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const navigate = useNavigate();
@@ -48,11 +48,30 @@ const Sidebar = ({ onLogout, userRole = 'admin', currentUser = null }) => {
   const isKasirDashboardActive = currentPath === '/dashboard-kasir' && currentKasirTab !== 'verification';
   const isKasirVerificationActive = currentPath === '/dashboard-kasir' && currentKasirTab === 'verification';
 
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    if (onClose) onClose();
+  }, [location.pathname, location.search]);
+
+  const handleNavClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <h2>Apotek Pemuda Farma</h2>
-      </div>
+    <>
+      {/* Mobile overlay backdrop */}
+      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+      <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-header">
+          <h2>Apotek Pemuda Farma</h2>
+          {onClose && (
+            <button className="sidebar-close-btn" onClick={onClose} aria-label="Tutup menu">
+              <svg viewBox="0 0 24 24" width="22" height="22">
+                <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+              </svg>
+            </button>
+          )}
+        </div>
       
       {userRole === 'customer' && (
         <div className="customer-profile-card">
@@ -260,6 +279,7 @@ const Sidebar = ({ onLogout, userRole = 'admin', currentUser = null }) => {
         </ul>
       </nav>
     </div>
+    </>
   );
 };
 

@@ -9,6 +9,7 @@ import '../styles/ManajemenObatRacikan.css';
 const API_BASE_URL = 'http://localhost:3000/api/custom-medicine';
 
 const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [customMedicines, setCustomMedicines] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -198,10 +199,10 @@ const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} />
+      <Sidebar onLogout={onLogout} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="main-content">
-        <DashboardHeader authToken={authToken} />
+        <DashboardHeader authToken={authToken} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
 
         <div className="content-section">
           {/* Tools Bar */}

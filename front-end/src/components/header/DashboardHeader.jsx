@@ -45,7 +45,7 @@ const resolveHeaderTitle = (roleKey, location) => {
   return matched?.title || 'Dashboard';
 };
 
-const DashboardHeader = ({ userRole = 'admin', authToken = null }) => {
+const DashboardHeader = ({ userRole = 'admin', authToken = null, onToggleSidebar }) => {
   const location = useLocation();
   const clock = useRealtimeClock();
   const roleKey = String(userRole || 'admin').toLowerCase();
@@ -63,7 +63,16 @@ const DashboardHeader = ({ userRole = 'admin', authToken = null }) => {
 
   return (
     <div className="dashboard-header">
-      <h1>{title}</h1>
+      <div className="dashboard-header-left">
+        {onToggleSidebar && (
+          <button className="hamburger-btn" onClick={onToggleSidebar} aria-label="Menu">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+            </svg>
+          </button>
+        )}
+        <h1>{title}</h1>
+      </div>
       <div className="user-info">
         <span className="date">{clock}</span>
         <NotificationBell authToken={authToken} />

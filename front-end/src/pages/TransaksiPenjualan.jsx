@@ -7,6 +7,7 @@ import Pagination from '../components/Pagination';
 const API_BASE_URL = 'http://localhost:3000/api/orders';
 
 const TransaksiPenjualan = ({ onLogout, authToken }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -71,10 +72,10 @@ const TransaksiPenjualan = ({ onLogout, authToken }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} />
+      <Sidebar onLogout={onLogout} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="main-content">
-        <DashboardHeader authToken={authToken} />
+        <DashboardHeader authToken={authToken} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
 
         <div className="content-header">
           <h2>Transaksi Penjualan</h2>

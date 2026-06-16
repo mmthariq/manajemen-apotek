@@ -9,6 +9,7 @@ import ConfirmModal from '../components/ConfirmModal';
 const API_BASE_URL = 'http://localhost:3000/api/suppliers';
 
 const SupplierPage = ({ onLogout, authToken = null }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -168,10 +169,10 @@ const SupplierPage = ({ onLogout, authToken = null }) => {
 
   return (
     <div className="dashboard-container supplier-page">
-      <Sidebar onLogout={onLogout} />
+      <Sidebar onLogout={onLogout} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className="main-content">
-        <DashboardHeader authToken={authToken} />
+        <DashboardHeader authToken={authToken} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
 
         {/* Content */}
         <div className="content-header">

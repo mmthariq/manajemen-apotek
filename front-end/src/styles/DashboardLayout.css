@@ -25,3 +25,17 @@
   display: flex;
   flex-direction: column;
 }
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .dashboard-layout-sidebar {
+    min-height: auto;
+  }
+
+  .dashboard-layout-main {
+    width: 100%;
+  }
+}

@@ -36,6 +36,7 @@ const mapApiUserToUi = (user) => {
 };
 
 const ManajemenPengguna = ({ onLogout, authToken = null }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -233,10 +234,10 @@ const ManajemenPengguna = ({ onLogout, authToken = null }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} />
+      <Sidebar onLogout={onLogout} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className="main-content">
-        <DashboardHeader authToken={authToken} />
+        <DashboardHeader authToken={authToken} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
         
         <div className="content-header">
           <h2>Manajemen Pengguna</h2>

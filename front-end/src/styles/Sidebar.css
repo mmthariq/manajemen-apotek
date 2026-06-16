@@ -17,11 +17,15 @@
   transition: width 0.3s ease;
   box-shadow: 18px 0 40px rgba(6, 95, 70, 0.12);
   font-family: 'DM Sans', 'Space Grotesk', sans-serif;
+  flex-shrink: 0;
 }
 
 .sidebar-header {
   padding: 22px 20px 16px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .sidebar-header h2 {
@@ -34,6 +38,32 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Close button (mobile only) */
+.sidebar-close-btn {
+  display: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #e2f2ee;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Overlay backdrop (mobile only) */
+.sidebar-overlay {
+  display: none;
 }
 
 .sidebar-nav ul {
@@ -161,8 +191,34 @@
   color: #fecaca;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* ═══════════════════════════════════════════════════════════════
+   Hamburger Menu Button (placed in headers by pages)
+   ═══════════════════════════════════════════════════════════════ */
+.hamburger-btn {
+  display: none;
+  background: rgba(15, 118, 110, 0.1);
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  color: #0f172a;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.hamburger-btn:hover {
+  background: rgba(15, 118, 110, 0.18);
+  border-color: rgba(15, 118, 110, 0.35);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive — Tablet (≤1024px): Collapsed sidebar
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
   .sidebar {
     width: 74px;
   }
@@ -170,25 +226,34 @@
   .customer-profile-card {
     display: none;
   }
-  
+
   .sidebar-header h2 {
     display: none;
   }
-  
-  .sidebar-nav li a span {
+
+  .sidebar-nav li a span,
+  .sidebar-nav li.logout .logout-link .logout-text {
     display: none;
   }
-  
+
   .sidebar-nav li a {
     justify-content: center;
     padding: 15px 0;
   }
-  
-  /* Add hover effect to show text on hover */
+
+  .sidebar-nav li.logout .logout-link {
+    justify-content: center;
+    padding: 15px 0;
+  }
+
+  /* Hover expand on tablet */
   .sidebar:hover {
     width: 280px;
+    position: fixed;
+    z-index: 999;
+    box-shadow: 18px 0 60px rgba(6, 95, 70, 0.25);
   }
-  
+
   .sidebar:hover .sidebar-header h2 {
     display: block;
   }
@@ -196,13 +261,96 @@
   .sidebar:hover .customer-profile-card {
     display: block;
   }
-  
+
   .sidebar:hover .sidebar-nav li a {
     justify-content: flex-start;
-    padding: 12px 20px;
+    padding: 11px 16px;
   }
-  
-  .sidebar:hover .sidebar-nav li a span {
+
+  .sidebar:hover .sidebar-nav li a span,
+  .sidebar:hover .sidebar-nav li.logout .logout-link .logout-text {
+    display: inline;
+  }
+
+  .sidebar:hover .sidebar-nav li.logout .logout-link {
+    justify-content: flex-start;
+    padding: 11px 16px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive — Mobile (≤768px): Full overlay sidebar
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 998;
+    animation: overlayFadeIn 0.3s ease;
+  }
+
+  @keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 300px;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    overflow-y: auto;
+  }
+
+  /* When open on mobile */
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Reset tablet hover expand behavior on mobile */
+  .sidebar:hover {
+    width: 300px;
+    position: fixed;
+    z-index: 999;
+  }
+
+  .sidebar-header h2 {
     display: block;
   }
-} 
+
+  .customer-profile-card {
+    display: block;
+  }
+
+  .sidebar-nav li a {
+    justify-content: flex-start;
+    padding: 11px 16px;
+  }
+
+  .sidebar-nav li a span,
+  .sidebar-nav li.logout .logout-link .logout-text {
+    display: inline;
+  }
+
+  .sidebar-nav li.logout .logout-link {
+    justify-content: flex-start;
+    padding: 11px 16px;
+  }
+}

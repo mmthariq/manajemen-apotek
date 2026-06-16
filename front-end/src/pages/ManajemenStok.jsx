@@ -12,10 +12,11 @@ const formatRupiah = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')
 const parseRupiah = (text) => Number(String(text || '').replace(/[^\d]/g, '')) || 0;
 
 const ManajemenStok = ({ onLogout, authToken = null }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [medications, setMedications] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -197,11 +198,11 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar onLogout={onLogout} />
-      
+      <Sidebar onLogout={onLogout} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
       <div className="main-content">
-        <DashboardHeader authToken={authToken} />
-        
+        <DashboardHeader authToken={authToken} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
+
         <div className="content-header">
           <h2>Manajemen Stok Obat</h2>
           <button className="add-button" onClick={handleAddNew}>
@@ -211,7 +212,7 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
             Tambah Obat
           </button>
         </div>
-        
+
         <div className="table-container">
           {errorMessage && <p>{errorMessage}</p>}
           {isLoading && <p>Memuat data obat...</p>}
@@ -259,8 +260,8 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
                   <td>{med.kadaluarsa}</td>
                   <td>{med.supplier}</td>
                   <td className="actions">
-                    <button 
-                      className="edit-button" 
+                    <button
+                      className="edit-button"
                       onClick={() => handleEdit(med.kode)}
                       title="Edit Obat"
                     >
@@ -269,8 +270,8 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                       </svg>
                     </button>
-                    <button 
-                      className="delete-button" 
+                    <button
+                      className="delete-button"
                       onClick={() => handleDeleteClick(med.kode)}
                       title="Hapus Obat"
                     >
@@ -289,9 +290,9 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
       </div>
-      
+
       {/* Obat Form Modal */}
-      <ObatForm 
+      <ObatForm
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);

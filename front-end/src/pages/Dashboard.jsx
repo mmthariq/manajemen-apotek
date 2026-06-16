@@ -94,8 +94,9 @@ const Dashboard = ({ onLogout, userRole, currentUser, authToken = null }) => {
 
   return (
     <DashboardLayout onLogout={onLogout} userRole={userRole} currentUser={currentUser}>
+      {({ toggleSidebar }) => (
       <div className="main-content">
-        <DashboardHeader userRole={userRole} authToken={authToken} />
+        <DashboardHeader userRole={userRole} authToken={authToken} onToggleSidebar={toggleSidebar} />
         
         <div className="stats-container">
           {errorMessage && <p>{errorMessage}</p>}
@@ -288,6 +289,7 @@ const Dashboard = ({ onLogout, userRole, currentUser, authToken = null }) => {
           </div>
         </div>
       </div>
+      )}
     </DashboardLayout>
   );
 };
