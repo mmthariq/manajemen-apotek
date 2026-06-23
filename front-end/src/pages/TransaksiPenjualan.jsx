@@ -4,7 +4,7 @@ import '../styles/TransaksiPenjualan.css';
 import Sidebar from '../components/Sidebar';
 import Pagination from '../components/Pagination';
 
-const API_BASE_URL = 'http://localhost:3000/api/orders';
+const API_BASE_URL = '/api/orders';
 
 const TransaksiPenjualan = ({ onLogout, authToken }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

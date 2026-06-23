@@ -126,7 +126,9 @@ model Transaction {
   orderCode            String    @unique @default(cuid())
   type                 OrderType
   status               Status    @default(PENDING)
-  totalPrice           Float
+  subtotal             Float     @default(0)     // Jumlah sebelum diskon
+  discount             Float     @default(0)     // Potongan harga/promo
+  totalPrice           Float                      // Total akhir = subtotal - discount
   paymentProofImageUrl String?
   prescriptionImageUrl String?
   usageInstructions    String?

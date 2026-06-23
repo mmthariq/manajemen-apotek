@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/TransaksiForm.css';
 
-const DRUG_API_BASE_URL = 'http://localhost:3000/api/obat';
+const DRUG_API_BASE_URL = '/api/obat';
 
 const TransaksiForm = ({ isOpen, onClose, onSave, editData }) => {
   const initialFormData = {

@@ -193,6 +193,8 @@ const mapOrderRow = (row) => ({
   id: row.id,
   type: row.type ?? ORDER_TYPE.ONLINE,
   orderStatus: row.status ?? null,
+  subtotal: Number(row.subtotal ?? 0),
+  discount: Number(row.discount ?? 0),
   totalPrice: Number(row.totalPrice ?? row.totalprice ?? 0),
   createdAt: row.createdAt ?? row.createdat ?? null,
   paymentProofImageUrl: row.paymentProofImageUrl ?? row.paymentproofimageurl ?? null,
@@ -277,7 +279,12 @@ const createOrder = async (req, res, next) => {
   const client = await pool.connect();
 
   try {
-    const { customerId, customer_id, cashierId, cashier_id, items } = req.body;
+    const { customerId, customer_id, cashierId, cashier_id, items, discount } = req.body;
+    const discountAmount = toNullableNumber(discount) || 0;
+
+    if (discountAmount < 0) {
+      return res.status(400).json({ message: 'Diskon tidak boleh negatif.' });
+    }
 
     let parsedItems = items;
     if (typeof parsedItems === 'string') {
@@ -399,23 +406,23 @@ const createOrder = async (req, res, next) => {
 
     const orderResult = (hasPrescriptionColumn && hasUsageInstructionsColumn)
       ? await client.query(
-        `INSERT INTO "transactions" ("orderCode", "customerId", "cashierId", "totalPrice", "type", "status", "prescriptionImageUrl", "usageInstructions", "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-         RETURNING "id", "type", "status", "totalPrice", "createdAt", "paymentProofImageUrl", "prescriptionImageUrl", "usageInstructions"`,
-        [orderCode, resolvedCustomerId, resolvedCashierId, 0, resolvedOrderType, initialOrderStatus, prescriptionImageUrl, null]
+        `INSERT INTO "transactions" ("orderCode", "customerId", "cashierId", "totalPrice", "subtotal", "discount", "type", "status", "prescriptionImageUrl", "usageInstructions", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+         RETURNING "id", "type", "status", "totalPrice", "subtotal", "discount", "createdAt", "paymentProofImageUrl", "prescriptionImageUrl", "usageInstructions"`,
+        [orderCode, resolvedCustomerId, resolvedCashierId, 0, 0, discountAmount, resolvedOrderType, initialOrderStatus, prescriptionImageUrl, null]
       )
       : hasPrescriptionColumn
       ? await client.query(
-        `INSERT INTO "transactions" ("orderCode", "customerId", "cashierId", "totalPrice", "type", "status", "prescriptionImageUrl", "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-         RETURNING "id", "type", "status", "totalPrice", "createdAt", "paymentProofImageUrl", "prescriptionImageUrl"`,
-        [orderCode, resolvedCustomerId, resolvedCashierId, 0, resolvedOrderType, initialOrderStatus, prescriptionImageUrl]
+        `INSERT INTO "transactions" ("orderCode", "customerId", "cashierId", "totalPrice", "subtotal", "discount", "type", "status", "prescriptionImageUrl", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+         RETURNING "id", "type", "status", "totalPrice", "subtotal", "discount", "createdAt", "paymentProofImageUrl", "prescriptionImageUrl"`,
+        [orderCode, resolvedCustomerId, resolvedCashierId, 0, 0, discountAmount, resolvedOrderType, initialOrderStatus, prescriptionImageUrl]
       )
       : await client.query(
-        `INSERT INTO "transactions" ("orderCode", "customerId", "cashierId", "totalPrice", "type", "status", "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-         RETURNING "id", "type", "status", "totalPrice", "createdAt", "paymentProofImageUrl"`,
-        [orderCode, resolvedCustomerId, resolvedCashierId, 0, resolvedOrderType, initialOrderStatus]
+        `INSERT INTO "transactions" ("orderCode", "customerId", "cashierId", "totalPrice", "subtotal", "discount", "type", "status", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+         RETURNING "id", "type", "status", "totalPrice", "subtotal", "discount", "createdAt", "paymentProofImageUrl"`,
+        [orderCode, resolvedCustomerId, resolvedCashierId, 0, 0, discountAmount, resolvedOrderType, initialOrderStatus]
       );
 
     let orderRow = orderResult.rows[0];
@@ -548,31 +555,40 @@ const createOrder = async (req, res, next) => {
       });
     }
 
+    if (discountAmount > computedTotalPrice) {
+      const discountError = new Error('Diskon tidak boleh lebih besar dari subtotal.');
+      discountError.status = 400;
+      throw discountError;
+    }
+
     const updatedOrderResult = (hasPrescriptionColumn && hasUsageInstructionsColumn)
       ? await client.query(
         `UPDATE "transactions"
-         SET "totalPrice" = $1,
+         SET "subtotal" = $1,
+             "totalPrice" = ($1 - $2),
              "updatedAt" = NOW()
-         WHERE "id" = $2
-         RETURNING "id", "type", "status", "totalPrice", "createdAt", "paymentProofImageUrl", "prescriptionImageUrl", "usageInstructions"`,
-        [computedTotalPrice, orderRow.id]
+         WHERE "id" = $3
+         RETURNING "id", "type", "status", "totalPrice", "subtotal", "discount", "createdAt", "paymentProofImageUrl", "prescriptionImageUrl", "usageInstructions"`,
+        [computedTotalPrice, discountAmount, orderRow.id]
       )
       : hasPrescriptionColumn
       ? await client.query(
         `UPDATE "transactions"
-         SET "totalPrice" = $1,
+         SET "subtotal" = $1,
+             "totalPrice" = ($1 - $2),
              "updatedAt" = NOW()
-         WHERE "id" = $2
-         RETURNING "id", "type", "status", "totalPrice", "createdAt", "paymentProofImageUrl", "prescriptionImageUrl"`,
-        [computedTotalPrice, orderRow.id]
+         WHERE "id" = $3
+         RETURNING "id", "type", "status", "totalPrice", "subtotal", "discount", "createdAt", "paymentProofImageUrl", "prescriptionImageUrl"`,
+        [computedTotalPrice, discountAmount, orderRow.id]
       )
       : await client.query(
         `UPDATE "transactions"
-         SET "totalPrice" = $1,
+         SET "subtotal" = $1,
+             "totalPrice" = ($1 - $2),
              "updatedAt" = NOW()
-         WHERE "id" = $2
-         RETURNING "id", "type", "status", "totalPrice", "createdAt", "paymentProofImageUrl"`,
-        [computedTotalPrice, orderRow.id]
+         WHERE "id" = $3
+         RETURNING "id", "type", "status", "totalPrice", "subtotal", "discount", "createdAt", "paymentProofImageUrl"`,
+        [computedTotalPrice, discountAmount, orderRow.id]
       );
 
     if (updatedOrderResult.rowCount > 0) {
@@ -630,6 +646,8 @@ const getOrders = async (req, res, next) => {
       `SELECT orders."id",
               orders."type",
               orders."status",
+              orders."subtotal",
+              orders."discount",
               orders."totalPrice",
               orders."createdAt",
               orders."paymentProofImageUrl",
@@ -640,7 +658,7 @@ const getOrders = async (req, res, next) => {
        LEFT JOIN "transaction_details" AS items
          ON items."transactionId" = orders."id"
        ${whereClause}
-       GROUP BY orders."id", orders."type", orders."status", orders."totalPrice", orders."createdAt", orders."paymentProofImageUrl"${hasPrescriptionColumn ? ', orders."prescriptionImageUrl"' : ''}${hasUsageInstructionsColumn ? ', orders."usageInstructions"' : ''}
+       GROUP BY orders."id", orders."type", orders."status", orders."subtotal", orders."discount", orders."totalPrice", orders."createdAt", orders."paymentProofImageUrl"${hasPrescriptionColumn ? ', orders."prescriptionImageUrl"' : ''}${hasUsageInstructionsColumn ? ', orders."usageInstructions"' : ''}
        ORDER BY orders."id" ASC`,
       params
     );
@@ -669,7 +687,7 @@ const getOrderById = async (req, res, next) => {
       : 'NULL::text AS "usageInstructions"';
 
     const orderResult = await pool.query(
-      `SELECT "id", "customerId", "type", "status", "totalPrice", "createdAt", "paymentProofImageUrl", ${prescriptionSelect}, ${usageInstructionsSelect}
+      `SELECT "id", "customerId", "type", "status", "subtotal", "discount", "totalPrice", "createdAt", "paymentProofImageUrl", ${prescriptionSelect}, ${usageInstructionsSelect}
        FROM "transactions"
        WHERE "id" = $1 AND "type" = $2`,
       [id, ORDER_TYPE.ONLINE]

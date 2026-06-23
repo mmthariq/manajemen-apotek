@@ -3,8 +3,8 @@ import DashboardHeader from '../components/header/DashboardHeader';
 import Sidebar from '../components/Sidebar';
 import '../styles/TransaksiKasir.css';
 
-const DRUG_API_BASE_URL = 'http://localhost:3000/api/obat';
-const ORDER_API_BASE_URL = 'http://localhost:3000/api/orders';
+const DRUG_API_BASE_URL = '/api/obat';
+const ORDER_API_BASE_URL = '/api/orders';
 
 const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   // State for form input values
@@ -19,6 +19,7 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   const [obatList, setObatList] = useState([]);
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [diskon, setDiskon] = useState(0); // Tambahkan state untuk diskon
   
   useEffect(() => {
     const fetchDrugs = async () => {
@@ -162,6 +163,11 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
     return cartItems.reduce((total, item) => total + item.total, 0);
   };
 
+  // Function to get final total after discount
+  const getTotalAfterDiscount = () => {
+    return Math.max(0, getCartTotal() - diskon);
+  };
+
   // Function to handle checkout
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
@@ -198,6 +204,7 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
 
       const formData = new FormData();
       formData.append('items', JSON.stringify(itemsPayload));
+      formData.append('discount', diskon); // Tambahkan diskon ke formData
       
       if (prescriptionFile) {
         formData.append('prescriptionImage', prescriptionFile);
@@ -236,6 +243,7 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
     setNamaPembeli('');
     setPrescriptionFile(null);
     setShowStruk(false);
+    setDiskon(0); // Reset diskon
   };
 
   // Get current date and time
@@ -377,6 +385,25 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
                       placeholder="Masukkan nama pembeli"
                     />
                   </div>
+                  <div className="form-group">
+                    <label>Diskon/Promo (Rp)</label>
+                    <input
+                      type="number"
+                      value={diskon}
+                      onChange={(e) => setDiskon(Math.max(0, Number(e.target.value) || 0))}
+                      min="0"
+                      max={getCartTotal()}
+                      placeholder="Masukkan jumlah diskon"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Total Setelah Diskon</label>
+                    <input
+                      type="text"
+                      value={`Rp ${getTotalAfterDiscount().toLocaleString('id-ID')}`}
+                      readOnly
+                    />
+                  </div>
                   {cartItems.some(item => item.category === 'KERAS') && (
                     <div className="form-group">
                       <label>Upload Resep Dokter <span style={{color: 'red'}}>*</span></label>
@@ -426,8 +453,18 @@ const TransaksiKasir = ({ onLogout, userRole, currentUser, authToken }) => {
                 </div>
               ))}
               <div className="struk-total">
-                <p>Total</p>
+                <p>Subtotal</p>
                 <p>Rp {getCartTotal().toLocaleString('id-ID')}</p>
+              </div>
+              {diskon > 0 && (
+                <div className="struk-discount">
+                  <p>Diskon</p>
+                  <p>-Rp {diskon.toLocaleString('id-ID')}</p>
+                </div>
+              )}
+              <div className="struk-total">
+                <p><strong>Total Pembayaran</strong></p>
+                <p><strong>Rp {getTotalAfterDiscount().toLocaleString('id-ID')}</strong></p>
               </div>
               <div className="struk-info">
                 <p>Pembeli: {namaPembeli}</p>
