@@ -42,6 +42,7 @@ const getDashboardAnalytics = async (req, res, next) => {
       expiringSoonResult,
       recentTransactionsResult,
       recentPurchasesResult,
+      cogsResult,
     ] = await Promise.all([
       pool.query(
         `SELECT
@@ -140,11 +141,22 @@ const getDashboardAnalytics = async (req, res, next) => {
          LIMIT 20`,
         [startDate || null, endDate || null]
       ),
+      pool.query(
+        `SELECT COALESCE(SUM(td."quantity" * COALESCE(d."purchasePrice", d."price" / 1.15, 0)), 0)::float8 AS "cogsTotal"
+         FROM "transaction_details" td
+         JOIN "transactions" t ON t."id" = td."transactionId"
+         LEFT JOIN "drugs" d ON d."id" = td."drugId"
+         WHERE ($1::date IS NULL OR DATE(t."createdAt") >= $1::date)
+           AND ($2::date IS NULL OR DATE(t."createdAt") <= $2::date)
+           AND t."status" IN ('VERIFIED', 'COMPLETED')`,
+        [startDate || null, endDate || null]
+      ),
     ]);
 
     const summary = summaryResult.rows[0] || {};
     const penjualanPeriode = Number(periodSalesResult.rows[0]?.penjualanPeriode || 0);
     const pembelianPeriode = Number(periodPurchaseResult.rows[0]?.pembelianPeriode || 0);
+    const cogsTotal = Number(cogsResult.rows[0]?.cogsTotal || 0);
 
     res.status(200).json({
       message: 'Data analitik dashboard berhasil diambil.',
@@ -158,7 +170,7 @@ const getDashboardAnalytics = async (req, res, next) => {
           penjualanPeriode,
           pendapatanPeriode: penjualanPeriode,
           pembelianPeriode,
-          labaKotorPeriode: penjualanPeriode - pembelianPeriode,
+          labaKotorPeriode: penjualanPeriode - cogsTotal,
           stokMenipis: lowStockResult.rowCount,
           obatMendekatiKedaluwarsa: expiringSoonResult.rowCount,
           totalPeringatan: Number(lowStockResult.rowCount || 0) + Number(expiringSoonResult.rowCount || 0),

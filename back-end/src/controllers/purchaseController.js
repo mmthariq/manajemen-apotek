@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const { MARGIN_MULTIPLIER } = require('../config/pricing');
 
 const mapPurchaseRow = (row) => ({
   id: row.id,
@@ -155,12 +156,12 @@ const createPurchase = async (req, res, next) => {
       await client.query(
         `UPDATE "drugs"
          SET "stock" = "stock" + $1,
-             "price" = ROUND(($3 * 1.15)::numeric, 2),
+             "price" = ROUND(($3 * $5)::numeric, 2),
              "purchasePrice" = $3,
              "expiredDate" = LEAST("expiredDate", CAST($4 AS timestamp)),
              "updatedAt" = NOW()
          WHERE "id" = $2`,
-        [item.quantity, item.drugId, item.unitPrice, item.expiredDate]
+        [item.quantity, item.drugId, item.unitPrice, item.expiredDate, MARGIN_MULTIPLIER]
       );
 
       detailRows.push(detailResult.rows[0]);

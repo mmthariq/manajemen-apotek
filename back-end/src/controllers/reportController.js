@@ -5,7 +5,7 @@ const pool = require('../config/database');
 const toCurrency = (value) => Number(value || 0);
 
 const loadAnalyticsData = async ({ startDate, endDate, category }) => {
-  const [summaryResult, purchaseSummaryResult, lowStockResult, purchaseResult] = await Promise.all([
+  const [summaryResult, purchaseSummaryResult, lowStockResult, purchaseResult, cogsResult] = await Promise.all([
     pool.query(
       `SELECT
          COALESCE(SUM(t."totalPrice"), 0)::float8 AS "penjualanPeriode",
@@ -42,16 +42,28 @@ const loadAnalyticsData = async ({ startDate, endDate, category }) => {
        ORDER BY p."id" ASC`,
       [startDate || null, endDate || null]
     ),
+    // COGS: hitung harga pokok penjualan berdasarkan purchasePrice obat yang terjual
+    pool.query(
+      `SELECT COALESCE(SUM(td."quantity" * COALESCE(d."purchasePrice", d."price" / 1.15, 0)), 0)::float8 AS "cogsTotal"
+       FROM "transaction_details" td
+       JOIN "transactions" t ON t."id" = td."transactionId"
+       LEFT JOIN "drugs" d ON d."id" = td."drugId"
+       WHERE ($1::date IS NULL OR DATE(t."createdAt") >= $1::date)
+         AND ($2::date IS NULL OR DATE(t."createdAt") <= $2::date)
+         AND t."status" IN ('VERIFIED', 'COMPLETED')`,
+      [startDate || null, endDate || null]
+    ),
   ]);
 
   const penjualanPeriode = toCurrency(summaryResult.rows[0]?.penjualanPeriode);
   const pembelianPeriode = toCurrency(purchaseSummaryResult.rows[0]?.pembelianPeriode);
+  const cogsTotal = toCurrency(cogsResult.rows[0]?.cogsTotal);
 
   return {
     summary: {
       penjualanPeriode,
       pembelianPeriode,
-      labaKotorPeriode: penjualanPeriode - pembelianPeriode,
+      labaKotorPeriode: penjualanPeriode - cogsTotal,
       totalTransaksi: Number(summaryResult.rows[0]?.totalTransaksi || 0),
       totalPengadaan: Number(purchaseSummaryResult.rows[0]?.totalPengadaan || 0),
       stokMenipis: lowStockResult.rowCount,

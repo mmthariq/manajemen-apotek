@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const { calculateSellingPrice } = require('../config/pricing');
 
 const getAllDrugs = async (req, res, next) => {
   try {
@@ -48,16 +49,19 @@ const getAllDrugs = async (req, res, next) => {
 
 const createDrug = async (req, res, next) => {
   try {
-    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId, category } = req.body;
+    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, purchasePrice, hargaBeli, expiredDate, supplierId, category } = req.body;
 
     const resolvedName = String(name || nama || '').trim();
     const resolvedStock = Number(stock ?? stok);
-    const resolvedPrice = Number(price ?? harga);
     const resolvedSupplierId = supplierId ? Number(supplierId) : null;
 
-    if (!resolvedName || Number.isNaN(resolvedStock) || Number.isNaN(resolvedPrice) || !unit) {
+    // Tentukan purchasePrice dan hitung harga jual otomatis (margin 15%)
+    const resolvedPurchasePrice = Number(purchasePrice ?? hargaBeli ?? price ?? harga);
+    const resolvedPrice = calculateSellingPrice(resolvedPurchasePrice);
+
+    if (!resolvedName || Number.isNaN(resolvedStock) || Number.isNaN(resolvedPurchasePrice) || !unit) {
       return res.status(400).json({
-        message: 'Nama obat, stok, unit, dan harga harus diisi dengan format yang valid.',
+        message: 'Nama obat, stok, unit, dan harga beli harus diisi dengan format yang valid.',
       });
     }
 
@@ -75,8 +79,8 @@ const createDrug = async (req, res, next) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO "drugs" ("name", "description", "category", "stock", "unit", "price", "expiredDate", "supplierId", "updatedAt")
-       VALUES ($1, $2, $3::"DrugCategory", $4, $5, $6, $7, $8, NOW())
+      `INSERT INTO "drugs" ("name", "description", "category", "stock", "unit", "price", "purchasePrice", "expiredDate", "supplierId", "updatedAt")
+       VALUES ($1, $2, $3::"DrugCategory", $4, $5, $6, $7, $8, $9, NOW())
        RETURNING "id", "name", "description", "category", "stock", "unit", "price", "purchasePrice", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
       [
         resolvedName,
@@ -85,6 +89,7 @@ const createDrug = async (req, res, next) => {
         resolvedStock,
         String(unit).trim(),
         resolvedPrice,
+        resolvedPurchasePrice,
         expiredDate || null,
         resolvedSupplierId,
       ]
@@ -133,7 +138,7 @@ const getDrugById = async (req, res, next) => {
 const updateDrug = async (req, res, next) => {
   try {
     const { idObat } = req.params;
-    const { name, nama, description, deskripsi, stock, stok, unit, price, harga, expiredDate, supplierId, category } = req.body;
+    const { name, nama, description, deskripsi, stock, stok, unit, purchasePrice, hargaBeli, expiredDate, supplierId, category } = req.body;
 
     const existingResult = await pool.query('SELECT * FROM "drugs" WHERE "id" = $1', [idObat]);
     if (existingResult.rowCount === 0) {
@@ -144,8 +149,14 @@ const updateDrug = async (req, res, next) => {
     const nextName = name ?? nama ?? existing.name;
     const nextDescription = description ?? deskripsi ?? existing.description;
     const nextStock = stock ?? stok ?? existing.stock;
-    const nextPrice = price ?? harga ?? existing.price;
     const nextSupplierId = supplierId !== undefined ? (supplierId ? Number(supplierId) : null) : existing.supplierId;
+
+    // Jika purchasePrice diubah, recalculate harga jual otomatis (margin 15%)
+    // Jika tidak, pertahankan harga yang sudah ada
+    const nextPurchasePrice = purchasePrice ?? hargaBeli ?? existing.purchasePrice;
+    const nextPrice = (purchasePrice !== undefined || hargaBeli !== undefined)
+      ? calculateSellingPrice(Number(nextPurchasePrice))
+      : existing.price;
 
     const validCategories = ['BEBAS', 'BEBAS_TERBATAS', 'KERAS'];
     const nextCategory = category !== undefined
@@ -172,10 +183,11 @@ const updateDrug = async (req, res, next) => {
            "stock" = $4,
            "unit" = $5,
            "price" = $6,
-           "expiredDate" = $7,
-           "supplierId" = $8,
+           "purchasePrice" = $7,
+           "expiredDate" = $8,
+           "supplierId" = $9,
            "updatedAt" = NOW()
-       WHERE "id" = $9
+       WHERE "id" = $10
        RETURNING "id", "name", "description", "category", "stock", "unit", "price", "purchasePrice", "expiredDate", "supplierId", "createdAt", "updatedAt"`,
       [
         String(nextName).trim(),
@@ -184,6 +196,7 @@ const updateDrug = async (req, res, next) => {
         Number(nextStock),
         String(unit ?? existing.unit).trim(),
         Number(nextPrice),
+        nextPurchasePrice != null ? Number(nextPurchasePrice) : null,
         expiredDate === undefined ? existing.expiredDate : expiredDate,
         nextSupplierId,
         idObat,
