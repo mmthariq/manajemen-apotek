@@ -389,10 +389,10 @@ const recordCustomMedicineTransaction = async (req, res, next) => {
     );
 
     const transactionResult = await client.query(
-      `INSERT INTO "transactions" ("orderCode", "totalPrice", "cashierId", "customerId", "type", "status", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-       RETURNING "id", "totalPrice", "createdAt", "cashierId", "customerId", "type", "status"`,
-      [orderCode, computedTotal, resolvedCashierId, customerId || null, 'OFFLINE', 'COMPLETED']
+      `INSERT INTO "transactions" ("orderCode", "totalPrice", "subtotal", "discount", "cashierId", "customerId", "type", "status", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+       RETURNING "id", "totalPrice", "subtotal", "discount", "createdAt", "cashierId", "customerId", "type", "status"`,
+      [orderCode, computedTotal, computedTotal, 0, resolvedCashierId, customerId || null, 'OFFLINE', 'COMPLETED']
     );
 
     const transaction = transactionResult.rows[0];

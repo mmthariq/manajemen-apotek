@@ -6,7 +6,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import Pagination from '../components/Pagination';
 import '../styles/ManajemenObatRacikan.css';
 
-const API_BASE_URL = 'http://localhost:3000/api/custom-medicine';
+const API_BASE_URL = '/api/custom-medicine';
 
 const ManajemenObatRacikan = ({ onLogout, authToken = null }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

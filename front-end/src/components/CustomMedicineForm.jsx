@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/CustomMedicineForm.css';
 
-const DRUG_API_URL = 'http://localhost:3000/api/obat';
+const DRUG_API_URL = '/api/obat';
 
 const CustomMedicineForm = ({ isOpen, onClose, onSave, authToken, editData }) => {
   const initialFormData = {
