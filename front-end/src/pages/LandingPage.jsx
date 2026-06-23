@@ -196,7 +196,7 @@ const LandingPage = ({ isAuthenticated, redirectPath }) => {
             </Box>
             <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
               <Typography variant="body2" className="landing-footer-text">
-                Kontak: 08xx-xxxx-xxxx
+                Kontak: 081249868704
               </Typography>
               <Typography variant="body2" className="landing-footer-text">
                 Email: info@pemudafarma.id

@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import PenggunaForm from '../components/PenggunaForm';
 import ConfirmModal from '../components/ConfirmModal';
 
-const API_BASE_URL = 'http://localhost:3000/api/users';
+const API_BASE_URL = '/api/users';
 
 const toTitleCaseRole = (roleValue) => {
   const role = String(roleValue || '').toLowerCase();

@@ -11,7 +11,7 @@ const PAYMENT_CONFIG = {
   },
   qris: {
     merchantName: 'Apotek Pemuda',
-    imageUrl: '/images/qris-apotek-pemuda.png',
+    imageUrl: '/images/qrisapotek.jpeg',
   },
   deadline: '1×24 jam',
 };
@@ -25,7 +25,7 @@ const PAYMENT_CONFIG = {
  * @param {string}  [variant]   – 'full' (default) | 'compact' for modals
  */
 const PaymentInstructions = ({ totalAmount = 0, status, variant = 'full' }) => {
-  const [activeTab, setActiveTab] = useState('transfer');
+  const [activeTab, setActiveTab] = useState('qris');
   const [copiedField, setCopiedField] = useState(null);
 
   // Only show for pending orders
@@ -76,13 +76,6 @@ const PaymentInstructions = ({ totalAmount = 0, status, variant = 'full' }) => {
       {/* ── Tabs ── */}
       <div className="payment-tabs">
         <button
-          className={`payment-tab ${activeTab === 'transfer' ? 'active' : ''}`}
-          onClick={() => setActiveTab('transfer')}
-        >
-          <span className="payment-tab-icon">🏦</span>
-          Transfer Bank
-        </button>
-        <button
           className={`payment-tab ${activeTab === 'qris' ? 'active' : ''}`}
           onClick={() => setActiveTab('qris')}
         >
@@ -91,63 +84,6 @@ const PaymentInstructions = ({ totalAmount = 0, status, variant = 'full' }) => {
         </button>
       </div>
 
-      {/* ── Transfer Bank Content ── */}
-      {activeTab === 'transfer' && (
-        <div className="payment-tab-content" key="transfer">
-          <div className="payment-bank-card">
-            {/* Bank name */}
-            <div className="payment-bank-name">
-              <div className="payment-bank-logo">{PAYMENT_CONFIG.bank.name}</div>
-              <div>
-                <div className="payment-bank-label">{PAYMENT_CONFIG.bank.code}</div>
-                <div className="payment-bank-sublabel">{PAYMENT_CONFIG.bank.name}</div>
-              </div>
-            </div>
-
-            {/* Account number */}
-            <div className="payment-copy-row">
-              <div>
-                <div className="payment-copy-label">No. Rekening</div>
-                <div className="payment-copy-value">{PAYMENT_CONFIG.bank.accountNumber}</div>
-              </div>
-              <button
-                className={`payment-copy-btn ${copiedField === 'account' ? 'copied' : ''}`}
-                onClick={() => handleCopy(PAYMENT_CONFIG.bank.accountNumber, 'account')}
-              >
-                <span className="payment-copy-btn-icon">
-                  {copiedField === 'account' ? '✓' : '📋'}
-                </span>
-                {copiedField === 'account' ? 'Tersalin!' : 'Salin'}
-              </button>
-            </div>
-
-            {/* Transfer amount */}
-            <div className="payment-copy-row">
-              <div>
-                <div className="payment-copy-label">Jumlah Transfer</div>
-                <div className="payment-copy-value amount">{formatCurrency(totalAmount)}</div>
-              </div>
-              <button
-                className={`payment-copy-btn ${copiedField === 'amount' ? 'copied' : ''}`}
-                onClick={() => handleCopy(String(totalAmount), 'amount')}
-              >
-                <span className="payment-copy-btn-icon">
-                  {copiedField === 'amount' ? '✓' : '📋'}
-                </span>
-                {copiedField === 'amount' ? 'Tersalin!' : 'Salin'}
-              </button>
-            </div>
-
-            {/* Account holder */}
-            <div className="payment-account-holder">
-              <span className="payment-account-holder-label">Atas Nama:</span>
-              <span className="payment-account-holder-name">
-                {PAYMENT_CONFIG.bank.accountHolder}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── QRIS Content ── */}
       {activeTab === 'qris' && (

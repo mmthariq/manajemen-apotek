@@ -4,9 +4,9 @@ import DashboardLayout from '../components/DashboardLayout';
 import Pagination from '../components/Pagination';
 import '../styles/ManajemenPengadaan.css';
 
-const SUPPLIER_API_BASE_URL = 'http://localhost:3000/api/suppliers';
-const DRUG_API_BASE_URL = 'http://localhost:3000/api/obat';
-const PURCHASE_API_BASE_URL = 'http://localhost:3000/api/purchases';
+const SUPPLIER_API_BASE_URL = '/api/suppliers';
+const DRUG_API_BASE_URL = '/api/obat';
+const PURCHASE_API_BASE_URL = '/api/purchases';
 
 const formatRupiah = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
 

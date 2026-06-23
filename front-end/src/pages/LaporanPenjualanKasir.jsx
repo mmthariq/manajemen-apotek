@@ -4,8 +4,8 @@ import Sidebar from '../components/Sidebar';
 import Pagination from '../components/Pagination';
 import '../styles/LaporanPenjualanKasir.css';
 
-const API_BASE_URL = 'http://localhost:3000/api/orders';
-const REPORT_EXPORT_URL = 'http://localhost:3000/api/reports/sales-kasir/export';
+const API_BASE_URL = '/api/orders';
+const REPORT_EXPORT_URL = '/api/reports/sales-kasir/export';
 
 const LaporanPenjualanKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   const [selectedDate, setSelectedDate] = useState(getCurrentDate());

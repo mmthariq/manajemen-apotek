@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar';
 import SupplierForm from '../components/SupplierForm';
 import ConfirmModal from '../components/ConfirmModal';
 
-const API_BASE_URL = 'http://localhost:3000/api/suppliers';
+const API_BASE_URL = '/api/suppliers';
 
 const SupplierPage = ({ onLogout, authToken = null }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

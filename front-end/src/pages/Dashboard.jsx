@@ -4,8 +4,8 @@ import '../styles/Dashboard.css';
 import DashboardLayout from '../components/DashboardLayout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
-const API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
-const NOTIFICATION_API_BASE_URL = 'http://localhost:3000/api/dashboard/notifications';
+const API_BASE_URL = '/api/dashboard/analytics';
+const NOTIFICATION_API_BASE_URL = '/api/dashboard/notifications';
 
 const Dashboard = ({ onLogout, userRole, currentUser, authToken = null }) => {
   const [weeklySalesData, setWeeklySalesData] = useState([]);

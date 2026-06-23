@@ -53,7 +53,7 @@ const CustomerForgotPasswordPage = () => {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
-  const API = 'http://localhost:3000/api/auth';
+  const API = '/api/auth';
 
   // Step 1 — send OTP
   const handleSendOtp = async (e) => {

@@ -6,7 +6,7 @@ import ObatForm from '../components/ObatForm';
 import ConfirmModal from '../components/ConfirmModal';
 import Pagination from '../components/Pagination';
 
-const API_BASE_URL = 'http://localhost:3000/api/obat';
+const API_BASE_URL = '/api/obat';
 
 const formatRupiah = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
 const parseRupiah = (text) => Number(String(text || '').replace(/[^\d]/g, '')) || 0;
@@ -149,7 +149,7 @@ const ManajemenStok = ({ onLogout, authToken = null }) => {
         stock: Number(formData.stok || 0),
         unit: formData.jenis,
         category: formData.kategori,
-        price: parseRupiah(formData.harga),
+        purchasePrice: parseRupiah(formData.hargaBeli),
         expiredDate: formData.kadaluarsa || null,
         description: formData.nama,
         supplierId: formData.supplierId ? Number(formData.supplierId) : null,

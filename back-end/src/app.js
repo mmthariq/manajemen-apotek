@@ -20,7 +20,16 @@ try {
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+
+// CORS Configuration - apply globally including static files
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.FRONTEND_URL || '*'  // Use FRONTEND_URL from .env in production
+    : '*',  // Allow all origins in development
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 
 // 4. Routes
 app.get('/', (req, res) => {
@@ -40,8 +49,18 @@ app.get('/api', (req, res) => {
 
 app.use('/api', mainRouter);
 
-// Static file serving
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+// ── Static file serving with CORS and cache control ──
+app.use('/uploads', (req, res, next) => {
+  // Explicit CORS headers for static files
+  res.header('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL || '*' : '*');
+  res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Cache control: cache for 7 days
+  res.header('Cache-Control', 'public, max-age=604800');
+  
+  next();
+}, express.static(path.join(__dirname, '..', 'uploads')));
 
 // 5. Error Handling (Harus di paling bawah)
 app.use((req, res, next) => {

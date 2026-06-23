@@ -16,7 +16,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import PaymentInstructions from '../components/PaymentInstructions';
 import '../styles/OrderDetail.css';
 
-const API_BASE_URL = 'http://localhost:3000/api/orders';
+const API_BASE_URL = '/api/orders';
 
 const STATUS_LABELS = {
   pending_payment: 'Menunggu Pembayaran',

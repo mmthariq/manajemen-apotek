@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './NotificationBell.css';
 
-const NOTIF_API = 'http://localhost:3000/api/dashboard/notifications';
+const NOTIF_API = '/api/dashboard/notifications';
 
 const NotificationBell = ({ authToken }) => {
   const [notifications, setNotifications] = useState([]);

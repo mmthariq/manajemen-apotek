@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DashboardHeader from '../components/header/DashboardHeader';
 import { useSearchParams } from 'react-router-dom';
+import { getFullImageUrl } from '../config/apiConfig';
 import '../styles/Dashboard.css';
 import DashboardLayout from '../components/DashboardLayout';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const ORDER_API_BASE_URL = 'http://localhost:3000/api/orders';
-const ANALYTICS_API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
+const ORDER_API_BASE_URL = '/api/orders';
+const ANALYTICS_API_BASE_URL = '/api/dashboard/analytics';
 
 const DB_STATUS_TO_LABEL = {
   PENDING: 'Menunggu Pembayaran',
@@ -209,15 +210,7 @@ const DashboardKasir = ({ onLogout, userRole, currentUser, authToken }) => {
   };
 
   const resolveProofImageUrl = (proofPath) => {
-    if (!proofPath) {
-      return null;
-    }
-
-    if (String(proofPath).startsWith('http')) {
-      return proofPath;
-    }
-
-    return `http://localhost:3000${proofPath}`;
+    return getFullImageUrl(proofPath);
   };
 
   return (

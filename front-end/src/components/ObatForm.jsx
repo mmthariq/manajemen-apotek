@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/ObatForm.css';
 
-const SUPPLIER_API_URL = 'http://localhost:3000/api/suppliers';
+const SUPPLIER_API_URL = '/api/suppliers';
 
 const ObatForm = ({ isOpen, onClose, onSave, editData, authToken = null }) => {
   const initialFormData = {
@@ -10,7 +10,7 @@ const ObatForm = ({ isOpen, onClose, onSave, editData, authToken = null }) => {
     jenis: 'Tablet',
     kategori: 'BEBAS',
     stok: 0,
-    harga: '',
+    hargaBeli: '',
     kadaluarsa: '',
     supplierId: ''
   };
@@ -33,7 +33,7 @@ const ObatForm = ({ isOpen, onClose, onSave, editData, authToken = null }) => {
         ...editData,
         jenis: editData.satuan || editData.jenis || 'Tablet',
         kategori: editData.category || editData.kategori || 'BEBAS',
-        harga: editData.hargaJual || editData.harga || '',
+        hargaBeli: editData.hargaBeli || editData.harga || '',
         supplierId: editData.supplierId || ''
       });
     } else {
@@ -162,16 +162,19 @@ const ObatForm = ({ isOpen, onClose, onSave, editData, authToken = null }) => {
           
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="harga">Harga</label>
+              <label htmlFor="hargaBeli">Harga Beli (Harga Pokok)</label>
               <input
                 type="text"
-                id="harga"
-                name="harga"
-                value={formData.harga}
+                id="hargaBeli"
+                name="hargaBeli"
+                value={formData.hargaBeli}
                 onChange={handleChange}
                 placeholder="Rp 0"
                 required
               />
+              <small style={{ color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                Harga jual otomatis dihitung +15% dari harga beli
+              </small>
             </div>
             
             <div className="form-group">

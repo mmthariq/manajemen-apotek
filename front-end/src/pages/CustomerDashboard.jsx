@@ -47,13 +47,13 @@ import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import DashboardLayout from '../components/DashboardLayout';
 import PaymentInstructions from '../components/PaymentInstructions';
+import { getFullImageUrl } from '../config/apiConfig';
 import '../styles/CustomerDashboard.css';
 
-const API_BASE_URL = 'http://localhost:3000/api/orders';
-const CUSTOMER_API_BASE_URL = 'http://localhost:3000/api/customers';
-const BACKEND_BASE_URL = 'http://localhost:3000';
-const DRUG_API_BASE_URL = 'http://localhost:3000/api/obat';
-const CUSTOM_MED_API_BASE_URL = 'http://localhost:3000/api/custom-medicine';
+const API_BASE_URL = '/api/orders';
+const CUSTOMER_API_BASE_URL = '/api/customers';
+const DRUG_API_BASE_URL = '/api/obat';
+const CUSTOM_MED_API_BASE_URL = '/api/custom-medicine';
 
 const DB_STATUS_TO_LABEL = {
   PENDING: 'Menunggu Pembayaran',
@@ -555,15 +555,7 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
   };
 
   const resolveProofImageUrl = (proofPath) => {
-    if (!proofPath) {
-      return null;
-    }
-
-    if (String(proofPath).startsWith('http')) {
-      return proofPath;
-    }
-
-    return `${BACKEND_BASE_URL}${proofPath}`;
+    return getFullImageUrl(proofPath);
   };
 
   const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
@@ -1479,9 +1471,9 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
                 </div>
               </div>
             ) : (
-              <Grid container spacing={2.5}>
+              <Grid container spacing={1.5}>
                 {(showCatalog ? paginatedMedicines : paginatedCustomMedicines).map((medicine) => (
-                  <Grid item xs={12} sm={6} lg={4} key={medicine.id}>
+                  <Grid item xs={6} sm={4} md={4} lg={3} key={medicine.id}>
                     <Card className="product-card-modern" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                       {/* accent strip */}
                       <div className={`product-card-accent ${showCatalog ? '' : 'custom'}`} />
@@ -1489,13 +1481,13 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
                       <CardContent className="product-card-body" sx={{ flex: 1, pb: 0 }}>
                         <div className="product-card-header">
                           <div className="product-card-name">{medicine.nama}</div>
-                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                          <div className="product-card-badges">
                             <span className={`product-card-category ${showCatalog ? 'regular' : 'custom'}`}>
                               {showCatalog ? 'Obat' : 'Racikan'}
                             </span>
                             {showCatalog && (
                               <span 
-                                className={`product-card-category`} 
+                                className="product-card-category"
                                 style={{
                                   backgroundColor: medicine.category === 'KERAS' ? '#fee2e2' : medicine.category === 'BEBAS_TERBATAS' ? '#fef3c7' : '#dcfce7',
                                   color: medicine.category === 'KERAS' ? '#dc2626' : medicine.category === 'BEBAS_TERBATAS' ? '#d97706' : '#16a34a',
@@ -1530,10 +1522,10 @@ const CustomerDashboard = ({ onLogout, authToken, currentUser, onUserUpdate }) =
                             disabled={isOrderLoading || medicine.stok <= 0}
                             onClick={() => addToCart(medicine, 'regular')}
                           >
-                            {medicine.stok <= 0 ? 'Stok Habis' : '+ Tambah ke Keranjang'}
+                            {medicine.stok <= 0 ? 'Stok Habis' : '+ Keranjang'}
                           </Button>
                         ) : (
-                          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} width="100%">
+                          <Stack direction="column" spacing={0.5} width="100%">
                             <Button
                               fullWidth
                               className="add-cart-btn secondary"

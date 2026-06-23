@@ -129,7 +129,7 @@ const CustomerRegistration = ({ onRegistrationSuccess }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/customers/register', {
+      const response = await fetch('/api/customers/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

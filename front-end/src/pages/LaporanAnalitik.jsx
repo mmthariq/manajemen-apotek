@@ -4,8 +4,8 @@ import '../styles/LaporanAnalitik.css';
 import Sidebar from '../components/Sidebar';
 import ExportModal from '../components/ExportModal';
 
-const API_BASE_URL = 'http://localhost:3000/api/dashboard/analytics';
-const REPORT_EXPORT_URL = 'http://localhost:3000/api/reports/analytics/export';
+const API_BASE_URL = '/api/dashboard/analytics';
+const REPORT_EXPORT_URL = '/api/reports/analytics/export';
 
 const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
   style: 'currency',
